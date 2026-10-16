@@ -41,3 +41,61 @@ body {
   background: rgba(255, 255, 255, 0.16);
   background-clip: content-box;
 }
+
+/* ── Aviso de nueva versión ─────────────────────────────────────── */
+
+/* Entra deslizándose desde abajo, con un rebote suave al asentar. */
+.update-toast {
+  animation: update-toast-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes update-toast-in {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.96);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* El destello que barre el panel. Se reinicia con cada paso (key). */
+.update-shine {
+  animation: update-shine 1.4s ease-out both;
+}
+
+@keyframes update-shine {
+  0% {
+    transform: translateX(-120%) skewX(-12deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(420%) skewX(-12deg);
+    opacity: 0;
+  }
+}
+
+/* La chispa de la marca respira: pulso + giro leve. */
+.update-sparkle {
+  animation: update-sparkle 2.8s ease-in-out infinite;
+}
+
+@keyframes update-sparkle {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.18) rotate(12deg);
+    opacity: 1;
+  }
+}

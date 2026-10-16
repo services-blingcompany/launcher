@@ -2,6 +2,7 @@
 
 const { app, BrowserWindow, ipcMain, shell, Menu } = require("electron");
 const path = require("node:path");
+const updates = require("./updateCheck.cjs");
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 
@@ -29,6 +30,29 @@ function isAllowedUrl(value) {
 function openExternalAllowed(url) {
   if (isAllowedUrl(url)) return shell.openExternal(url);
   return Promise.resolve();
+}
+
+/**
+ * Los links de actualización apuntan a GitHub (release y asset .exe).
+ * Allowlist aparte, más restrictiva: sólo https de los hosts de GitHub.
+ */
+const UPDATE_HOSTS = new Set([
+  "github.com",
+  "objects.githubusercontent.com",
+  "release-assets.githubusercontent.com",
+  "api.github.com",
+]);
+
+function openUpdateLink(url) {
+  try {
+    const parsed = new URL(String(url));
+    if (parsed.protocol !== "https:" || !UPDATE_HOSTS.has(parsed.hostname)) {
+      return Promise.resolve();
+    }
+    return shell.openExternal(parsed.toString());
+  } catch {
+    return Promise.resolve();
+  }
 }
 
 function createLauncherWindow() {
@@ -125,6 +149,7 @@ ipcMain.handle("bling:open-service", (_event, { id, url, title }) =>
   openService(id, url, title),
 );
 ipcMain.handle("bling:open-external", (_event, url) => openExternalAllowed(url));
+ipcMain.handle("bling:app-version", () => app.getVersion());
 ipcMain.on("bling:minimize", (event) => {
   BrowserWindow.fromWebContents(event.sender)?.minimize();
 });
@@ -148,6 +173,7 @@ if (!gotTheLock) {
 
   app.whenReady().then(() => {
     createLauncherWindow();
+    updates.init({ openLink: openUpdateLink });
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) createLauncherWindow();

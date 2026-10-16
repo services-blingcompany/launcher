@@ -4,7 +4,9 @@ import TitleBar from "./components/TitleBar";
 import Rail from "./components/Rail";
 import FeaturedCard from "./components/FeaturedCard";
 import ServiceRow from "./components/ServiceRow";
+import UpdateToast, { UpdateBadge } from "./components/UpdateToast";
 import { SERVICES } from "./data/services";
+import type { UpdateInfo } from "./bling";
 
 /**
  * Pantalla del launcher (layout horizontal): rail con keyart + reloj a
@@ -14,6 +16,53 @@ import { SERVICES } from "./data/services";
 export default function App() {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // ── Actualizaciones ──
+  const [version, setVersion] = useState("");
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [buscando, setBuscando] = useState(false);
+
+  useEffect(() => {
+    void window.bling.appVersion().then(setVersion);
+    // El main avisa cuando aparece una versión más nueva (a los 5 s y
+    // luego cada 4 h). Si el usuario ya la descartó, no vuelve a saltar.
+    return window.bling.onUpdateAvailable((nueva) => {
+      setUpdate(nueva);
+      setToastVisible(true);
+    });
+  }, []);
+
+  async function revisarActualizaciones() {
+    if (buscando) return;
+    setBuscando(true);
+    try {
+      const res = await window.bling.checkForUpdates();
+      if (res.status === "available") {
+        setUpdate(res.update);
+        // Aunque la haya descartado antes, un chequeo manual la muestra.
+        setToastVisible(true);
+      } else {
+        // Nada nuevo: mensaje breve de "estás al día".
+        setUpdate(null);
+        setToastVisible(false);
+        flashAlDia();
+      }
+    } finally {
+      setBuscando(false);
+    }
+  }
+
+  const [alDia, setAlDia] = useState(false);
+  function flashAlDia() {
+    setAlDia(true);
+    setTimeout(() => setAlDia(false), 2600);
+  }
+
+  function descartarAviso() {
+    if (update) window.bling.dismissUpdate(update.version);
+    setToastVisible(false);
+  }
 
   // Atajo "/" enfoca el buscador (como en la mayoría de los launchers).
   useEffect(() => {
@@ -90,6 +139,10 @@ export default function App() {
               {SERVICES.length} disponibles
             </span>
 
+            {update && !toastVisible && (
+              <UpdateBadge update={update} onOpen={() => setToastVisible(true)} />
+            )}
+
             <button
               type="button"
               onClick={() => void window.bling.openExternal("https://bling.uy")}
@@ -158,14 +211,31 @@ export default function App() {
                 <span className="font-mono text-[9px] tracking-widest uppercase text-white/35">
                   Bling Company · Uruguay
                 </span>
-                <span className="font-mono text-[9px] tracking-widest uppercase text-white/35">
-                  v1.0.0
-                </span>
+                <button
+                  type="button"
+                  onClick={() => void revisarActualizaciones()}
+                  disabled={buscando}
+                  title="Buscar actualizaciones"
+                  className="font-mono text-[9px] tracking-widest uppercase text-white/35 transition-colors hover:text-white/70 disabled:opacity-60"
+                >
+                  {buscando
+                    ? "Buscando…"
+                    : alDia
+                      ? "Estás al día ✦"
+                      : `v${version || "…"}`}
+                </button>
               </div>
             </div>
           </div>
         </main>
       </div>
+
+      {/* ── Aviso de nueva versión ── */}
+      {update && toastVisible && (
+        <div className="pointer-events-none fixed bottom-5 right-5 z-50">
+          <UpdateToast update={update} onDismiss={descartarAviso} />
+        </div>
+      )}
     </div>
   );
 }
