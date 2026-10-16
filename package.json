@@ -4,6 +4,11 @@
   "version": "1.0.0",
   "private": true,
   "description": "Launcher de escritorio del ecosistema Bling: todos los servicios en una sola app.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/services-blingcompany/launcher.git"
+  },
+  "author": "Bling Company",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
