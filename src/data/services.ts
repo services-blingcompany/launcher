@@ -12,6 +12,8 @@ export type Service = {
   /** Hex del texto/icono del acento. */
   accent: string;
   badge?: string;
+  /** Tarjeta grande arriba de todo (sólo una). */
+  featured?: boolean;
   status: ServiceStatus;
 };
 
@@ -30,6 +32,7 @@ export const SERVICES: Service[] = [
     accentRgb: "255, 204, 0",
     accent: "text-[#ffcc00]",
     badge: "En vivo",
+    featured: true,
     status: "available",
   },
   {

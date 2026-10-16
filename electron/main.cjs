@@ -33,10 +33,10 @@ function openExternalAllowed(url) {
 
 function createLauncherWindow() {
   launcherWindow = new BrowserWindow({
-    width: 1080,
+    width: 1180,
     height: 700,
-    minWidth: 920,
-    minHeight: 620,
+    minWidth: 1000,
+    minHeight: 580,
     show: false,
     frame: false, // titlebar propio, en theme de la marca
     backgroundColor: "#09090b",
