@@ -9,6 +9,14 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.4.0]
+
+- **La derecha, a la altura de la izquierda.** El contenido ahora te saluda por tu nombre ("Buenas, Facundo.") cuando hay sesión, el buscador baja de la barra superior al cuerpo y pasa a ser el protagonista de la pantalla, y la ayuda de teclado se convierte en una línea discreta (antes eran tres cajitas que competían con el título).
+- **Tarjeta destacada en formato hero.** Más alta, con la llamada **Abrir** a la vista y el icono del servicio como marca de agua que llena el aire de la derecha. También deja de mostrar el borde claro cuando está seleccionada: se marca con la misma barrita del acento que las filas.
+- **Panel de cuenta.** En ventanas anchas aparece una columna a la derecha con tu avatar, tu alias de BlingPay (copiable con un clic) y accesos directos a Mi perfil, Ajustes de cuenta y Notificaciones, más el estado del launcher (servicios disponibles y versión, con el chequeo de actualizaciones). En ventanas angostas se oculta solo: todo sigue estando en el menú de usuario y en el pie.
+- La barra superior queda para lo esencial: **Bling Launcher** + versión a la izquierda; ajustes, bling.uy y tu usuario a la derecha.
+- Interno: las URLs de las páginas de cuenta viven en un solo lugar (`src/lib/cuenta.ts`) y las usan tanto el menú de usuario como el panel.
+
 ## [1.3.1]
 
 - **Tipografía de la casa**: todo el texto pasa a **Montserrat** (la del ecosistema, en lugar de Barlow) y los micro-rótulos a **JetBrains Mono** (en lugar de la mono del sistema).

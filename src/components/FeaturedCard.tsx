@@ -7,9 +7,10 @@ const ICONS = {
 } as const;
 
 /**
- * Tarjeta destacada: el servicio más importante, en formato ancho con el
- * nombre grande y un mini "estado en vivo". Comparte el efecto de luz
- * especular con las filas.
+ * Tarjeta destacada: el servicio más importante, en formato hero. El icono
+ * fantasma de la derecha llena el aire que deja el texto y la llamada a la
+ * acción ("Abrir") reemplaza a la flechita suelta. Comparte la luz
+ * especular y la barra de selección con las filas.
  */
 export default function FeaturedCard({
   service,
@@ -41,26 +42,32 @@ export default function FeaturedCard({
       onClick={abrir}
       onMouseMove={seguirCursor}
       disabled={!disponible}
-      className={`group relative flex w-full items-center gap-6 overflow-hidden rounded-2xl border bg-gradient-to-r from-zinc-950 to-zinc-900/60 px-7 py-6 text-left transition-all duration-300 outline-none hover:-translate-y-0.5 hover:shadow-[0_20px_50px_-24px_rgba(255,204,0,0.35)] ${
-        selected
-          ? "border-white/15"
-          : "border-white/10 hover:border-white/20"
-      }`}
+      className={`group relative flex w-full items-center gap-6 overflow-hidden rounded-2xl border bg-gradient-to-br from-zinc-950 via-zinc-950 to-zinc-900/60 px-7 py-7 text-left transition-all duration-300 outline-none ${
+        disponible
+          ? "hover:-translate-y-0.5 hover:border-white/20 hover:shadow-[0_28px_60px_-30px_rgba(255,204,0,0.45)]"
+          : "cursor-default opacity-60"
+      } ${selected ? "border-white/15" : "border-white/10"}`}
     >
-      {/* Halo superior del acento */}
+      {/* Halo del acento, corrido a la derecha */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-24 left-1/3 h-48 w-96 -translate-x-1/2 rounded-full blur-3xl opacity-25 transition-opacity duration-500 group-hover:opacity-45"
+        className="pointer-events-none absolute -right-16 -top-20 h-56 w-72 rounded-full blur-3xl opacity-25 transition-opacity duration-500 group-hover:opacity-45"
         style={{
           background: `radial-gradient(closest-side, rgba(${service.accentRgb}, 0.5), transparent)`,
         }}
+      />
+      {/* Icono fantasma: llena el aire de la derecha sin competir con el texto */}
+      <Icon
+        aria-hidden
+        className="pointer-events-none absolute -right-5 top-1/2 h-44 w-44 -translate-y-1/2 opacity-[0.05]"
+        strokeWidth={0.75}
       />
       {/* Luz especular que sigue al cursor */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
         style={{
-          background: `radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(${service.accentRgb}, 0.12), transparent 70%)`,
+          background: `radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), rgba(${service.accentRgb}, 0.12), transparent 70%)`,
         }}
       />
       {/* Línea de acento superior */}
@@ -110,16 +117,22 @@ export default function FeaturedCard({
             </span>
           )}
         </span>
-        <span className="mt-1.5 block font-[var(--font-montserrat)] text-2xl font-extralight leading-tight tracking-tight text-white">
+        <span className="mt-1.5 block truncate font-[var(--font-montserrat)] text-3xl font-extralight leading-tight tracking-tight text-white">
           {service.name}
         </span>
-        <span className="mt-1 block text-xs font-light text-white/60">
+        <span className="mt-1.5 block max-w-md text-[13px] font-light text-white/55">
           {service.tagline}
         </span>
       </span>
 
-      <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/60 transition-all duration-300 group-hover:border-transparent group-hover:bg-[#ffcc00] group-hover:text-black">
-        <ArrowUpRight size={18} />
+      {/* La tarjeta entera es el botón: la llamada es visual, no un <button>
+          anidado (HTML no lo permite). */}
+      <span className="relative ml-4 hidden shrink-0 items-center gap-2 rounded-xl border border-[#ffcc00]/30 bg-[#ffcc00]/10 px-4 py-2.5 font-mono text-[9px] tracking-widest uppercase text-[#ffcc00] transition-colors group-hover:border-[#ffcc00]/60 group-hover:bg-[#ffcc00]/20 sm:inline-flex">
+        Abrir
+        <ArrowUpRight
+          size={12}
+          className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+        />
       </span>
     </button>
   );

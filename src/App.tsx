@@ -8,7 +8,8 @@ import UpdateToast, { UpdateBadge } from "./components/UpdateToast";
 import SettingsPanel from "./components/SettingsPanel";
 import UserMenu from "./components/UserMenu";
 import LoginDialog from "./components/LoginDialog";
-import { useSession } from "./hooks/useSession";
+import AccountPanel from "./components/AccountPanel";
+import { datosDeUsuario, useSession } from "./hooks/useSession";
 import { SERVICES } from "./data/services";
 import { normalizar } from "./lib/normalizar";
 import type { Service } from "./data/services";
@@ -283,6 +284,18 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [navegables, seleccion, abrir]);
 
+  // Presentación de la cabecera: si hay sesión, saluda por su nombre.
+  const cuenta = user ? datosDeUsuario(user) : null;
+  const saludo = cuenta
+    ? `Buenas, ${cuenta.nombre.split(" ")[0]}`
+    : "Servicios de Bling";
+  const bajada = cuenta
+    ? "Tu sesión está activa: cada servicio se abre con vos adentro."
+    : "Entrás una vez y te conoce todo el ecosistema.";
+  const totalDisponibles = SERVICES.filter(
+    (s) => s.status === "available",
+  ).length;
+
   return (
     <div className="flex h-full flex-col bg-[#09090b] text-white antialiased">
       <TitleBar />
@@ -291,189 +304,228 @@ export default function App() {
         <Rail />
 
         <main className="flex min-w-0 flex-1 flex-col">
-          {/* ── Barra superior: buscador + web ── */}
-          <div className="flex items-center gap-3 border-b border-white/5 px-7 py-4">
-            <div className="relative flex-1 max-w-md">
-              <Search
-                size={14}
-                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/35"
-              />
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar servicio…"
-                className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-9 pr-16 text-xs text-white placeholder:text-white/35 outline-none transition-colors focus:border-white/25 focus:bg-white/[0.07]"
-              />
-              {query ? (
-                <button
-                  type="button"
-                  onClick={() => setQuery("")}
-                  aria-label="Limpiar búsqueda"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-1 text-white/40 transition-colors hover:text-white"
-                >
-                  <X size={12} />
-                </button>
-              ) : (
-                <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] text-white/40">
-                  /
-                </kbd>
-              )}
-            </div>
-
-            <span className="ml-auto font-mono text-[9px] tracking-widest uppercase text-white/35">
-              {SERVICES.filter((s) => s.status === "available").length} de{" "}
-              {SERVICES.length} disponibles
+          {/* ── Barra superior: identidad + accesos ── */}
+          <div className="flex items-center gap-3 border-b border-white/5 px-7 py-3.5">
+            <span className="font-mono text-[9px] tracking-widest uppercase text-white/30">
+              Bling Launcher
+            </span>
+            <span aria-hidden className="h-3 w-px bg-white/10" />
+            <span className="font-mono text-[9px] tracking-widest uppercase text-white/25">
+              v{version || "…"}
             </span>
 
-            {update && !toastVisible && (
-              <UpdateBadge update={update} onOpen={() => setToastVisible(true)} />
-            )}
+            <div className="ml-auto flex items-center gap-2">
+              {update && !toastVisible && (
+                <UpdateBadge update={update} onOpen={() => setToastVisible(true)} />
+              )}
 
-            <button
-              type="button"
-              onClick={() => setAjustesAbiertos(true)}
-              aria-label="Ajustes"
-              title="Ajustes"
-              className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 transition-colors hover:border-white/25 hover:text-white"
-            >
-              <SettingsIcon size={13} />
-            </button>
+              <button
+                type="button"
+                onClick={() => setAjustesAbiertos(true)}
+                aria-label="Ajustes"
+                title="Ajustes"
+                className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 transition-colors hover:border-white/25 hover:text-white"
+              >
+                <SettingsIcon size={13} />
+              </button>
 
-            <button
-              type="button"
-              onClick={() => void window.bling.openExternal("https://bling.uy")}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-mono text-[9px] tracking-widest uppercase text-white/60 transition-colors hover:border-white/25 hover:text-white"
-            >
-              <Globe size={11} />
-              bling.uy
-            </button>
+              <button
+                type="button"
+                onClick={() => void window.bling.openExternal("https://bling.uy")}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-mono text-[9px] tracking-widest uppercase text-white/60 transition-colors hover:border-white/25 hover:text-white"
+              >
+                <Globe size={11} />
+                bling.uy
+              </button>
 
-            <UserMenu
-              user={user}
-              cargando={cargando}
-              sinLeer={sinLeer}
-              onAbrirLogin={() => setLoginAbierto(true)}
-              onCerrarSesion={() => void logout()}
-            />
+              <UserMenu
+                user={user}
+                cargando={cargando}
+                sinLeer={sinLeer}
+                onAbrirLogin={() => setLoginAbierto(true)}
+                onCerrarSesion={() => void logout()}
+              />
+            </div>
           </div>
 
-          {/* ── Contenido ── */}
-          <div className="flex-1 overflow-y-auto px-7 py-6">
-            <div className="mx-auto max-w-2xl">
-              <h1 className="font-[var(--font-montserrat)] text-2xl font-extralight leading-tight tracking-tight text-white">
-                Servicios de Bling
-                <span className="text-[#ffcc00]">.</span>
-              </h1>
-              <p className="mt-1.5 text-xs font-light text-white/55">
-                Cada servicio se abre en su propia ventana, con tu sesión de
-                Bling ya activa: entrás una vez y te conoce todo el ecosistema.
-              </p>
-              <p className="mt-2 font-mono text-[9px] tracking-widest uppercase text-white/30">
-                <kbd className="rounded border border-white/10 bg-white/5 px-1 py-0.5">/</kbd> buscar
-                <span className="mx-1.5 text-white/20">·</span>
-                <kbd className="rounded border border-white/10 bg-white/5 px-1 py-0.5">↑↓</kbd> recorrer
-                <span className="mx-1.5 text-white/20">·</span>
-                <kbd className="rounded border border-white/10 bg-white/5 px-1 py-0.5">Enter</kbd> abrir
-              </p>
-
-              {/* Destacado */}
-              {!query && (
-                <div className="mt-6">
-                  <FeaturedCard
-                    service={destacado}
-                    selected={destacado.id === seleccion}
-                    onOpen={abrir}
+          {/* ── Contenido: columna principal + cuenta ── */}
+          <div className="flex-1 overflow-y-auto px-7 py-7">
+            <div className="mx-auto flex w-full max-w-2xl gap-9 xl:max-w-[1040px]">
+              <div className="min-w-0 flex-1">
+                {/* Encabezado: quién sos + qué podés abrir */}
+                <p className="flex items-center gap-2 font-mono text-[9px] tracking-widest uppercase text-white/30">
+                  <span
+                    aria-hidden
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      cargando
+                        ? "animate-pulse bg-white/30"
+                        : user
+                          ? "bg-[#ffcc00]"
+                          : "bg-white/20"
+                    }`}
                   />
-                </div>
-              )}
-
-              {/* Recientes */}
-              {!query && recientesVisibles.length > 0 && (
-                <section className="mt-7">
-                  <SectionHeader
-                    label="Recientes"
-                    count={recientesVisibles.length}
-                  />
-                  <div className="mt-3 space-y-2.5">
-                    {recientesVisibles.map((s) => (
-                      <ServiceRow
-                        key={s.id}
-                        service={s}
-                        selected={s.id === seleccion}
-                        onOpen={abrir}
-                        onOpenExternal={abrirEnNavegador}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Servicios */}
-              {disponibles.length > 0 && (
-                <section className="mt-7">
-                  <SectionHeader label="Disponibles" count={disponibles.length} />
-                  <div className="mt-3 space-y-2.5">
-                    {disponibles.map((s) => (
-                      <ServiceRow
-                        key={s.id}
-                        service={s}
-                        selected={s.id === seleccion}
-                        onOpen={abrir}
-                        onOpenExternal={abrirEnNavegador}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Próximamente */}
-              {proximos.length > 0 && (
-                <section className="mt-7">
-                  <SectionHeader
-                    label="Próximamente"
-                    count={proximos.length}
-                  />
-                  <div className="mt-3 space-y-2.5">
-                    {proximos.map((s) => (
-                      <ServiceRow
-                        key={s.id}
-                        service={s}
-                        selected={false}
-                        onOpen={abrir}
-                        onOpenExternal={abrirEnNavegador}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Sin resultados */}
-              {query && navegables.length === 0 && (
-                <p className="mt-10 text-center text-xs font-light text-white/40">
-                  Ningún servicio coincide con «{query}».
+                  {cargando
+                    ? "Buscando sesión"
+                    : user
+                      ? "Sesión activa"
+                      : "Sin sesión"}
                 </p>
-              )}
+                <h1 className="mt-2.5 font-[var(--font-montserrat)] text-3xl font-extralight leading-tight tracking-tight text-white">
+                  {saludo}
+                  <span className="text-[#ffcc00]">.</span>
+                </h1>
+                <p className="mt-1.5 text-xs font-light text-white/50">
+                  {bajada}
+                </p>
 
-              {/* ── Pie ── */}
-              <div className="mt-9 flex items-center justify-between border-t border-white/10 pt-4">
-                <span className="font-mono text-[9px] tracking-widest uppercase text-white/35">
-                  Bling Company · Uruguay
-                </span>
-                <button
-                  type="button"
-                  onClick={() => void revisarActualizaciones()}
-                  disabled={buscando}
-                  title="Buscar actualizaciones"
-                  className="font-mono text-[9px] tracking-widest uppercase text-white/35 transition-colors hover:text-white/70 disabled:opacity-60"
-                >
-                  {buscando
-                    ? "Buscando…"
-                    : alDia
-                      ? "Estás al día ✦"
-                      : `v${version || "…"}`}
-                </button>
+                {/* Buscador: el protagonista del launcher */}
+                <div className="relative mt-6">
+                  <Search
+                    size={15}
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/35"
+                  />
+                  <input
+                    ref={inputRef}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="¿Qué querés abrir?"
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-3.5 pl-11 pr-14 text-sm text-white outline-none transition-colors placeholder:text-white/35 hover:border-white/20 hover:bg-white/[0.05] focus:border-[#ffcc00]/40 focus:bg-white/[0.06]"
+                  />
+                  {query ? (
+                    <button
+                      type="button"
+                      onClick={() => setQuery("")}
+                      aria-label="Limpiar búsqueda"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-white/40 transition-colors hover:text-white"
+                    >
+                      <X size={13} />
+                    </button>
+                  ) : (
+                    <kbd className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] text-white/40">
+                      /
+                    </kbd>
+                  )}
+                </div>
+                <p className="mt-2 flex items-center justify-end gap-1.5 font-mono text-[9px] tracking-widest uppercase text-white/25">
+                  <span>↑↓</span> recorrer
+                  <span aria-hidden className="text-white/15">·</span>
+                  <span>Enter</span> abrir
+                </p>
+
+                {/* Destacado */}
+                {!query && (
+                  <div className="mt-5">
+                    <FeaturedCard
+                      service={destacado}
+                      selected={destacado.id === seleccion}
+                      onOpen={abrir}
+                    />
+                  </div>
+                )}
+
+                {/* Recientes */}
+                {!query && recientesVisibles.length > 0 && (
+                  <section className="mt-8">
+                    <SectionHeader label="Recientes" />
+                    <div className="mt-3 space-y-2.5">
+                      {recientesVisibles.map((s) => (
+                        <ServiceRow
+                          key={s.id}
+                          service={s}
+                          selected={s.id === seleccion}
+                          onOpen={abrir}
+                          onOpenExternal={abrirEnNavegador}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Servicios */}
+                {disponibles.length > 0 && (
+                  <section className="mt-8">
+                    <SectionHeader label="Disponibles" />
+                    <div className="mt-3 space-y-2.5">
+                      {disponibles.map((s) => (
+                        <ServiceRow
+                          key={s.id}
+                          service={s}
+                          selected={s.id === seleccion}
+                          onOpen={abrir}
+                          onOpenExternal={abrirEnNavegador}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Próximamente */}
+                {proximos.length > 0 && (
+                  <section className="mt-8">
+                    <SectionHeader label="Próximamente" />
+                    <div className="mt-3 space-y-2.5">
+                      {proximos.map((s) => (
+                        <ServiceRow
+                          key={s.id}
+                          service={s}
+                          selected={false}
+                          onOpen={abrir}
+                          onOpenExternal={abrirEnNavegador}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Sin resultados */}
+                {query && navegables.length === 0 && (
+                  <div className="mt-8 rounded-xl border border-dashed border-white/10 px-5 py-8 text-center">
+                    <p className="text-xs font-light text-white/45">
+                      Ningún servicio coincide con «{query}».
+                    </p>
+                    <p className="mt-1.5 font-mono text-[9px] tracking-widest uppercase text-white/25">
+                      Probá con otro nombre
+                    </p>
+                  </div>
+                )}
+
+                {/* ── Pie ── */}
+                <div className="mt-9 flex items-center justify-between border-t border-white/10 pt-4">
+                  <span className="font-mono text-[9px] tracking-widest uppercase text-white/35">
+                    Bling Company · Uruguay
+                  </span>
+                  {/* Con el panel a la vista, la versión y su chequeo viven ahí. */}
+                  <button
+                    type="button"
+                    onClick={() => void revisarActualizaciones()}
+                    disabled={buscando}
+                    title="Buscar actualizaciones"
+                    className="font-mono text-[9px] tracking-widest uppercase text-white/35 transition-colors hover:text-white/70 disabled:opacity-60 xl:hidden"
+                  >
+                    {buscando
+                      ? "Buscando…"
+                      : alDia
+                        ? "Estás al día ✦"
+                        : `v${version || "…"}`}
+                  </button>
+                </div>
               </div>
+
+              {/* Columna derecha: cuenta + estado (sólo con ancho de sobra) */}
+              <AccountPanel
+                user={user}
+                cargando={cargando}
+                sinLeer={sinLeer}
+                version={version}
+                disponibles={totalDisponibles}
+                total={SERVICES.length}
+                update={update}
+                alDia={alDia}
+                buscando={buscando}
+                onAbrirLogin={() => setLoginAbierto(true)}
+                onBuscarActualizaciones={() => void revisarActualizaciones()}
+                onVerNovedades={() => setToastVisible(true)}
+              />
             </div>
           </div>
         </main>
@@ -515,16 +567,13 @@ export default function App() {
   );
 }
 
-function SectionHeader({ label, count }: { label: string; count: number }) {
+function SectionHeader({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3">
       <span className="font-mono text-[9px] tracking-widest uppercase text-white/40">
         {label}
       </span>
       <span className="h-px flex-1 bg-white/10" />
-      <span className="font-mono text-[9px] tracking-widest text-white/30">
-        {String(count).padStart(2, "0")}
-      </span>
     </div>
   );
 }

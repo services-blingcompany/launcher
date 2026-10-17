@@ -12,12 +12,8 @@ import {
   Wallet,
 } from "lucide-react";
 import { datosDeUsuario } from "../hooks/useSession";
+import { PAGINAS, abrirCuenta } from "../lib/cuenta";
 import type { BlingUser } from "../bling";
-
-/** Ventana embebida de una página de cuenta (comparte la sesión). */
-function abrirCuenta(id: string, url: string, title: string) {
-  void window.bling.openService({ id, url, title });
-}
 
 /**
  * Botón de usuario de la barra superior.
@@ -98,9 +94,7 @@ export default function UserMenu({
       {/* Campanita: sólo con sesión, con el contador de no leídas */}
       <button
         type="button"
-        onClick={() =>
-          abrirCuenta("notificaciones", "https://bling.uy/bling/notifications", "Notificaciones")
-        }
+        onClick={() => abrirCuenta(PAGINAS.notificaciones)}
         aria-label={sinLeer > 0 ? `Notificaciones (${sinLeer} sin leer)` : "Notificaciones"}
         title="Notificaciones"
         className="relative inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 transition-colors hover:border-white/25 hover:text-white"
@@ -163,7 +157,7 @@ export default function UserMenu({
               label="Mi perfil"
               onClick={() => {
                 setAbierto(false);
-                abrirCuenta("perfil", "https://bling.uy/bling/profile", "Mi perfil");
+                abrirCuenta(PAGINAS.perfil);
               }}
             />
             <Item
@@ -171,7 +165,7 @@ export default function UserMenu({
               label="Ajustes de cuenta"
               onClick={() => {
                 setAbierto(false);
-                abrirCuenta("cuenta-ajustes", "https://bling.uy/bling/settings", "Ajustes de cuenta");
+                abrirCuenta(PAGINAS.ajustes);
               }}
             />
             <Item
@@ -184,11 +178,7 @@ export default function UserMenu({
               }
               onClick={() => {
                 setAbierto(false);
-                abrirCuenta(
-                  "notificaciones",
-                  "https://bling.uy/bling/notifications",
-                  "Notificaciones",
-                );
+                abrirCuenta(PAGINAS.notificaciones);
               }}
             />
             {/* Sin endpoint de saldo todavía: acá se muestra el alias de
