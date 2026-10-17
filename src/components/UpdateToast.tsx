@@ -62,7 +62,7 @@ export default function UpdateToast({
         </div>
 
         <div className="mt-3 flex items-baseline gap-3">
-          <h3 className="font-[var(--font-barlow)] text-3xl font-extralight leading-none tracking-tight text-white">
+          <h3 className="font-[var(--font-montserrat)] text-3xl font-extralight leading-none tracking-tight text-white">
             v{update.version}
           </h3>
           <span className="h-px flex-1 border-b border-dotted border-white/20" />

@@ -145,7 +145,7 @@ export default function UserMenu({
         >
           {/* Encabezado: quién sos */}
           <div className="border-b border-white/10 px-3.5 py-3">
-            <p className="truncate font-[var(--font-barlow)] text-sm font-light text-white">
+            <p className="truncate font-[var(--font-montserrat)] text-sm font-light text-white">
               {nombre}
             </p>
             <p className="mt-0.5 truncate text-[11px] font-light text-white/45">

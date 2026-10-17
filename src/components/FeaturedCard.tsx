@@ -43,8 +43,8 @@ export default function FeaturedCard({
       disabled={!disponible}
       className={`group relative flex w-full items-center gap-6 overflow-hidden rounded-2xl border bg-gradient-to-r from-zinc-950 to-zinc-900/60 px-7 py-6 text-left transition-all duration-300 outline-none hover:-translate-y-0.5 hover:shadow-[0_20px_50px_-24px_rgba(255,204,0,0.35)] ${
         selected
-          ? "border-white/35"
-          : "border-white/15 hover:border-white/30"
+          ? "border-white/15"
+          : "border-white/10 hover:border-white/20"
       }`}
     >
       {/* Halo superior del acento */}
@@ -71,6 +71,16 @@ export default function FeaturedCard({
           background: `linear-gradient(90deg, transparent, rgba(${service.accentRgb}, 0.7), transparent)`,
         }}
       />
+
+      {/* Barra de selección por teclado: la misma señal que usan las filas,
+          así la destacada no necesita un borde claro para marcarse. */}
+      {selected && disponible && (
+        <span
+          aria-hidden
+          className="absolute inset-y-4 left-0 w-[2px] rounded-full"
+          style={{ background: `rgb(${service.accentRgb})` }}
+        />
+      )}
 
       <span
         className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 ${service.accent}`}
@@ -100,7 +110,7 @@ export default function FeaturedCard({
             </span>
           )}
         </span>
-        <span className="mt-1.5 block font-[var(--font-barlow)] text-2xl font-extralight leading-tight tracking-tight text-white">
+        <span className="mt-1.5 block font-[var(--font-montserrat)] text-2xl font-extralight leading-tight tracking-tight text-white">
           {service.name}
         </span>
         <span className="mt-1 block text-xs font-light text-white/60">

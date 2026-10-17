@@ -63,7 +63,7 @@ export default function Rail() {
         <BlingWordmark className="h-7 w-auto" />
 
         <div>
-          <p className="font-[var(--font-barlow)] text-5xl font-extralight leading-none tracking-tight text-white">
+          <p className="font-[var(--font-montserrat)] text-5xl font-extralight leading-none tracking-tight text-white">
             {hora}
           </p>
           <p className="mt-2 font-mono text-[10px] tracking-widest uppercase text-white/50 first-letter:uppercase">

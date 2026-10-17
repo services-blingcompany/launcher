@@ -94,7 +94,7 @@ export default function ServiceRow({
 
       <span className="relative min-w-0 flex-1 py-3.5">
         <span className="flex items-center gap-2">
-          <span className="truncate font-[var(--font-barlow)] text-[15px] font-light text-white">
+          <span className="truncate font-[var(--font-montserrat)] text-[15px] font-light text-white">
             {service.name}
           </span>
           {service.badge && disponible && (

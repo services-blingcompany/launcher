@@ -9,6 +9,11 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.3.1]
+
+- **Tipografía de la casa**: todo el texto pasa a **Montserrat** (la del ecosistema, en lugar de Barlow) y los micro-rótulos a **JetBrains Mono** (en lugar de la mono del sistema).
+- **Bordes parejos**: la tarjeta destacada arrancaba seleccionada y mostraba un borde claro que desentonaba con las filas. Ahora todas comparten el mismo borde sutil y la selección se marca con la barrita del acento, igual que en el resto.
+
 ## [1.3.0]
 
 ### Sesión de Bling

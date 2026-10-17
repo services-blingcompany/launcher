@@ -59,7 +59,7 @@ export default function SettingsPanel({
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
               <Sparkle className="h-3.5 w-3.5 text-[#ffcc00]" />
-              <h2 className="font-[var(--font-barlow)] text-xl font-extralight tracking-tight text-white">
+              <h2 className="font-[var(--font-montserrat)] text-xl font-extralight tracking-tight text-white">
                 Ajustes
               </h2>
             </div>

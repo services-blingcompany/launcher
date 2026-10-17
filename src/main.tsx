@@ -1,8 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "@fontsource/barlow/200.css";
-import "@fontsource/barlow/300.css";
-import "@fontsource/barlow/400.css";
+import "@fontsource/montserrat/200.css";
+import "@fontsource/montserrat/300.css";
+import "@fontsource/montserrat/400.css";
+import "@fontsource/montserrat/500.css";
+import "@fontsource/jetbrains-mono/400.css";
+import "@fontsource/jetbrains-mono/500.css";
 import "./index.css";
 import App from "./App";
 

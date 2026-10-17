@@ -361,7 +361,7 @@ export default function App() {
           {/* ── Contenido ── */}
           <div className="flex-1 overflow-y-auto px-7 py-6">
             <div className="mx-auto max-w-2xl">
-              <h1 className="font-[var(--font-barlow)] text-2xl font-extralight leading-tight tracking-tight text-white">
+              <h1 className="font-[var(--font-montserrat)] text-2xl font-extralight leading-tight tracking-tight text-white">
                 Servicios de Bling
                 <span className="text-[#ffcc00]">.</span>
               </h1>
