@@ -1,0 +1,64 @@
+# Publica una release del Bling Launcher cada vez que se pushea un tag
+# vX.Y.Z. El workflow buildea el instalador de Windows y lo sube al
+# release junto con latest.yml y el blockmap, que electron-updater usa
+# para la descarga diferencial y la detección de versiones en los
+# clientes ya instalados.
+#
+# El build corre en Windows porque el target es NSIS.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+# Se necesita permiso de escritura para crear el release y subir assets.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # El tag debe coincidir con la versión de package.json: si no,
+      # electron-builder publicaría un latest.yml con otra versión y los
+      # clientes instalados se confundirían.
+      - name: Verificar que el tag coincide con package.json
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::El tag v$TAG no coincide con la versión de package.json ($PKG)."
+            exit 1
+          fi
+          echo "Tag y package.json coinciden en $PKG"
+
+      - name: Generar iconos
+        run: npm run icons
+
+      - name: Build de Windows (NSIS)
+        run: npm run dist
+
+      # Sube el instalador + latest.yml + blockmap. Si el release del tag
+      # ya existe (p. ej. creado a mano), se actualiza con los assets.
+      - name: Crear release y subir assets
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: false
+          files: |
+            release/Bling-Launcher-Setup-*.exe
+            release/Bling-Launcher-Setup-*.exe.blockmap
+            release/latest.yml

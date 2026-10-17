@@ -5,6 +5,8 @@ const path = require("node:path");
 const fs = require("node:fs");
 const updates = require("./updateCheck.cjs");
 const recents = require("./recents.cjs");
+const settings = require("./settings.cjs");
+const tray = require("./tray.cjs");
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 
@@ -12,6 +14,20 @@ const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 let launcherWindow = null;
 /** Ventanas embebidas por servicio, para no abrir dos veces el mismo. */
 const serviceWindows = new Map();
+
+/**
+ * true mientras el usuario pidió salir de verdad (bandeja → Salir, o
+ * "before-quit"). Se usa para distinguirlo de cerrar la ventana, que si
+ * el ajuste lo dice va a la bandeja en vez de matar la app.
+ */
+let isQuitting = false;
+
+/**
+ * Catálogo de servicios que el renderer manda por IPC, sólo para el
+ * submenú de la bandeja. El proceso principal nunca parsea el TS del
+ * renderer: recibe {id, name} y nada más.
+ */
+let catalogoServicios = [];
 
 /**
  * Seguridad: desde el renderer sólo se puede abrir lo que está en esta
@@ -140,7 +156,16 @@ function createLauncherWindow() {
 
   // Guardar el estado al cerrar y también si el usuario redimensiona
   // y olvida cerrar "bien" (se guarda al salir igualmente).
-  launcherWindow.on("close", () => saveWindowState(launcherWindow));
+  // Si el ajuste lo dice, cerrar la ventana la manda a la bandeja en vez
+  // de salir: el launcher sigue disponible sin ocupar lugar.
+  launcherWindow.on("close", (event) => {
+    if (!isQuitting && settings.load().minimizarBandeja) {
+      event.preventDefault();
+      launcherWindow.hide();
+      return;
+    }
+    saveWindowState(launcherWindow);
+  });
 
   // Links externos (target=_blank) salen al navegador del sistema.
   launcherWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -227,6 +252,39 @@ ipcMain.on("bling:close", (event) => {
   BrowserWindow.fromWebContents(event.sender)?.close();
 });
 
+// ── Ajustes ──────────────────────────────────────────────────────────
+/** Aplica en caliente el efecto de un ajuste recién cambiado. */
+function applySetting(ajustes, key) {
+  if (key === "abrirAlIniciar" || key === undefined) {
+    // Sólo tiene sentido en la app instalada: en dev apuntaría al
+    // binario de electron, no a un launcher instalado.
+    if (app.isPackaged) {
+      app.setLoginItemSettings({
+        openAtLogin: ajustes.abrirAlIniciar,
+        path: process.execPath,
+        args: [],
+      });
+    }
+  }
+  if (key === "minimizarBandeja" || key === undefined) {
+    tray.setEnabled(ajustes.minimizarBandeja, catalogoServicios);
+  }
+  if (key === "descargarActualizaciones" || key === undefined) {
+    updates.setAutoDownload(ajustes.descargarActualizaciones);
+  }
+}
+
+settings.init({ onApply: applySetting });
+
+// El renderer manda su catálogo para el submenú de la bandeja.
+ipcMain.on("bling:set-catalog", (_event, servicios) => {
+  if (!Array.isArray(servicios)) return;
+  catalogoServicios = servicios
+    .filter((s) => s && typeof s.id === "string" && typeof s.name === "string")
+    .map((s) => ({ id: s.id, name: s.name }));
+  tray.refresh(catalogoServicios);
+});
+
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   // Segunda instancia: sólo enfocar la ventana existente.
@@ -244,6 +302,12 @@ if (!gotTheLock) {
   });
 
   Menu.setApplicationMenu(null);
+
+  // Marcar el momento en que el usuario pide salir de verdad: así el
+  // handler de "close" sabe que NO debe mandar la ventana a la bandeja.
+  app.on("before-quit", () => {
+    isQuitting = true;
+  });
 
   app.whenReady().then(() => {
     // Por defecto Electron rechaza TODOS los permisos en silencio: la red
@@ -264,6 +328,15 @@ if (!gotTheLock) {
     createLauncherWindow();
     updates.init({ openLink: openUpdateLink });
     recents.init();
+
+    // La bandeja necesita saber cuál es el hub (puede haber ventanas de
+    // servicios abiertas). Se registra el getter antes de aplicar ajustes.
+    tray.setHubGetter(() => launcherWindow);
+
+    // Aplicar los ajustes guardados (bandeja, auto-launch, auto-download).
+    // El catálogo llega del renderer apenas monta; hasta entonces la
+    // bandeja queda sin submenú de servicios.
+    applySetting(settings.load());
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) createLauncherWindow();

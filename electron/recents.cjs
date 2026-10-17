@@ -47,6 +47,11 @@ function add(id) {
 function init() {
   ipcMain.handle("bling:recents", () => load());
   ipcMain.handle("bling:recents-add", (_event, id) => add(id));
+  // Vaciar la lista desde Ajustes → Datos.
+  ipcMain.handle("bling:recents-clear", () => {
+    save([]);
+    return [];
+  });
 }
 
 module.exports = { init, add };

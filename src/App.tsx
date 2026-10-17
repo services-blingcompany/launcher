@@ -1,14 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Search, Globe, X } from "lucide-react";
+import { Search, Globe, X, Settings as SettingsIcon } from "lucide-react";
 import TitleBar from "./components/TitleBar";
 import Rail from "./components/Rail";
 import FeaturedCard from "./components/FeaturedCard";
 import ServiceRow from "./components/ServiceRow";
 import UpdateToast, { UpdateBadge } from "./components/UpdateToast";
+import SettingsPanel from "./components/SettingsPanel";
 import { SERVICES } from "./data/services";
 import { normalizar } from "./lib/normalizar";
 import type { Service } from "./data/services";
-import type { UpdateInfo } from "./bling";
+import type {
+  Settings,
+  UpdateInfo,
+  UpdateProgress,
+  UpdateCheckResult,
+} from "./bling";
+
+const DEFAULT_SETTINGS: Settings = {
+  abrirAlIniciar: false,
+  minimizarBandeja: false,
+  descargarActualizaciones: true,
+};
 
 /**
  * Pantalla del launcher (layout horizontal): rail con keyart + reloj a
@@ -28,18 +40,55 @@ export default function App() {
   // ── Actualizaciones ──
   const [version, setVersion] = useState("");
   const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const [progress, setProgress] = useState<UpdateProgress | null>(null);
+  const [descargado, setDescargado] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [buscando, setBuscando] = useState(false);
+  const [ultimoResultado, setUltimoResultado] =
+    useState<UpdateCheckResult | null>(null);
+
+  // ── Ajustes ──
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [ajustesAbiertos, setAjustesAbiertos] = useState(false);
 
   useEffect(() => {
     void window.bling.appVersion().then(setVersion);
     void window.bling.getRecents().then(setRecents);
+    void window.bling.getSettings().then(setSettings);
+
+    // La bandeja necesita el catálogo para su submenú de servicios.
+    window.bling.setCatalog(
+      SERVICES.map((s) => ({ id: s.id, name: s.name })),
+    );
+
     // El main avisa cuando aparece una versión más nueva (a los 5 s y
     // luego cada 4 h). Si el usuario ya la descartó, no vuelve a saltar.
-    return window.bling.onUpdateAvailable((nueva) => {
+    const offAvailable = window.bling.onUpdateAvailable((nueva) => {
       setUpdate(nueva);
       setToastVisible(true);
     });
+    const offProgress = window.bling.onUpdateProgress((p) => {
+      setProgress(p);
+      if (p) setDescargado(false);
+    });
+    const offDownloaded = window.bling.onUpdateDownloaded((nueva) => {
+      setUpdate(nueva);
+      setProgress(null);
+      setDescargado(true);
+      setToastVisible(true);
+    });
+    // La bandeja pide abrir un servicio concreto.
+    const offTray = window.bling.onOpenService((id) => {
+      const svc = SERVICES.find((s) => s.id === id);
+      if (svc) abrir(svc);
+    });
+
+    return () => {
+      offAvailable();
+      offProgress();
+      offDownloaded();
+      offTray();
+    };
   }, []);
 
   async function revisarActualizaciones() {
@@ -47,13 +96,18 @@ export default function App() {
     setBuscando(true);
     try {
       const res = await window.bling.checkForUpdates();
-      if (res.status === "available") {
+      setUltimoResultado(res);
+      if (res.status === "available" && res.update) {
         setUpdate(res.update);
+        setDescargado(res.downloaded);
+        setProgress(res.progress);
         // Aunque la haya descartado antes, un chequeo manual la muestra.
         setToastVisible(true);
       } else {
         // Nada nuevo: mensaje breve de "estás al día".
         setUpdate(null);
+        setProgress(null);
+        setDescargado(false);
         setToastVisible(false);
         flashAlDia();
       }
@@ -61,6 +115,18 @@ export default function App() {
       setBuscando(false);
     }
   }
+
+  /** Cambia un ajuste y guarda el estado que devuelve el proceso principal. */
+  const setAjuste = useCallback(
+    <K extends keyof Settings>(key: K, value: Settings[K]) => {
+      void window.bling.setSetting(key, value).then(setSettings);
+    },
+    [],
+  );
+
+  const borrarRecientes = useCallback(() => {
+    void window.bling.clearRecents().then(setRecents);
+  }, []);
 
   const [alDia, setAlDia] = useState(false);
   function flashAlDia() {
@@ -71,6 +137,16 @@ export default function App() {
   function descartarAviso() {
     if (update) window.bling.dismissUpdate(update.version);
     setToastVisible(false);
+  }
+
+  /** Pide bajar la versión disponible; el progreso llega por push. */
+  function descargarActualizacion() {
+    void window.bling.downloadUpdate();
+  }
+
+  /** Cierra la app y lanza el instalador ya descargado. */
+  function instalarActualizacion() {
+    window.bling.installUpdate();
   }
 
   /** Abre un servicio y lo registra como reciente. */
@@ -249,6 +325,16 @@ export default function App() {
 
             <button
               type="button"
+              onClick={() => setAjustesAbiertos(true)}
+              aria-label="Ajustes"
+              title="Ajustes"
+              className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 transition-colors hover:border-white/25 hover:text-white"
+            >
+              <SettingsIcon size={13} />
+            </button>
+
+            <button
+              type="button"
               onClick={() => void window.bling.openExternal("https://bling.uy")}
               className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-mono text-[9px] tracking-widest uppercase text-white/60 transition-colors hover:border-white/25 hover:text-white"
             >
@@ -381,8 +467,29 @@ export default function App() {
       {/* ── Aviso de nueva versión ── */}
       {update && toastVisible && (
         <div className="pointer-events-none fixed bottom-5 right-5 z-50">
-          <UpdateToast update={update} onDismiss={descartarAviso} />
+          <UpdateToast
+            update={update}
+            progress={progress}
+            downloaded={descargado}
+            onDismiss={descartarAviso}
+            onDownload={descargarActualizacion}
+            onInstall={instalarActualizacion}
+          />
         </div>
+      )}
+
+      {/* ── Panel de ajustes ── */}
+      {ajustesAbiertos && (
+        <SettingsPanel
+          settings={settings}
+          onSet={setAjuste}
+          version={version}
+          buscando={buscando}
+          onBuscarActualizaciones={() => void revisarActualizaciones()}
+          onBorrarRecientes={borrarRecientes}
+          onCerrar={() => setAjustesAbiertos(false)}
+          ultimoResultado={ultimoResultado}
+        />
       )}
     </div>
   );

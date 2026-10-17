@@ -1,19 +1,31 @@
-import { ArrowDownToLine, X } from "lucide-react";
+import { ArrowDownToLine, Check, X } from "lucide-react";
 import Sparkle, { ShineSweep } from "./Sparkle";
-import type { UpdateInfo } from "../bling";
+import type { UpdateInfo, UpdateProgress } from "../bling";
 
 /**
  * Aviso de nueva versión. Entra deslizándose desde abajo, con un destello
- * que barre el panel y la chispa de la marca pulsando. Dos acciones:
- * descargar el instalador o ver el release en GitHub. La X lo descarta
- * (deja de auto-molestar para esa versión, pero queda el badge).
+ * que barre el panel y la chispa de la marca pulsando.
+ *
+ * Tres estados: disponible (botón para descargar), descargando (barra de
+ * progreso) y descargado (listo para instalar). "Novedades" siempre lleva
+ * a la página del release en GitHub.
  */
 export default function UpdateToast({
   update,
+  progress,
+  downloaded,
   onDismiss,
+  onDownload,
+  onInstall,
 }: {
   update: UpdateInfo;
+  /** null si no hay descarga en curso. */
+  progress: UpdateProgress | null;
+  /** true cuando ya bajó y sólo falta instalar. */
+  downloaded: boolean;
   onDismiss: () => void;
+  onDownload: () => void;
+  onInstall: () => void;
 }) {
   return (
     <div
@@ -36,7 +48,7 @@ export default function UpdateToast({
           <div className="flex items-center gap-2">
             <Sparkle className="h-3.5 w-3.5 text-[#ffcc00]" />
             <span className="font-mono text-[9px] tracking-widest uppercase text-[#ffcc00]">
-              Nueva versión disponible
+              {downloaded ? "Lista para instalar" : "Nueva versión disponible"}
             </span>
           </div>
           <button
@@ -65,23 +77,45 @@ export default function UpdateToast({
           </p>
         )}
 
-        <div className="mt-4 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void window.bling.openUpdateLink(update.url)}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#ffcc00] px-4 py-2.5 font-mono text-[10px] tracking-widest uppercase text-black transition-colors hover:bg-[#ffd633]"
-          >
-            <ArrowDownToLine size={13} />
-            Descargar e instalar
-          </button>
-          <button
-            type="button"
-            onClick={() => void window.bling.openUpdateLink(update.page)}
-            className="rounded-xl border border-white/15 px-4 py-2.5 font-mono text-[10px] tracking-widest uppercase text-white/60 transition-colors hover:border-white/30 hover:text-white"
-          >
-            Novedades
-          </button>
-        </div>
+        {/* ── Progreso de descarga ── */}
+        {progress ? (
+          <div className="mt-4">
+            <div className="flex items-center justify-between font-mono text-[9px] tracking-widest uppercase text-white/45">
+              <span>Descargando…</span>
+              <span>{progress.percent}%</span>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#ffcc00] to-[#ffd633] transition-[width] duration-300"
+                style={{ width: `${progress.percent}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={downloaded ? onInstall : onDownload}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#ffcc00] px-4 py-2.5 font-mono text-[10px] tracking-widest uppercase text-black transition-colors hover:bg-[#ffd633]"
+            >
+              {downloaded ? <Check size={13} /> : <ArrowDownToLine size={13} />}
+              {downloaded ? "Instalar ahora" : "Descargar e instalar"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void window.bling.openUpdateLink(update.page)}
+              className="rounded-xl border border-white/15 px-4 py-2.5 font-mono text-[10px] tracking-widest uppercase text-white/60 transition-colors hover:border-white/30 hover:text-white"
+            >
+              Novedades
+            </button>
+          </div>
+        )}
+
+        {downloaded && (
+          <p className="mt-2.5 text-center text-[10px] font-light text-white/35">
+            Se instala al salir, o ahora si preferís.
+          </p>
+        )}
       </div>
     </div>
   );

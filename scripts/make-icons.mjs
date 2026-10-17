@@ -33,4 +33,12 @@ const ico = await pngToIco([
 ]);
 writeFileSync(join(assetsDir, "icon.ico"), ico);
 
-console.log("OK: assets/icon.ico + assets/icon.png");
+// Icono de bandeja: la campana sola, sobre transparente. Se entrega a
+// 32 (Windows lo reescala a 16 en la taskbar); el PNG lleva alfa.
+const traySvg = readFileSync(join(assetsDir, "tray-icon.svg"), "utf8");
+writeFileSync(
+  join(assetsDir, "tray-icon.png"),
+  new Resvg(traySvg, { fitTo: { mode: "width", value: 32 } }).render().asPng(),
+);
+
+console.log("OK: assets/icon.ico + assets/icon.png + assets/tray-icon.png");
