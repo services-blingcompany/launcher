@@ -9,6 +9,11 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.2.1]
+
+- **Logo del wordmark**: la campana ahora usa el PNG oficial (con ondas), integrada en el slot de la «n» del logo «Bling».
+- `app-update.yml` generado también en builds `--dir` para probar actualización local sin instalar.
+
 ## [1.2.0]
 
 ### Actualizaciones automáticas

@@ -1,7 +1,7 @@
 {
   "name": "bling-launcher",
   "productName": "Bling Launcher",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Launcher de escritorio del ecosistema Bling: todos los servicios en una sola app.",
   "repository": {
@@ -16,6 +16,8 @@
     "build": "tsc --noEmit && vite build",
     "icons": "node scripts/make-icons.mjs",
     "dist": "npm run build && electron-builder --win --publish never",
+    "local:build": "npm run build && electron-builder --win --dir --publish never && node scripts/ensure-app-update-yml.mjs",
+    "local": "taskkill /F /IM \"Bling Launcher.exe\" /T >nul 2>&1 & npm run local:build && start \"\" \"release\\win-unpacked\\Bling Launcher.exe\"",
     "start": "npm run build && electron ."
   },
   "dependencies": {
