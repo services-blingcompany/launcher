@@ -31,6 +31,10 @@ interface BlingApi {
   minimize(): void;
   close(): void;
 
+  /** Ids de servicios usados por última vez, más reciente primero. */
+  getRecents(): Promise<string[]>;
+  addRecent(id: string): Promise<string[]>;
+
   appVersion(): Promise<string>;
   checkForUpdates(): Promise<UpdateCheckResult>;
   dismissUpdate(version: string): void;

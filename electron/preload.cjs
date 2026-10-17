@@ -10,6 +10,12 @@ contextBridge.exposeInMainWorld("bling", {
   minimize: () => ipcRenderer.send("bling:minimize"),
   close: () => ipcRenderer.send("bling:close"),
 
+  // ── Recientes ──
+  /** Ids de servicios abiertos por última vez, más reciente primero. */
+  getRecents: () => ipcRenderer.invoke("bling:recents"),
+  /** Registra un servicio como usado. Devuelve la lista ya actualizada. */
+  addRecent: (id) => ipcRenderer.invoke("bling:recents-add", id),
+
   // ── Actualizaciones ──
   appVersion: () => ipcRenderer.invoke("bling:app-version"),
   checkForUpdates: () => ipcRenderer.invoke("update:check"),

@@ -1,8 +1,10 @@
 "use strict";
 
-const { app, BrowserWindow, ipcMain, shell, Menu } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, Menu, screen, session } = require("electron");
 const path = require("node:path");
+const fs = require("node:fs");
 const updates = require("./updateCheck.cjs");
+const recents = require("./recents.cjs");
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 
@@ -55,10 +57,69 @@ function openUpdateLink(url) {
   }
 }
 
+function windowStatePath() {
+  return path.join(app.getPath("userData"), "window-state.json");
+}
+
+/**
+ * Recuerda tamaño/posición/maximizado entre sesiones. Se valida que la
+ * ventana caiga en una pantalla conectada: si el usuario desconectó un
+ * monitor, no arranca fuera de pantalla.
+ */
+function loadWindowState() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(windowStatePath(), "utf8"));
+    if (
+      typeof raw?.x !== "number" ||
+      typeof raw?.y !== "number" ||
+      typeof raw?.width !== "number" ||
+      typeof raw?.height !== "number"
+    ) {
+      return null;
+    }
+    return raw;
+  } catch {
+    return null; // primera vez, o estado corrupto
+  }
+}
+
+function boundsAreVisible(bounds) {
+  return screen.getAllDisplays().some((display) => {
+    const a = display.workArea;
+    return (
+      bounds.x + bounds.width > a.x &&
+      bounds.x < a.x + a.width &&
+      bounds.y + bounds.height > a.y &&
+      bounds.y < a.y + a.height
+    );
+  });
+}
+
+function saveWindowState(win) {
+  if (!win || win.isDestroyed() || win.isMinimized()) return;
+  try {
+    const maximized = win.isMaximized();
+    // getNormalBounds da el tamaño "real" incluso estando maximizada.
+    const bounds = maximized ? win.getNormalBounds() : win.getBounds();
+    fs.mkdirSync(app.getPath("userData"), { recursive: true });
+    fs.writeFileSync(
+      windowStatePath(),
+      JSON.stringify({ ...bounds, maximized }, null, 2),
+    );
+  } catch (err) {
+    console.warn("[window] no se pudo guardar el estado:", err.message);
+  }
+}
+
 function createLauncherWindow() {
+  const saved = loadWindowState();
+  const visible = saved && boundsAreVisible(saved);
+
   launcherWindow = new BrowserWindow({
-    width: 1180,
-    height: 700,
+    width: visible ? saved.width : 1180,
+    height: visible ? saved.height : 700,
+    x: visible ? saved.x : undefined,
+    y: visible ? saved.y : undefined,
     minWidth: 1000,
     minHeight: 580,
     show: false,
@@ -73,7 +134,13 @@ function createLauncherWindow() {
     },
   });
 
+  if (visible && saved.maximized) launcherWindow.maximize();
+
   launcherWindow.once("ready-to-show", () => launcherWindow.show());
+
+  // Guardar el estado al cerrar y también si el usuario redimensiona
+  // y olvida cerrar "bien" (se guarda al salir igualmente).
+  launcherWindow.on("close", () => saveWindowState(launcherWindow));
 
   // Links externos (target=_blank) salen al navegador del sistema.
   launcherWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -145,9 +212,12 @@ function openService(serviceId, url, title) {
 }
 
 // ── IPC del renderer ────────────────────────────────────────────────
-ipcMain.handle("bling:open-service", (_event, { id, url, title }) =>
-  openService(id, url, title),
-);
+ipcMain.handle("bling:open-service", (_event, { id, url, title }) => {
+  const ok = openService(id, url, title);
+  // Abrirlo lo registra como "usado": alimenta la sección de recientes.
+  if (ok) recents.add(id);
+  return ok;
+});
 ipcMain.handle("bling:open-external", (_event, url) => openExternalAllowed(url));
 ipcMain.handle("bling:app-version", () => app.getVersion());
 ipcMain.on("bling:minimize", (event) => {
@@ -163,17 +233,37 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on("second-instance", () => {
-    if (launcherWindow) {
-      if (launcherWindow.isMinimized()) launcherWindow.restore();
-      launcherWindow.focus();
+    // Si el hub se cerró pero quedaron ventanas de servicio abiertas,
+    // launcherWindow es null: hay que recrearla, no ignorar el evento.
+    if (!launcherWindow || launcherWindow.isDestroyed()) {
+      createLauncherWindow();
+      return;
     }
+    if (launcherWindow.isMinimized()) launcherWindow.restore();
+    launcherWindow.focus();
   });
 
   Menu.setApplicationMenu(null);
 
   app.whenReady().then(() => {
+    // Por defecto Electron rechaza TODOS los permisos en silencio: la red
+    // social pediría notificaciones o cámara para los lives y nunca
+    // funcionarían. Allowlist explícita; el resto se rechaza.
+    const ALLOWED_PERMISSIONS = new Set([
+      "notifications", // avisos de la red social
+      "media", // micrófono y cámara para streams/lives
+      "fullscreen", // vídeos de noticias a pantalla completa
+      "clipboard-sanitized-write", // copiar enlaces
+    ]);
+    session.defaultSession.setPermissionRequestHandler(
+      (_webContents, permission, callback) => {
+        callback(ALLOWED_PERMISSIONS.has(permission));
+      },
+    );
+
     createLauncherWindow();
     updates.init({ openLink: openUpdateLink });
+    recents.init();
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) createLauncherWindow();

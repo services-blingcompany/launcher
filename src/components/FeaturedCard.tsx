@@ -11,7 +11,15 @@ const ICONS = {
  * nombre grande y un mini "estado en vivo". Comparte el efecto de luz
  * especular con las filas.
  */
-export default function FeaturedCard({ service }: { service: Service }) {
+export default function FeaturedCard({
+  service,
+  selected = false,
+  onOpen,
+}: {
+  service: Service;
+  selected?: boolean;
+  onOpen: (service: Service) => void;
+}) {
   const Icon = ICONS[service.icon as "newspaper"];
   const disponible = service.status === "available";
 
@@ -23,20 +31,21 @@ export default function FeaturedCard({ service }: { service: Service }) {
 
   function abrir() {
     if (!disponible || !service.url) return;
-    void window.bling.openService({
-      id: service.id,
-      url: service.url,
-      title: service.name,
-    });
+    onOpen(service);
   }
 
   return (
     <button
       type="button"
+      data-sid={service.id}
       onClick={abrir}
       onMouseMove={seguirCursor}
       disabled={!disponible}
-      className="group relative flex w-full items-center gap-6 overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-r from-zinc-950 to-zinc-900/60 px-7 py-6 text-left transition-all duration-300 outline-none hover:-translate-y-0.5 hover:border-white/30 hover:shadow-[0_20px_50px_-24px_rgba(255,204,0,0.35)]"
+      className={`group relative flex w-full items-center gap-6 overflow-hidden rounded-2xl border bg-gradient-to-r from-zinc-950 to-zinc-900/60 px-7 py-6 text-left transition-all duration-300 outline-none hover:-translate-y-0.5 hover:shadow-[0_20px_50px_-24px_rgba(255,204,0,0.35)] ${
+        selected
+          ? "border-white/35"
+          : "border-white/15 hover:border-white/30"
+      }`}
     >
       {/* Halo superior del acento */}
       <div

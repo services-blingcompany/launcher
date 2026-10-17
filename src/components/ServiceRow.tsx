@@ -1,6 +1,7 @@
 import type { MouseEvent } from "react";
 import {
   ArrowUpRight,
+  ExternalLink,
   Lock,
   Newspaper,
   TrendingUp,
@@ -22,38 +23,41 @@ const ICONS = {
  * Fila de servicio (layout horizontal): icono a la izquierda, nombre y
  * tagline al medio, acción a la derecha. La luz especular sigue al
  * cursor con --mx/--my. Si está "soon" queda bloqueada.
+ *
+ * `selected` la marca cuando el usuario la recorre con ↑↓. La acción
+ * secundaria (abrir en el navegador del sistema) es un botón aparte:
+ * HTML no permite anidar botones.
  */
-export default function ServiceRow({ service }: { service: Service }) {
+export default function ServiceRow({
+  service,
+  selected = false,
+  onOpen,
+  onOpenExternal,
+}: {
+  service: Service;
+  selected?: boolean;
+  onOpen: (service: Service) => void;
+  onOpenExternal: (service: Service) => void;
+}) {
   const Icon = ICONS[service.icon];
   const disponible = service.status === "available";
 
-  function seguirCursor(e: MouseEvent<HTMLButtonElement>) {
+  function seguirCursor(e: MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
     e.currentTarget.style.setProperty("--mx", `${e.clientX - rect.left}px`);
     e.currentTarget.style.setProperty("--my", `${e.clientY - rect.top}px`);
   }
 
-  function abrir() {
-    if (!disponible || !service.url) return;
-    void window.bling.openService({
-      id: service.id,
-      url: service.url,
-      title: service.name,
-    });
-  }
-
   return (
-    <button
-      type="button"
-      onClick={abrir}
+    <div
+      data-sid={service.id}
       onMouseMove={seguirCursor}
-      disabled={!disponible}
-      aria-disabled={!disponible}
-      className={`group relative flex w-full items-center gap-4 overflow-hidden rounded-xl border border-white/10 bg-zinc-950/80 px-4 py-3.5 text-left transition-all duration-300 outline-none ${
-        disponible
-          ? "cursor-pointer hover:border-white/25 hover:bg-zinc-900/70"
-          : "cursor-not-allowed opacity-60"
-      }`}
+      onClick={() => disponible && onOpen(service)}
+      className={`group relative flex w-full items-center gap-4 overflow-hidden rounded-xl border bg-zinc-950/80 pr-3 pl-4 text-left transition-all duration-300 outline-none ${
+        selected && disponible
+          ? "border-white/25 bg-zinc-900/70"
+          : "border-white/10"
+      } ${disponible ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
     >
       {/* Halo del acento, detrás del icono */}
       <div
@@ -73,6 +77,14 @@ export default function ServiceRow({ service }: { service: Service }) {
           }}
         />
       )}
+      {/* Barra de selección por teclado */}
+      {selected && disponible && (
+        <span
+          aria-hidden
+          className="absolute inset-y-3 left-0 w-[2px] rounded-full"
+          style={{ background: `rgb(${service.accentRgb})` }}
+        />
+      )}
 
       <span
         className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 ${service.accent}`}
@@ -80,7 +92,7 @@ export default function ServiceRow({ service }: { service: Service }) {
         <Icon size={17} />
       </span>
 
-      <span className="relative min-w-0 flex-1">
+      <span className="relative min-w-0 flex-1 py-3.5">
         <span className="flex items-center gap-2">
           <span className="truncate font-[var(--font-barlow)] text-[15px] font-light text-white">
             {service.name}
@@ -103,11 +115,30 @@ export default function ServiceRow({ service }: { service: Service }) {
         </span>
       </span>
 
-      <span className="relative shrink-0">
+      <span className="relative flex shrink-0 items-center gap-1">
+        {/* Acción secundaria: aparece al pasar el cursor o al recorrer
+            con el teclado. */}
+        {disponible && (
+          <button
+            type="button"
+            aria-label={`Abrir ${service.name} en el navegador del sistema`}
+            title="Abrir en el navegador del sistema"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenExternal(service);
+            }}
+            className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/40 opacity-0 transition-all duration-300 hover:border-white/25 hover:text-white focus-visible:opacity-100 focus-visible:outline-none group-hover:opacity-100"
+          >
+            <ExternalLink size={12} />
+          </button>
+        )}
+
         {disponible ? (
           <ArrowUpRight
             size={15}
-            className="text-white/25 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white"
+            className={`transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 ${
+              selected ? "text-white" : "text-white/25 group-hover:text-white"
+            }`}
           />
         ) : (
           <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 font-mono text-[8px] tracking-widest uppercase text-white/45">
@@ -116,6 +147,6 @@ export default function ServiceRow({ service }: { service: Service }) {
           </span>
         )}
       </span>
-    </button>
+    </div>
   );
 }
