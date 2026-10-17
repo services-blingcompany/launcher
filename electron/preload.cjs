@@ -32,9 +32,24 @@ contextBridge.exposeInMainWorld("bling", {
     return () => ipcRenderer.removeListener("tray:open-service", listener);
   },
 
+  // ── Sesión ──
+  /** Perfil de la sesión activa, o null si no hay nadie logueado. */
+  authStatus: () => ipcRenderer.invoke("auth:status"),
+  /** Login nativo. Devuelve { ok, user?, error?, necesitaVerificar? }. */
+  authLogin: (credenciales) => ipcRenderer.invoke("auth:login", credenciales),
+  /** Cierra sesión en el backend y borra las cookies del jar compartido. */
+  authLogout: () => ipcRenderer.invoke("auth:logout"),
+  /** Contador de notificaciones sin leer (0 sin sesión). */
+  authNotifications: () => ipcRenderer.invoke("auth:notifications"),
+  /** El main avisa cuando la sesión cambia (login, expiración o cierre). */
+  onAuthChanged: (callback) => {
+    const listener = (_event, user) => callback(user);
+    ipcRenderer.on("auth:changed", listener);
+    return () => ipcRenderer.removeListener("auth:changed", listener);
+  },
+
   // ── Actualizaciones ──
-  appVersion: () => ipcRenderer.invoke("bling:app-version"),
-  checkForUpdates: () => ipcRenderer.invoke("update:check"),
+  appVersion: () => ipcRenderer.invoke("bling:app-version"),  checkForUpdates: () => ipcRenderer.invoke("update:check"),
   dismissUpdate: (version) => ipcRenderer.send("update:dismiss", version),
   openUpdateLink: (url) => ipcRenderer.invoke("update:open", url),
   /** Descarga la versión disponible (no instala todavía). */

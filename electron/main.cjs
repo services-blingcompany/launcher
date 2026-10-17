@@ -7,6 +7,7 @@ const updates = require("./updateCheck.cjs");
 const recents = require("./recents.cjs");
 const settings = require("./settings.cjs");
 const tray = require("./tray.cjs");
+const auth = require("./auth.cjs");
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 
@@ -165,6 +166,9 @@ function createLauncherWindow() {
       return;
     }
     saveWindowState(launcherWindow);
+    // El puente de sesión no debe sobrevivir al hub: si no, la app quedaría
+    // viva sólo por esa ventana invisible (window-all-closed nunca llegaría).
+    auth.cerrarPuente();
   });
 
   // Links externos (target=_blank) salen al navegador del sistema.
@@ -239,8 +243,10 @@ function openService(serviceId, url, title) {
 // ── IPC del renderer ────────────────────────────────────────────────
 ipcMain.handle("bling:open-service", (_event, { id, url, title }) => {
   const ok = openService(id, url, title);
-  // Abrirlo lo registra como "usado": alimenta la sección de recientes.
-  if (ok) recents.add(id);
+  // Sólo los servicios del catálogo alimentan "Recientes": las ventanas de
+  // cuenta (perfil, ajustes, notificaciones) no deben desplazar a los
+  // servicios que el usuario realmente usa.
+  if (ok && catalogoServicios.some((s) => s.id === id)) recents.add(id);
   return ok;
 });
 ipcMain.handle("bling:open-external", (_event, url) => openExternalAllowed(url));
@@ -328,6 +334,8 @@ if (!gotTheLock) {
     createLauncherWindow();
     updates.init({ openLink: openUpdateLink });
     recents.init();
+    // Sesión de Bling: login nativo + perfil, sobre el jar compartido.
+    auth.init({ getHub: () => launcherWindow });
 
     // La bandeja necesita saber cuál es el hub (puede haber ventanas de
     // servicios abiertas). Se registra el getter antes de aplicar ajustes.

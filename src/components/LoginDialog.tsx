@@ -1,0 +1,209 @@
+import { useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
+import { Eye, EyeOff, Loader2, X } from "lucide-react";
+import Sparkle from "./Sparkle";
+import type { AuthLoginResult } from "../bling";
+
+/**
+ * Login nativo del launcher. Las credenciales viajan por IPC al proceso
+ * principal, que es el que habla con bling.uy (el renderer vive en file:// y
+ * no puede pegarle a la API). Al entrar, la cookie httpOnly queda en el jar
+ * compartido: los servicios te conocen sin volver a pedir nada.
+ */
+export default function LoginDialog({
+  onCerrar,
+  onLogin,
+}: {
+  onCerrar: () => void;
+  onLogin: (
+    email: string,
+    password: string,
+    recordarme: boolean,
+  ) => Promise<AuthLoginResult>;
+}) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [verPassword, setVerPassword] = useState(false);
+  const [recordarme, setRecordarme] = useState(true);
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [necesitaVerificar, setNecesitaVerificar] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
+
+  // Escape cierra (captura, como el panel de ajustes) y el foco arranca
+  // donde tiene que arrancar.
+  useEffect(() => {
+    emailRef.current?.focus();
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onCerrar();
+      }
+    }
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [onCerrar]);
+
+  async function enviar(e: FormEvent) {
+    e.preventDefault();
+    if (enviando) return;
+
+    setError(null);
+    setNecesitaVerificar(false);
+    setEnviando(true);
+
+    try {
+      const resultado = await onLogin(email.trim(), password, recordarme);
+      if (resultado.ok) {
+        onCerrar();
+        return;
+      }
+      setError(resultado.error ?? "No pudimos iniciar sesión.");
+      setNecesitaVerificar(!!resultado.necesitaVerificar);
+    } catch {
+      setError("No pudimos conectar con Bling. Revisá tu conexión.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm"
+      onClick={onCerrar}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Iniciar sesión"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="update-toast relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.8)]"
+      >
+        <div className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-[#ffcc00] via-[#ffcc00]/40 to-transparent" />
+
+        <div className="relative p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Sparkle className="h-3.5 w-3.5 text-[#ffcc00]" />
+                <h2 className="font-[var(--font-barlow)] text-xl font-extralight tracking-tight text-white">
+                  Entrá a Bling
+                </h2>
+              </div>
+              <p className="mt-1 text-[11px] font-light text-white/50">
+                Una sesión para todo el ecosistema.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onCerrar}
+              aria-label="Cerrar"
+              className="-mr-1 -mt-1 rounded-lg p-1.5 text-white/40 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              <X size={15} />
+            </button>
+          </div>
+
+          <form onSubmit={enviar} className="mt-5 space-y-3.5">
+            <label className="block">
+              <span className="font-mono text-[9px] tracking-widest uppercase text-white/40">
+                Correo electrónico
+              </span>
+              <input
+                ref={emailRef}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="correo@ejemplo.com"
+                autoComplete="username"
+                disabled={enviando}
+                className="mt-1.5 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none transition-colors focus:border-[#ffcc00]/40 focus:bg-white/[0.07] disabled:opacity-60"
+              />
+            </label>
+
+            <label className="block">
+              <span className="font-mono text-[9px] tracking-widest uppercase text-white/40">
+                Contraseña
+              </span>
+              <span className="relative mt-1.5 block">
+                <input
+                  type={verPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  disabled={enviando}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 pr-9 text-xs text-white placeholder:text-white/30 outline-none transition-colors focus:border-[#ffcc00]/40 focus:bg-white/[0.07] disabled:opacity-60"
+                />
+                <button
+                  type="button"
+                  onClick={() => setVerPassword((v) => !v)}
+                  aria-label={verPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-white/40 transition-colors hover:text-white"
+                >
+                  {verPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+                </button>
+              </span>
+            </label>
+
+            <label className="flex cursor-pointer items-center gap-2 py-0.5">
+              <input
+                type="checkbox"
+                checked={recordarme}
+                onChange={(e) => setRecordarme(e.target.checked)}
+                disabled={enviando}
+                className="h-3.5 w-3.5 accent-[#ffcc00]"
+              />
+              <span className="text-[11px] font-light text-white/60">
+                Recordarme en este equipo
+              </span>
+            </label>
+
+            {error && (
+              <div className="rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2">
+                <p className="text-[11px] font-light text-red-300/90">{error}</p>
+                {necesitaVerificar && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void window.bling.openExternal("https://bling.uy/auth/verify")
+                    }
+                    className="mt-1 text-[10px] font-medium text-[#ffcc00] transition-opacity hover:opacity-80"
+                  >
+                    Verificar mi cuenta →
+                  </button>
+                )}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={enviando || !email || !password}
+              className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#ffcc00] px-3 py-2.5 text-xs font-medium text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {enviando && <Loader2 size={13} className="animate-spin" />}
+              {enviando ? "Entrando…" : "Ingresar"}
+            </button>
+          </form>
+
+          <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3.5">
+            <button
+              type="button"
+              onClick={() => void window.bling.openExternal("https://bling.uy/auth/register")}
+              className="text-[10px] font-light text-white/50 transition-colors hover:text-white"
+            >
+              Crear una cuenta
+            </button>
+            <button
+              type="button"
+              onClick={() => void window.bling.openExternal("https://bling.uy/auth/recovery")}
+              className="text-[10px] font-light text-white/50 transition-colors hover:text-white"
+            >
+              Olvidé mi contraseña
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

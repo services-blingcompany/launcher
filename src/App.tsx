@@ -6,6 +6,9 @@ import FeaturedCard from "./components/FeaturedCard";
 import ServiceRow from "./components/ServiceRow";
 import UpdateToast, { UpdateBadge } from "./components/UpdateToast";
 import SettingsPanel from "./components/SettingsPanel";
+import UserMenu from "./components/UserMenu";
+import LoginDialog from "./components/LoginDialog";
+import { useSession } from "./hooks/useSession";
 import { SERVICES } from "./data/services";
 import { normalizar } from "./lib/normalizar";
 import type { Service } from "./data/services";
@@ -50,6 +53,10 @@ export default function App() {
   // ── Ajustes ──
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [ajustesAbiertos, setAjustesAbiertos] = useState(false);
+
+  // ── Sesión de Bling (login nativo + jar compartido con los servicios) ──
+  const { user, cargando, sinLeer, login, logout } = useSession();
+  const [loginAbierto, setLoginAbierto] = useState(false);
 
   useEffect(() => {
     void window.bling.appVersion().then(setVersion);
@@ -341,6 +348,14 @@ export default function App() {
               <Globe size={11} />
               bling.uy
             </button>
+
+            <UserMenu
+              user={user}
+              cargando={cargando}
+              sinLeer={sinLeer}
+              onAbrirLogin={() => setLoginAbierto(true)}
+              onCerrarSesion={() => void logout()}
+            />
           </div>
 
           {/* ── Contenido ── */}
@@ -476,6 +491,11 @@ export default function App() {
             onInstall={instalarActualizacion}
           />
         </div>
+      )}
+
+      {/* ── Login nativo ── */}
+      {loginAbierto && (
+        <LoginDialog onCerrar={() => setLoginAbierto(false)} onLogin={login} />
       )}
 
       {/* ── Panel de ajustes ── */}

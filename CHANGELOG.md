@@ -9,6 +9,16 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.3.0]
+
+### Sesión de Bling
+
+- **Iniciar sesión sin salir del launcher**: el correo y la contraseña se escriben acá mismo. Los mensajes son los mismos que en la web (credenciales incorrectas, cuenta sin verificar, mantenimiento).
+- **Botón de usuario**: con sesión activa, la barra superior muestra tu avatar (o tus iniciales) y tu nombre, la campanita con las notificaciones sin leer y un menú con **Mi perfil**, **Ajustes de cuenta**, **Notificaciones**, tu alias de **BlingPay** (se copia con un clic) y **Cerrar sesión**.
+- **Una sesión para todo el ecosistema**: al entrar, cada servicio que abras (Bling Noticias, Social, Fundadores) ya viene logueado. Cerrar sesión también la cierra en el backend.
+
+Por dentro: las credenciales las maneja el proceso principal —el renderer nunca las ve y la cookie de acceso es httpOnly— y las páginas de cuenta se abren en ventanas embebidas, con la misma sesión.
+
 ## [1.2.3]
 
 - **Rail izquierdo renovado**: la campana de Bling reemplaza al rombo, con un pulso de ondas que salen en loop desde su centro (con halo amarillo de fondo). Respeta la preferencia de movimiento reducido del sistema.

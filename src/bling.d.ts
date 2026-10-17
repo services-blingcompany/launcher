@@ -43,6 +43,54 @@ export type Settings = {
 /** Entrada mínima del catálogo que el renderer manda a la bandeja. */
 export type CatalogEntry = { id: string; name: string };
 
+/** Perfil de persona, tal como lo devuelve /api/auth/me. */
+export type BlingPersona = {
+  nombre: string;
+  apellido?: string | null;
+  alias?: string | null;
+  avatar_url?: string | null;
+  bio?: string | null;
+};
+
+/** Perfil de empresa, tal como lo devuelve /api/auth/me. */
+export type BlingEmpresa = {
+  nombre_comercial: string;
+  nombre_legal?: string;
+  alias?: string | null;
+  avatar_url?: string | null;
+};
+
+/** Sesión activa de Bling (la fuente es el backend, no el renderer). */
+export type BlingUser = {
+  id: number;
+  number?: number;
+  email: string;
+  account_type: "PERSONA" | "EMPRESA" | "STAFF" | string;
+  role: string;
+  is_verified: boolean;
+  is_active: boolean;
+  persona?: BlingPersona | null;
+  empresa?: BlingEmpresa | null;
+};
+
+/** Respuesta del login nativo: ok con perfil, o error mostrable. */
+export type AuthLoginResult = {
+  ok: boolean;
+  user?: BlingUser | null;
+  error?: string;
+  necesitaVerificar?: boolean;
+};
+
+/** Contador de notificaciones sin leer. */
+export type NotificationsCount = { count: number; autenticado: boolean };
+
+/** Credenciales del formulario nativo. */
+export type AuthCredentials = {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
+};
+
 interface BlingApi {
   openService(service: BlingServiceRequest): Promise<boolean>;
   openExternal(url: string): Promise<void>;
@@ -63,9 +111,20 @@ interface BlingApi {
   setCatalog(servicios: CatalogEntry[]): void;
   onOpenService(callback: (id: string) => void): () => void;
 
+  // ── Sesión ──
+  /** Perfil de la sesión activa, o null si no hay nadie logueado. */
+  authStatus(): Promise<BlingUser | null>;
+  /** Login nativo contra bling.uy; las cookies quedan en el jar compartido. */
+  authLogin(credenciales: AuthCredentials): Promise<AuthLoginResult>;
+  /** Cierra sesión en el backend y borra las cookies locales. */
+  authLogout(): Promise<boolean>;
+  /** Notificaciones sin leer del usuario logueado. */
+  authNotifications(): Promise<NotificationsCount>;
+  /** Aviso push del main cuando la sesión cambia. */
+  onAuthChanged(callback: (user: BlingUser | null) => void): () => void;
+
   appVersion(): Promise<string>;
-  checkForUpdates(): Promise<UpdateCheckResult>;
-  dismissUpdate(version: string): void;
+  checkForUpdates(): Promise<UpdateCheckResult>;  dismissUpdate(version: string): void;
   openUpdateLink(url: string): Promise<void>;
   downloadUpdate(): Promise<UpdateCheckResult>;
   installUpdate(): void;
