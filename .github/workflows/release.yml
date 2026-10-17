@@ -52,12 +52,33 @@ jobs:
       - name: Build de Windows (NSIS)
         run: npm run dist
 
-      # Sube el instalador + latest.yml + blockmap. Si el release del tag
-      # ya existe (p. ej. creado a mano), se actualiza con los assets.
+      # El cuerpo del release sale del CHANGELOG.md: se extrae la sección
+      # "## [X.Y.Z]" de la versión del tag que se está publicando.
+      - name: Preparar notas del release desde CHANGELOG.md
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" { found = 1; next }
+            /^## \[/ { if (found) exit }
+            found { print }
+          ' CHANGELOG.md > release-body.md
+
+          if [ ! -s release-body.md ]; then
+            echo "Bling Launcher ${GITHUB_REF_NAME}" > release-body.md
+            echo "::warning::No hay sección en CHANGELOG.md para $VERSION; se usa un cuerpo genérico."
+          fi
+          echo "── Notas que irán al release ──"
+          cat release-body.md
+
+      # Sube el instalador + latest.yml + blockmap y publica las notas.
+      # Si el release del tag ya existe (p. ej. creado a mano), se
+      # actualiza con los assets y el cuerpo.
       - name: Crear release y subir assets
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: false
+          body_path: release-body.md
           files: |
             release/Bling-Launcher-Setup-*.exe
             release/Bling-Launcher-Setup-*.exe.blockmap
