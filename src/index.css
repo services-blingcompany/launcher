@@ -100,6 +100,35 @@ body {
   }
 }
 
+/* ── Pulso de la campana (rail) ──────────────────────────────────── */
+
+/*
+ * Anillos que salen desde la campana como ondas de radar: nacen apenas
+ * fuera del logo, se expanden y se desvanecen. Van escalonados (delay
+ * = i × 1,25 s con duración 5 s) para que siempre haya uno naciendo:
+ * un loop continuo que respeta movimiento reducido (ver más abajo).
+ */
+@keyframes pulso-campana {
+  0% {
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.55;
+  }
+  65% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.9);
+    opacity: 0;
+  }
+}
+
+.pulso-campana {
+  animation: pulso-campana 5s cubic-bezier(0.25, 0.6, 0.35, 1) infinite both;
+}
+
 /* ── Movimiento reducido ────────────────────────────────────────── */
 
 /*

@@ -23,7 +23,7 @@ const DEFAULT_SETTINGS: Settings = {
 };
 
 /**
- * Pantalla del launcher (layout horizontal): rail con keyart + reloj a
+ * Pantalla del launcher (layout horizontal): rail con campana + reloj a
  * la izquierda; a la derecha, buscador, servicio destacado y filas.
  * El catálogo vive en src/data/services.ts.
  *

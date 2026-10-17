@@ -9,6 +9,10 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.2.3]
+
+- **Rail izquierdo renovado**: la campana de Bling reemplaza al rombo, con un pulso de ondas que salen en loop desde su centro (con halo amarillo de fondo). Respeta la preferencia de movimiento reducido del sistema.
+
 ## [1.2.2]
 
 - **Icono nuevo**: la campana de Bling reemplaza al rombo — aparece en el icono de la app (escritorio, taskbar, instalador) y en la bandeja del sistema.

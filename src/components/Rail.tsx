@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import keyart from "../../assets/keyart.svg";
+import bellUrl from "../../assets/BlingBellNoBg.png?url";
 import BlingWordmark from "./BlingWordmark";
 
 /**
- * Rail izquierdo: la imagen vertical de marca (keyart) con el wordmark
- * encima y, abajo, el reloj en vivo de la fecha/hora local.
+ * Rail izquierdo: la campana de Bling con el pulso de ondas que expanden en
+ * loop desde su centro y, abajo, el reloj en vivo de la fecha/hora local.
  */
 export default function Rail() {
   const [ahora, setAhora] = useState(() => new Date());
@@ -27,12 +27,34 @@ export default function Rail() {
 
   return (
     <aside className="relative w-[248px] shrink-0 overflow-hidden border-r border-white/5">
-      <img
-        src={keyart}
-        alt=""
+      {/* Campana con pulso: halo + anillos que salen en loop */}
+      <div
         aria-hidden
-        className="absolute inset-0 h-full w-full object-cover object-center opacity-90"
-      />
+        className="pointer-events-none absolute left-1/2 top-[38%]"
+      >
+        <div
+          className="absolute left-1/2 top-1/2 h-[460px] w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(255,204,0,0.15), rgba(255,204,0,0.04) 45%, transparent 70%)",
+          }}
+        />
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="pulso-campana absolute left-1/2 top-1/2 h-[150px] w-[150px] rounded-full border-[1.5px]"
+            style={{
+              borderColor: "rgba(255,204,0,0.85)",
+              animationDelay: `${i * 1.25}s`,
+            }}
+          />
+        ))}
+        <img
+          src={bellUrl}
+          alt=""
+          className="absolute left-1/2 top-1/2 h-[150px] w-[150px] max-w-none -translate-x-1/2 -translate-y-1/2 [filter:drop-shadow(0_0_26px_rgba(255,204,0,0.22))]"
+        />
+      </div>
       {/* Velo inferior para que el texto se lea siempre */}
       <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#09090b] via-[#09090b]/85 to-transparent" />
       <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#09090b]/70 to-transparent" />
