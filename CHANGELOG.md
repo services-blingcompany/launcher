@@ -9,6 +9,11 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.13.0]
+
+- **La ventana de inicio de sesión de Google no puede pedir ningún permiso.** Es una página ajena: no tiene por qué usar la cámara, el micrófono, las notificaciones ni la pantalla completa del launcher, y ahora no puede. Los servicios siguen con los suyos (avisos, cámara y micrófono de los lives, pantalla completa y copiar enlaces), sin cambios.
+- La lista de hosts de inicio de sesión quedó en un módulo propio, con pruebas: sólo https y comparando el dominio exacto, así un subdominio parecido (`accounts.google.com.algo-malo.com`) no pasa.
+
 ## [1.12.0]
 
 - **Iniciar sesión con Google, adentro del launcher.** El diálogo de login ahora tiene "Continuar con Google": abre la página de login del sitio en una ventana del launcher (con su barra y la misma sesión) y, cuando entrás, el hub se entera al instante y aparece tu cuenta sin esperar. El popup de Google se abre como ventana hija del launcher: el token vuelve a la página como en el navegador.

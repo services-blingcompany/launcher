@@ -4,6 +4,7 @@ const { BaseWindow, WebContentsView, ipcMain } = require("electron");
 const path = require("node:path");
 const contextMenu = require("./contextMenu.cjs");
 const diagnostics = require("./diagnostics.cjs");
+const { esHostDeAcceso } = require("./acceso.cjs");
 
 /**
  * Ventanas de servicio.
@@ -31,23 +32,6 @@ let abrirExterno = () => {};
 let attachZoom = () => {};
 let zoomGuardado = () => 0;
 let alCambiarAuth = () => {};
-
-/**
- * Hosts de inicio de sesión de terceros que sí se abren dentro del launcher.
- * Google devuelve el token a la página que abrió el popup (window.opener), así
- * que mandarlo al navegador del sistema rompe el flujo: queda adentro, como
- * una ventana hija del servicio.
- */
-const HOSTS_ACCESO = new Set(["accounts.google.com"]);
-
-function esPopupDeAcceso(destino) {
-  try {
-    const url = new URL(String(destino));
-    return url.protocol === "https:" && HOSTS_ACCESO.has(url.hostname);
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Las páginas del auth avisan cuando terminan de moverse: si el usuario entró
@@ -227,7 +211,7 @@ function abrir({ id, url, title }) {
   // popups de inicio de sesión de terceros (Google), que tienen que volver a
   // la página que los abrió: se muestran como ventana hija del servicio.
   wc.setWindowOpenHandler(({ url: destino }) => {
-    if (esPopupDeAcceso(destino)) {
+    if (esHostDeAcceso(destino)) {
       return {
         action: "allow",
         overrideBrowserWindowOptions: {

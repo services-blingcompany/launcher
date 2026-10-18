@@ -8,6 +8,7 @@ const recents = require("./recents.cjs");
 const settings = require("./settings.cjs");
 const tray = require("./tray.cjs");
 const auth = require("./auth.cjs");
+const acceso = require("./acceso.cjs");
 const contextMenu = require("./contextMenu.cjs");
 const diagnostics = require("./diagnostics.cjs");
 const notificaciones = require("./notificaciones.cjs");
@@ -441,7 +442,17 @@ if (!gotTheLock) {
       "clipboard-sanitized-write", // copiar enlaces
     ]);
     session.defaultSession.setPermissionRequestHandler(
-      (_webContents, permission, callback) => {
+      (webContents, permission, callback, detalles) => {
+        // La ventana de inicio de sesión de Google es una página ajena y no
+        // tiene nada que pedir acá. Los servicios sí: los avisos de la red
+        // social, la cámara y el micrófono de los lives, la pantalla completa
+        // de los vídeos y copiar enlaces.
+        const origen =
+          (detalles && detalles.requestingUrl) ||
+          (webContents && webContents.getURL()) ||
+          "";
+        if (acceso.esHostDeAcceso(origen)) return callback(false);
+
         callback(ALLOWED_PERMISSIONS.has(permission));
       },
     );
