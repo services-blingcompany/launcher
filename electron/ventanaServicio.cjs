@@ -6,6 +6,7 @@ const contextMenu = require("./contextMenu.cjs");
 const diagnostics = require("./diagnostics.cjs");
 const { esHostDeAcceso } = require("./acceso.cjs");
 const { motivoDeFalla } = require("./conexion.cjs");
+const privacidad = require("./privacidad.cjs");
 
 /**
  * Ventanas de servicio.
@@ -287,7 +288,10 @@ function abrir({ id, url, title }) {
     const motivo = motivoDeFalla(codigo);
     if (!motivo) return;
     entrada.fallo = url;
-    diagnostics.escribir("warn", [`no cargó ${entrada.nombre || id}`, `${url} (${codigo})`]);
+    diagnostics.escribir("warn", [
+      `no cargó ${entrada.nombre || id}`,
+      `${privacidad.limpiarUrl(url)} (${codigo})`,
+    ]);
     mostrarSinConexion(entrada, motivo);
   });
 
@@ -340,7 +344,7 @@ function abrir({ id, url, title }) {
 
   barra.webContents.loadFile(path.join(__dirname, "barra-servicio.html"));
   wc.loadURL(url);
-  diagnostics.escribir("info", [`abriendo ${id}`, url]);
+  diagnostics.escribir("info", [`abriendo ${id}`, privacidad.limpiarUrl(url)]);
   avisar(entrada);
   return true;
 }

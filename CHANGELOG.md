@@ -9,6 +9,13 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.15.0]
+
+- **Atajo global para traer el launcher al frente.** Con **Ctrl + Shift + B** el launcher aparece desde cualquier aplicación, incluso si lo habías minimizado o escondido en la bandeja. Si otra aplicación ya usa esa combinación, prueba con **Ctrl + Alt + B**; si ninguna queda libre, lo deja anotado y el interruptor no tiene efecto (nunca le pisa el atajo a otro programa). Viene **apagado**: se enciende en Ajustes → General, y ahí mismo dice qué combinación quedó activa.
+- **El registro ya no puede guardar credenciales en una dirección.** Cuando una página no carga, la dirección se anota sin su consulta ni su fragmento: ahí viajan los códigos de un solo uso (el retorno de Google, por ejemplo) que no tienen por qué quedar en un archivo de texto que después se comparte.
+- **El registro y el reporte de diagnóstico no llevan el nombre de usuario del equipo.** Las rutas se muestran con la carpeta personal abreviada con `~`, así se entiende dónde estaba sin publicar con qué nombre se entra a la máquina.
+- El reporte avisa en su encabezado que no lleva datos de la cuenta: ni correo, ni alias, ni tokens, ni cookies.
+
 ## [1.14.0]
 
 - **Si el sitio no responde, se ve una pantalla del launcher y no el error crudo de Chromium.** Cuando una ventana de servicio no puede cargar —se cayó internet, el servicio no contesta—, aparece una pantalla propia, con la campana, el mismo fondo y el acento de siempre, que cuenta qué pasó y ofrece **Reintentar**.

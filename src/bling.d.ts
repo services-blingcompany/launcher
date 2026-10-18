@@ -40,6 +40,8 @@ export type Settings = {
   descargarActualizaciones: boolean;
   /** Aviso nativo de Windows cuando llegan notificaciones nuevas. */
   avisosEscritorio: boolean;
+  /** Atajo global que trae el launcher al frente desde cualquier aplicación. */
+  atajoGlobal: boolean;
   /** Nivel de zoom del renderer (1.2^zoom; 0 = 100 %). */
   zoom: number;
 };
@@ -115,6 +117,11 @@ interface BlingApi {
   setCatalog(servicios: CatalogEntry[]): void;
   /** El main avisa cuando cambia un ajuste por su cuenta (zoom con Ctrl +/-). */
   onSettingsChanged(callback: (settings: Settings) => void): () => void;
+  /**
+   * Combinación del atajo global que quedó registrada, o null si está apagado
+   * o si otra aplicación ya usaba las combinaciones probadas.
+   */
+  atajoGlobal(): Promise<string | null>;
   /** Servicio pedido desde afuera (jump list, --abrir=) y todavía sin abrir. */
   takePendingService(): Promise<string | null>;
   onOpenService(callback: (id: string) => void): () => void;

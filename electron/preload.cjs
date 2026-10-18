@@ -25,6 +25,8 @@ contextBridge.exposeInMainWorld("bling", {
     ipcRenderer.invoke("bling:settings-set", key, value),
   /** Manda el catálogo al proceso principal (para el menú de bandeja). */
   setCatalog: (servicios) => ipcRenderer.send("bling:set-catalog", servicios),
+  /** Combinación del atajo global activo (null si no hay ninguno). */
+  atajoGlobal: () => ipcRenderer.invoke("bling:atajo-global"),
   /** El proceso principal avisa cuando cambia un ajuste por su cuenta. */
   onSettingsChanged: (callback) => {
     const listener = (_event, ajustes) => callback(ajustes);

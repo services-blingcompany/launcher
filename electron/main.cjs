@@ -1,6 +1,6 @@
 "use strict";
 
-const { app, BrowserWindow, ipcMain, shell, Menu, screen, session } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, Menu, screen, session, globalShortcut } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
 const updates = require("./updateCheck.cjs");
@@ -183,6 +183,52 @@ function avisarAjustes(ajustes) {
   }
 }
 
+// ── Atajo global ─────────────────────────────────────────────────────
+/**
+ * Combinaciones que se prueban en orden para traer el launcher al frente
+ * desde cualquier aplicación. Se registran para todo el sistema, así que si
+ * otra aplicación ya usa una, se pasa a la siguiente; si ninguna queda libre
+ * se anota en el registro y el interruptor simplemente no tiene efecto (nunca
+ * se rompe la ventana ni se pisa el atajo de otro programa).
+ */
+const ATAJOS_GLOBALES = ["CommandOrControl+Shift+B", "CommandOrControl+Alt+B"];
+
+/** Combinación registrada ahora mismo (null si no hay ninguna). */
+let atajoGlobalActivo = null;
+
+/** Trae el hub al frente, recreándolo si el usuario lo había cerrado. */
+function mostrarLauncher() {
+  if (!launcherWindow || launcherWindow.isDestroyed()) {
+    createLauncherWindow();
+    return;
+  }
+  if (launcherWindow.isMinimized()) launcherWindow.restore();
+  if (!launcherWindow.isVisible()) launcherWindow.show();
+  launcherWindow.focus();
+}
+
+function aplicarAtajoGlobal(activo) {
+  globalShortcut.unregisterAll();
+  atajoGlobalActivo = null;
+  if (!activo) return;
+
+  for (const atajo of ATAJOS_GLOBALES) {
+    try {
+      if (globalShortcut.register(atajo, mostrarLauncher)) {
+        atajoGlobalActivo = atajo;
+        diagnostics.escribir("info", [`atajo global activo: ${atajo}`]);
+        return;
+      }
+    } catch {
+      // Combinación que Electron no acepta: se prueba la que sigue.
+    }
+  }
+
+  diagnostics.escribir("warn", [
+    "no se pudo registrar el atajo global: otra aplicación usa esas combinaciones",
+  ]);
+}
+
 /** Id de servicio pedido desde afuera (`--abrir=news`) y todavía sin abrir. */
 let servicioPendiente = null;
 
@@ -310,6 +356,7 @@ ipcMain.handle("bling:open-service", (_event, { id, url, title }) => {
 });
 ipcMain.handle("bling:open-external", (_event, url) => openExternalAllowed(url));
 ipcMain.handle("bling:app-version", () => app.getVersion());
+ipcMain.handle("bling:atajo-global", () => atajoGlobalActivo);
 ipcMain.on("bling:minimize", (event) => {
   BrowserWindow.fromWebContents(event.sender)?.minimize();
 });
@@ -340,6 +387,9 @@ function applySetting(ajustes, key) {
   if (key === "zoom" || key === undefined) {
     // Ya se guardó desde acá (o el panel lo mandó por IPC): no se reescribe.
     aplicarZoom(ajustes.zoom, { persistir: false });
+  }
+  if (key === "atajoGlobal" || key === undefined) {
+    aplicarAtajoGlobal(ajustes.atajoGlobal);
   }
 }
 
@@ -410,6 +460,9 @@ if (!gotTheLock) {
     diagnostics.escribir("info", ["cerrando la aplicación"]);
   });
 
+  // Soltar el atajo global: si no, Windows lo deja tomado hasta reiniciar.
+  app.on("will-quit", () => globalShortcut.unregisterAll());
+
   // GPU, red o utilidades: si uno se cae, conviene saberlo después.
   app.on("child-process-gone", (_evento, detalles) => {
     diagnostics.escribir("error", [
@@ -460,6 +513,8 @@ if (!gotTheLock) {
     createLauncherWindow();
     updates.init({ openLink: openUpdateLink });
     recents.init();
+    // Atajo global: sólo se puede registrar con la aplicación ya lista.
+    aplicarAtajoGlobal(settings.load().atajoGlobal);
     // Sesión de Bling: login nativo + perfil, sobre el jar compartido.
     auth.init({ getHub: () => launcherWindow });
 

@@ -4,6 +4,7 @@ const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
 const os = require("node:os");
+const privacidad = require("./privacidad.cjs");
 
 /**
  * Registro en disco + reporte de diagnóstico para soporte.
@@ -14,13 +15,17 @@ const os = require("node:os");
  * junta ese registro con el entorno del equipo.
  *
  * Lo único que se guarda son avisos de la propia app: nunca credenciales,
- * correo, alias, tokens ni cookies.
+ * correo, alias, tokens ni cookies. Las rutas absolutas se reducen a "~" y a
+ * las direcciones se les quita la consulta, donde viajan los códigos de un
+ * solo uso (ver privacidad.cjs).
  */
 
 /** ~512 KB por archivo: alcanza para semanas y no crece sin control. */
 const MAX_BYTES = 512 * 1024;
 /** Cuántas líneas del registro van al reporte. */
 const LINEAS_REPORTE = 120;
+/** Carpeta del usuario, para no escribir rutas con su nombre en disco. */
+const RAIZ_USUARIO = os.homedir();
 
 const PLATAFORMAS = { win32: "Windows", darwin: "macOS", linux: "Linux" };
 let carpetaLogs = null;
@@ -44,7 +49,10 @@ function formatear(valor) {
 function escribir(nivel, partes) {
   if (!archivoLog) return;
   try {
-    const linea = `${new Date().toISOString()} [${nivel}] ${partes.map(formatear).join(" ")}\n`;
+    const texto = partes
+      .map((parte) => privacidad.limpiarRuta(formatear(parte), RAIZ_USUARIO))
+      .join(" ");
+    const linea = `${new Date().toISOString()} [${nivel}] ${texto}\n`;
     fs.appendFileSync(archivoLog, linea, "utf8");
     reciclar();
   } catch {
@@ -118,7 +126,7 @@ function attach(win, etiqueta, { consola = true } = {}) {
 
   wc.on("did-fail-load", (_evento, codigo, descripcion, url, esPrincipal) => {
     if (!esPrincipal) return;
-    escribir("warn", [prefijo + `no cargó (${codigo} ${descripcion})`, url]);
+    escribir("warn", [prefijo + `no cargó (${codigo} ${descripcion})`, privacidad.limpiarUrl(url)]);
   });
 
   wc.on("preload-error", (_evento, ruta, error) => {
@@ -150,7 +158,7 @@ function attachContenido(wc, etiqueta) {
 
   wc.on("did-fail-load", (_evento, codigo, descripcion, url, esPrincipal) => {
     if (!esPrincipal) return;
-    escribir("warn", [prefijo + `la página no cargó (${codigo} ${descripcion})`, url]);
+    escribir("warn", [prefijo + `la página no cargó (${codigo} ${descripcion})`, privacidad.limpiarUrl(url)]);
   });
 
   wc.on("preload-error", (_evento, ruta, error) => {
@@ -186,6 +194,7 @@ function reporte() {
 
   lineas.push("Bling Launcher — diagnóstico");
   lineas.push(`Generado: ${new Date().toISOString()}`);
+  lineas.push("Sin datos de la cuenta: ni correo, ni alias, ni tokens, ni cookies.");
   lineas.push("");
   lineas.push("── Versión ──");
   lineas.push(fila("Aplicación", app.getVersion()));
@@ -218,8 +227,10 @@ function reporte() {
     // Sólo sí o no: el reporte se comparte y no lleva datos de la cuenta.
     lineas.push(fila("Sesión", datos.sesion ? "con cuenta" : "sin cuenta"));
   }
-  lineas.push(fila("Datos", app.getPath("userData")));
-  lineas.push(fila("Registro", archivoLog || "(sin registro)"));
+  // Las rutas van con la carpeta del usuario como "~": sirven para saber dónde
+  // mirar sin publicar con qué nombre de usuario se entra al equipo.
+  lineas.push(fila("Datos", privacidad.limpiarRuta(app.getPath("userData"), RAIZ_USUARIO)));
+  lineas.push(fila("Registro", privacidad.limpiarRuta(archivoLog, RAIZ_USUARIO) || "(sin registro)"));
 
   lineas.push("");
   lineas.push(`── Registro (últimas ${LINEAS_REPORTE} líneas) ──`);

@@ -3,6 +3,7 @@ import { MessageSquare, Minus, Newspaper, Plus, X, Trash2, RefreshCw } from "luc
 import Sparkle from "./Sparkle";
 import ReportDialog from "./ReportDialog";
 import { PASO_ZOOM, ZOOM_MAX, ZOOM_MIN, acotarZoom, porcentajeDeZoom } from "../lib/zoom";
+import { etiquetaDeAtajo } from "../lib/normalizar";
 import type { Settings, UpdateCheckResult } from "../bling";
 
 /** Página de novedades: la misma que usa el aviso de actualización. */
@@ -34,6 +35,29 @@ export default function SettingsPanel({
   ultimoResultado?: UpdateCheckResult | null;
 }) {
   const [reporteAbierto, setReporteAbierto] = useState(false);
+  const [atajoRegistrado, setAtajoRegistrado] = useState<string | null>(null);
+
+  // El atajo lo registra el proceso principal: se le pregunta cuál quedó activo.
+  // Puede no haber ninguno si otra aplicación ya usa esas combinaciones, así que
+  // el panel no puede prometer una combinación que no funciona.
+  useEffect(() => {
+    let vigente = true;
+    window.bling
+      .atajoGlobal()
+      .then((atajo) => {
+        if (vigente) setAtajoRegistrado(atajo);
+      })
+      .catch(() => {});
+    return () => {
+      vigente = false;
+    };
+  }, [settings.atajoGlobal]);
+
+  const descripcionAtajo = !settings.atajoGlobal
+    ? "Trae el launcher al frente desde cualquier aplicación con Ctrl + Shift + B."
+    : atajoRegistrado
+      ? `${etiquetaDeAtajo(atajoRegistrado)} trae el launcher al frente desde cualquier aplicación.`
+      : "No se pudo registrar: otra aplicación ya usa esas combinaciones.";
 
   // Escape cierra, como en cualquier modal que se respeta.
   useEffect(() => {
@@ -95,6 +119,12 @@ export default function SettingsPanel({
             description="Cerrar la ventana la esconde; para salir de verdad usá Salir en la bandeja."
             checked={settings.minimizarBandeja}
             onChange={(v) => onSet("minimizarBandeja", v)}
+          />
+          <Toggle
+            label="Atajo global"
+            description={descripcionAtajo}
+            checked={settings.atajoGlobal}
+            onChange={(v) => onSet("atajoGlobal", v)}
           />
           <div className="mt-2.5 flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
             <div className="min-w-0">

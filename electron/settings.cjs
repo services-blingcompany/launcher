@@ -22,6 +22,12 @@ const DEFAULTS = {
   /** Aviso nativo de Windows cuando llegan notificaciones nuevas. */
   avisosEscritorio: true,
   /**
+   * Atajo global (Ctrl + Shift + B) que trae el launcher al frente desde
+   * cualquier aplicación. Apagado por defecto: toma una combinación de teclas
+   * en todo el sistema, así que lo enciende quien lo quiere.
+   */
+  atajoGlobal: false,
+  /**
    * Nivel de zoom del renderer (Chromium: 1.2^zoom, así que 0 es 100 % y
    * cada 0,5 es ~10 %). Se cambia con Ctrl + / Ctrl − / Ctrl 0.
    */
@@ -38,6 +44,7 @@ const VALIDAR = {
   minimizarBandeja: esBooleano,
   descargarActualizaciones: esBooleano,
   avisosEscritorio: esBooleano,
+  atajoGlobal: esBooleano,
   zoom: esNivelDeZoom,
 };
 
