@@ -37,14 +37,18 @@ function cantidad() {
 }
 
 /** Lo que la barra necesita saber de la ventana, en un solo objeto. */
-function avisar({ ventana, barra, contenido }) {
+function avisar({ ventana, barra, contenido, nombre }) {
   if (ventana.isDestroyed() || barra.webContents.isDestroyed()) return;
   const wc = contenido.webContents;
+  const tituloPagina = wc.getTitle();
   barra.webContents.send("bling:barra-estado", {
     atras: wc.navigationHistory.canGoBack(),
     adelante: wc.navigationHistory.canGoForward(),
     cargando: wc.isLoading(),
-    titulo: wc.getTitle() || ventana.getTitle(),
+    // La barra dice el nombre del servicio (lo que el usuario abrió); el
+    // título de la página queda como detalle al pasar el mouse.
+    titulo: nombre || tituloPagina || "Bling",
+    detalle: tituloPagina || "",
     maximizada: ventana.isMaximized(),
   });
 }
@@ -100,7 +104,7 @@ function abrir({ id, url, title }) {
   ventana.contentView.addChildView(barra);
   ventana.contentView.addChildView(contenido);
 
-  const entrada = { ventana, barra, contenido };
+  const entrada = { ventana, barra, contenido, nombre: title || "" };
   const idBarra = barra.webContents.id;
   abiertas.set(id, entrada);
   porBarra.set(idBarra, entrada);

@@ -44,8 +44,7 @@ export default function LoginDialog({
     return () => window.removeEventListener("keydown", onKey, true);
   }, [onCerrar]);
 
-  async function enviar(e: FormEvent) {
-    e.preventDefault();
+  async function enviar(e: FormEvent) {    e.preventDefault();
     if (enviando) return;
 
     setError(null);
@@ -65,6 +64,15 @@ export default function LoginDialog({
     } finally {
       setEnviando(false);
     }
+  }
+
+  /**
+   * Crear cuenta, recuperar la contraseña o verificar el correo: son páginas
+   * del auth con Turnstile, así que se abren en una ventana del launcher
+   * (misma sesión, misma barra) en vez del navegador del sistema.
+   */
+  function abrirPaginaDeAuth(id: string, url: string, title: string) {
+    void window.bling.openService({ id, url, title });
   }
 
   return (
@@ -166,7 +174,11 @@ export default function LoginDialog({
                   <button
                     type="button"
                     onClick={() =>
-                      void window.bling.openExternal("https://bling.uy/auth/verify")
+                      abrirPaginaDeAuth(
+                        "auth-verify",
+                        "https://bling.uy/auth/verify",
+                        "Verificar mi cuenta",
+                      )
                     }
                     className="mt-1 text-[10px] font-medium text-[#ffcc00] transition-opacity hover:opacity-80"
                   >
@@ -189,14 +201,26 @@ export default function LoginDialog({
           <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3.5">
             <button
               type="button"
-              onClick={() => void window.bling.openExternal("https://bling.uy/auth/register")}
+              onClick={() =>
+                abrirPaginaDeAuth(
+                  "auth-register",
+                  "https://bling.uy/auth/register",
+                  "Crear una cuenta",
+                )
+              }
               className="text-[10px] font-light text-white/50 transition-colors hover:text-white"
             >
               Crear una cuenta
             </button>
             <button
               type="button"
-              onClick={() => void window.bling.openExternal("https://bling.uy/auth/recovery")}
+              onClick={() =>
+                abrirPaginaDeAuth(
+                  "auth-recovery",
+                  "https://bling.uy/auth/recovery/forgot",
+                  "Recuperar la contraseña",
+                )
+              }
               className="text-[10px] font-light text-white/50 transition-colors hover:text-white"
             >
               Olvidé mi contraseña

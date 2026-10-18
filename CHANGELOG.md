@@ -9,6 +9,11 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.10.0]
+
+- **Crear cuenta y recuperar la contraseña, sin salir del launcher.** Los dos atajos del login abren las páginas del auth en una ventana del launcher —con su barra y la misma sesión— en vez del navegador del sistema. Lo mismo para "Verificar mi cuenta" cuando el correo todavía no está confirmado.
+- **La barra de los servicios muestra el nombre del servicio** (lo que abriste) y deja el título de la página como detalle al pasar el mouse, en vez de mostrar el título crudo del sitio.
+
 ## [1.9.0]
 
 - **Las ventanas de servicio ahora son del launcher.** Cada servicio abre con una barra propia: atrás, adelante, recargar (con aviso de carga), el título de la página, abrir en el navegador y los controles de ventana (minimizar, maximizar, cerrar). Se acabó la ventana pelada con el marco de Windows.

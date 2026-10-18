@@ -40,7 +40,7 @@ window.barra.onEstado((estado) => {
   progreso.classList.toggle("activo", estado.cargando);
   if (estado.titulo) {
     titulo.textContent = estado.titulo;
-    titulo.title = estado.titulo;
+    titulo.title = estado.detalle || estado.titulo;
   }
   maximizar.innerHTML = estado.maximizada ? ICONO_RESTAURAR : ICONO_MAXIMIZAR;
   maximizar.title = estado.maximizada ? "Restaurar" : "Maximizar";
