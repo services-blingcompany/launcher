@@ -9,6 +9,14 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.14.0]
+
+- **Si el sitio no responde, se ve una pantalla del launcher y no el error crudo de Chromium.** Cuando una ventana de servicio no puede cargar —se cayó internet, el servicio no contesta—, aparece una pantalla propia, con la campana, el mismo fondo y el acento de siempre, que cuenta qué pasó y ofrece **Reintentar**.
+- **La barra lo avisa.** Mientras está esa pantalla, la barra acompaña el nombre del servicio con un distintivo "Sin conexión", así se entiende de un vistazo por qué no hay página.
+- **Reintentar de verdad.** El botón de la pantalla, el de recargar de la barra y F5 o Ctrl+R vuelven a la dirección que falló, no a la pantalla local; "abrir en el navegador" también abre esa dirección.
+- El texto distingue los dos casos: cuando el problema parece de tu equipo ("Parece que no hay internet") y cuando parece del otro lado ("No pudimos conectar con Bling"). La pantalla no le pide nada al proceso principal: no lleva preload, y "Reintentar" es un enlace común.
+- La lógica de red quedó en un módulo propio, con pruebas.
+
 ## [1.13.0]
 
 - **La ventana de inicio de sesión de Google no puede pedir ningún permiso.** Es una página ajena: no tiene por qué usar la cámara, el micrófono, las notificaciones ni la pantalla completa del launcher, y ahora no puede. Los servicios siguen con los suyos (avisos, cámara y micrófono de los lives, pantalla completa y copiar enlaces), sin cambios.

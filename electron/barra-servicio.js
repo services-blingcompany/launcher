@@ -30,6 +30,7 @@ const atras = document.getElementById("atras");
 const adelante = document.getElementById("adelante");
 const recargar = document.getElementById("recargar");
 const titulo = document.getElementById("titulo");
+const aviso = document.getElementById("aviso");
 const progreso = document.getElementById("progreso");
 const maximizar = document.getElementById("maximizar");
 
@@ -42,6 +43,7 @@ window.barra.onEstado((estado) => {
     titulo.textContent = estado.titulo;
     titulo.title = estado.detalle || estado.titulo;
   }
+  aviso.hidden = !estado.sinConexion;
   maximizar.innerHTML = estado.maximizada ? ICONO_RESTAURAR : ICONO_MAXIMIZAR;
   maximizar.title = estado.maximizada ? "Restaurar" : "Maximizar";
 });

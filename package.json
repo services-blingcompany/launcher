@@ -1,7 +1,7 @@
 {
   "name": "bling-launcher",
   "productName": "Bling Launcher",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "private": true,
   "description": "Launcher de escritorio del ecosistema Bling: todos los servicios en una sola app.",
   "repository": {
@@ -58,7 +58,8 @@
       "dist/**",
       "electron/**",
       "assets/icon.ico",
-      "assets/tray-icon.png"
+      "assets/tray-icon.png",
+      "assets/BlingBellNoBg.png"
     ],
     "asar": true,
     "win": {

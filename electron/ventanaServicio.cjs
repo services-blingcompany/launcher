@@ -5,6 +5,7 @@ const path = require("node:path");
 const contextMenu = require("./contextMenu.cjs");
 const diagnostics = require("./diagnostics.cjs");
 const { esHostDeAcceso } = require("./acceso.cjs");
+const { motivoDeFalla } = require("./conexion.cjs");
 
 /**
  * Ventanas de servicio.
@@ -51,6 +52,26 @@ function cantidad() {
   return abiertas.size;
 }
 
+/** ¿La página que está cargada es nuestra pantalla de "sin conexión"? */
+function esPantallaDeSinConexion(wc) {
+  return String(wc.getURL()).includes("sin-conexion.html");
+}
+
+/**
+ * Muestra la pantalla local en lugar de la página que no cargó. Le pasa la
+ * dirección que falló y el motivo, para que el texto sea el que corresponde y
+ * "Reintentar" apunte a donde hay que volver.
+ */
+function mostrarSinConexion(entrada, motivo) {
+  const wc = entrada.contenido.webContents;
+  if (wc.isDestroyed()) return;
+  void wc
+    .loadFile(path.join(__dirname, "sin-conexion.html"), {
+      query: { u: entrada.fallo || "", m: motivo },
+    })
+    .catch(() => {});
+}
+
 /** Lo que la barra necesita saber de la ventana, en un solo objeto. */
 function avisar({ ventana, barra, contenido, nombre }) {
   if (ventana.isDestroyed() || barra.webContents.isDestroyed()) return;
@@ -65,6 +86,9 @@ function avisar({ ventana, barra, contenido, nombre }) {
     titulo: nombre || tituloPagina || "Bling",
     detalle: tituloPagina || "",
     maximizada: ventana.isMaximized(),
+    // Cuando la página no cargó y está la pantalla de reintentar, la barra lo
+    // avisa: el nombre del servicio solo no cuenta que algo salió mal.
+    sinConexion: esPantallaDeSinConexion(wc),
   });
 }
 
@@ -90,10 +114,13 @@ function accionar(registro, nombre) {
       wc.navigationHistory.goForward();
       break;
     case "recargar":
-      wc.reload();
+      // Si está la pantalla de "sin conexión" (que es local y siempre carga),
+      // recargar no sirve de nada: se reintenta la dirección que falló.
+      if (esPantallaDeSinConexion(wc) && registro.fallo) void wc.loadURL(registro.fallo);
+      else wc.reload();
       break;
     case "externo":
-      abrirExterno(wc.getURL());
+      abrirExterno(esPantallaDeSinConexion(wc) && registro.fallo ? registro.fallo : wc.getURL());
       break;
     case "minimizar":
       ventana.minimize();
@@ -176,7 +203,7 @@ function abrir({ id, url, title }) {
   ventana.contentView.addChildView(barra);
   ventana.contentView.addChildView(contenido);
 
-  const entrada = { ventana, barra, contenido, nombre: title || "" };
+  const entrada = { ventana, barra, contenido, nombre: title || "", fallo: "" };
   const idBarra = barra.webContents.id;
   abiertas.set(id, entrada);
   porBarra.set(idBarra, entrada);
@@ -250,6 +277,18 @@ function abrir({ id, url, title }) {
       evento.preventDefault();
       abrirExterno(destino);
     }
+  });
+
+  // Si la página no carga por un problema de red, el usuario no se merece el
+  // error crudo de Chromium: se muestra una pantalla del launcher, con la
+  // misma estética, que ofrece reintentar la dirección que falló.
+  wc.on("did-fail-load", (_evento, codigo, _descripcion, url, esPrincipal) => {
+    if (!esPrincipal) return;
+    const motivo = motivoDeFalla(codigo);
+    if (!motivo) return;
+    entrada.fallo = url;
+    diagnostics.escribir("warn", [`no cargó ${entrada.nombre || id}`, `${url} (${codigo})`]);
+    mostrarSinConexion(entrada, motivo);
   });
 
   // Las ventanas del auth (login, registro, recuperación, verificación) son

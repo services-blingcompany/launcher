@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:"
+    />
+    <title>Sin conexión</title>
+    <style>
+      /*
+       * Pantalla de "no pudimos conectar". Ocupa el lugar de la página del
+       * servicio cuando la carga falla por red, así el usuario ve algo del
+       * launcher —con su acento y su campana— en vez del error crudo de
+       * Chromium. Sin preload: "Reintentar" es un enlace común.
+       */
+      :root {
+        --acento: #ffcc00;
+        --sans: "Montserrat", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+        --mono: "JetBrains Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #09090b;
+        color: #fff;
+        font-family: var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+      .tarjeta {
+        width: min(420px, calc(100% - 48px));
+        padding: 32px 28px 28px;
+        border: 1px solid rgb(255 255 255 / 0.07);
+        border-radius: 16px;
+        background: rgb(255 255 255 / 0.02);
+        text-align: center;
+      }
+      .campana {
+        width: 56px;
+        height: 56px;
+        opacity: 0.9;
+        object-fit: contain;
+      }
+      h1 {
+        margin: 18px 0 0;
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      p {
+        margin: 10px 0 0;
+        font-size: 12.5px;
+        font-weight: 300;
+        line-height: 1.55;
+        color: rgb(255 255 255 / 0.55);
+      }
+      a.boton {
+        display: inline-block;
+        margin-top: 22px;
+        padding: 10px 22px;
+        border-radius: 10px;
+        background: var(--acento);
+        color: #09090b;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: filter 0.12s;
+      }
+      a.boton:hover {
+        filter: brightness(1.08);
+      }
+      a.boton[hidden] {
+        display: none;
+      }
+      .sitio {
+        margin-top: 18px;
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        color: rgb(255 255 255 / 0.3);
+        word-break: break-all;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="tarjeta">
+      <img class="campana" src="../assets/BlingBellNoBg.png" alt="" />
+      <h1 id="titulo">No pudimos conectar con Bling</h1>
+      <p id="detalle">El servicio no está respondiendo. Puede ser algo momentáneo.</p>
+      <a id="reintentar" class="boton" href="#">Reintentar</a>
+      <p id="sitio" class="sitio"></p>
+    </main>
+    <script src="sin-conexion.js"></script>
+  </body>
+</html>
