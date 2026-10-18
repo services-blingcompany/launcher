@@ -9,6 +9,12 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.6.0]
+
+- **"Acerca de" con reporte de problema.** En Ajustes hay una sección nueva con la versión instalada y un acceso a las novedades. Desde ahí, "Reportar" arma el diagnóstico (versión de la app, Electron, Chromium, Node, Windows, tamaño de la ventana, ajustes y las últimas líneas del registro), deja escribir qué pasó y lo copia o lo guarda como .txt. No lleva correo, ni alias, ni tokens, ni cookies.
+- **Registro en disco.** Lo que el launcher avisa queda en `%APPDATA%\Bling Launcher\logs\launcher.log` (se recicla solo a los ~512 KB): avisos y errores propios, caídas del proceso de render, cargas fallidas, errores del renderer y si el puente de login no pasó el reto de Cloudflare. Antes, en la app instalada, esos avisos se perdían.
+- El panel de ajustes scrollea si la ventana es baja.
+
 ## [1.5.0]
 
 - **Menú de clic derecho.** Electron no trae ninguno, así que hasta ahora no se podía pegar la contraseña en el login, copiar el alias de BlingPay ni copiar texto dentro de los servicios. Ahora el clic derecho ofrece lo que corresponde en cada caso:

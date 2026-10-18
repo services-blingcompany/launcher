@@ -48,8 +48,18 @@ contextBridge.exposeInMainWorld("bling", {
     return () => ipcRenderer.removeListener("auth:changed", listener);
   },
 
+  // ── Diagnóstico ──
+  /** Reporte de entorno y últimas líneas del registro, sin datos de la cuenta. */
+  getDiagnostics: () => ipcRenderer.invoke("bling:diagnostico"),
+  /** Guarda el reporte como .txt. Devuelve la ruta elegida, o null. */
+  saveDiagnostics: (texto) =>
+    ipcRenderer.invoke("bling:diagnostico-guardar", texto),
+  /** Abre la carpeta del registro en el explorador. */
+  openLogsFolder: () => ipcRenderer.invoke("bling:diagnostico-carpeta"),
+
   // ── Actualizaciones ──
-  appVersion: () => ipcRenderer.invoke("bling:app-version"),  checkForUpdates: () => ipcRenderer.invoke("update:check"),
+  appVersion: () => ipcRenderer.invoke("bling:app-version"),
+  checkForUpdates: () => ipcRenderer.invoke("update:check"),
   dismissUpdate: (version) => ipcRenderer.send("update:dismiss", version),
   openUpdateLink: (url) => ipcRenderer.invoke("update:open", url),
   /** Descarga la versión disponible (no instala todavía). */

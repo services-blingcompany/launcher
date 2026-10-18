@@ -1,7 +1,11 @@
-import { useEffect } from "react";
-import { X, Trash2, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
+import { MessageSquare, Newspaper, X, Trash2, RefreshCw } from "lucide-react";
 import Sparkle from "./Sparkle";
+import ReportDialog from "./ReportDialog";
 import type { Settings, UpdateCheckResult } from "../bling";
+
+/** Página de novedades: la misma que usa el aviso de actualización. */
+const NOVEDADES = "https://github.com/services-blingcompany/launcher/releases";
 
 /**
  * Panel de ajustes. Se superpone al hub con fondo difuso; Escape o la X
@@ -28,17 +32,21 @@ export default function SettingsPanel({
   onCerrar: () => void;
   ultimoResultado?: UpdateCheckResult | null;
 }) {
+  const [reporteAbierto, setReporteAbierto] = useState(false);
+
   // Escape cierra, como en cualquier modal que se respeta.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        onCerrar();
-      }
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      // Si el reporte está abierto, ese Escape es de él: este panel está
+      // escuchando primero, así que se hace a un lado.
+      if (reporteAbierto) return;
+      onCerrar();
     }
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [onCerrar]);
+  }, [onCerrar, reporteAbierto]);
 
   return (
     <div
@@ -55,7 +63,7 @@ export default function SettingsPanel({
         {/* Línea de acento superior */}
         <div className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-[#ffcc00] via-[#ffcc00]/40 to-transparent" />
 
-        <div className="relative p-6">
+        <div className="relative max-h-[85vh] overflow-y-auto p-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
               <Sparkle className="h-3.5 w-3.5 text-[#ffcc00]" />
@@ -144,8 +152,52 @@ export default function SettingsPanel({
               Borrar
             </button>
           </div>
+
+          {/* ── Acerca de ── */}
+          <Section label="Acerca de" />
+          <div className="mt-2.5 flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+            <div className="min-w-0">
+              <div className="text-xs font-light text-white/85">
+                Bling Launcher
+              </div>
+              <div className="font-mono text-[9px] tracking-widest uppercase text-white/35">
+                Versión {version || "…"}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => void window.bling.openUpdateLink(NOVEDADES)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-mono text-[9px] tracking-widest uppercase text-white/60 transition-colors hover:border-white/30 hover:text-white"
+            >
+              <Newspaper size={10} />
+              Novedades
+            </button>
+          </div>
+
+          <div className="mt-2.5 flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+            <div className="min-w-0">
+              <div className="text-xs font-light text-white/85">
+                ¿Algo no anda?
+              </div>
+              <div className="mt-0.5 text-[10px] font-light leading-relaxed text-white/40">
+                Copiá el diagnóstico y pegalo donde nos escribas.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setReporteAbierto(true)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-mono text-[9px] tracking-widest uppercase text-white/60 transition-colors hover:border-[#ffcc00]/40 hover:text-white"
+            >
+              <MessageSquare size={10} />
+              Reportar
+            </button>
+          </div>
         </div>
       </div>
+
+      {reporteAbierto && (
+        <ReportDialog onCerrar={() => setReporteAbierto(false)} />
+      )}
     </div>
   );
 }

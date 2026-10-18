@@ -9,6 +9,7 @@ const settings = require("./settings.cjs");
 const tray = require("./tray.cjs");
 const auth = require("./auth.cjs");
 const contextMenu = require("./contextMenu.cjs");
+const diagnostics = require("./diagnostics.cjs");
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 
@@ -181,6 +182,7 @@ function createLauncherWindow() {
   // Menú de clic derecho (copiar, pegar, seleccionar todo): Electron no
   // trae ninguno, y sin esto no se puede pegar la contraseña en el login.
   contextMenu.attach(launcherWindow, { esDelSitio: isAllowedUrl });
+  diagnostics.attach(launcherWindow, "hub");
 
   if (DEV_SERVER_URL) {
     launcherWindow.loadURL(DEV_SERVER_URL);
@@ -241,10 +243,12 @@ function openService(serviceId, url, title) {
   // Dentro de los servicios el clic derecho hace falta igual (o más):
   // copiar texto, pegar, copiar el enlace de una nota o el alias de alguien.
   contextMenu.attach(win, { esDelSitio: isAllowedUrl });
+  diagnostics.attach(win, `servicio:${serviceId}`);
 
   win.on("closed", () => serviceWindows.delete(serviceId));
 
   serviceWindows.set(serviceId, win);
+  diagnostics.escribir("info", [`abriendo ${serviceId}`, url]);
   win.loadURL(url);
   return true;
 }
@@ -291,6 +295,19 @@ function applySetting(ajustes, key) {
 
 settings.init({ onApply: applySetting });
 
+// ── Registro y diagnóstico ───────────────────────────────────────────
+// El reporte de "Acerca de" necesita el estado que vive acá, así que se
+// pide por función en vez de copiarlo (la ventana puede no existir).
+diagnostics.init({
+  datos: () => ({
+    ventana:
+      launcherWindow && !launcherWindow.isDestroyed()
+        ? { ...launcherWindow.getBounds(), maximizada: launcherWindow.isMaximized() }
+        : null,
+    ajustes: settings.load(),
+  }),
+});
+
 // El renderer manda su catálogo para el submenú de la bandeja.
 ipcMain.on("bling:set-catalog", (_event, servicios) => {
   if (!Array.isArray(servicios)) return;
@@ -322,6 +339,15 @@ if (!gotTheLock) {
   // handler de "close" sabe que NO debe mandar la ventana a la bandeja.
   app.on("before-quit", () => {
     isQuitting = true;
+    diagnostics.escribir("info", ["cerrando la aplicación"]);
+  });
+
+  // GPU, red o utilidades: si uno se cae, conviene saberlo después.
+  app.on("child-process-gone", (_evento, detalles) => {
+    diagnostics.escribir("error", [
+      `proceso hijo caído: ${detalles.type}`,
+      `${detalles.reason} (código ${detalles.exitCode})`,
+    ]);
   });
 
   app.whenReady().then(() => {

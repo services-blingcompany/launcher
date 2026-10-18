@@ -123,8 +123,17 @@ interface BlingApi {
   /** Aviso push del main cuando la sesión cambia. */
   onAuthChanged(callback: (user: BlingUser | null) => void): () => void;
 
+  // ── Diagnóstico ──
+  /** Reporte de entorno y últimas líneas del registro, sin datos de la cuenta. */
+  getDiagnostics(): Promise<string>;
+  /** Guarda el reporte como .txt. Devuelve la ruta elegida, o null. */
+  saveDiagnostics(texto: string): Promise<string | null>;
+  /** Abre la carpeta del registro en el explorador. */
+  openLogsFolder(): Promise<string | null>;
+
   appVersion(): Promise<string>;
-  checkForUpdates(): Promise<UpdateCheckResult>;  dismissUpdate(version: string): void;
+  checkForUpdates(): Promise<UpdateCheckResult>;
+  dismissUpdate(version: string): void;
   openUpdateLink(url: string): Promise<void>;
   downloadUpdate(): Promise<UpdateCheckResult>;
   installUpdate(): void;

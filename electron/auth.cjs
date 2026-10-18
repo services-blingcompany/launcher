@@ -1,6 +1,7 @@
 "use strict";
 
 const { ipcMain, session, BrowserWindow } = require("electron");
+const diagnostics = require("./diagnostics.cjs");
 
 /**
  * Sesión de Bling dentro del launcher.
@@ -79,6 +80,11 @@ function crearPuente() {
     puenteListo = null;
   });
 
+  // Las fallas del puente son "no me puedo loguear": tienen que quedar en
+  // el registro para poder mirarlas después. Sin la consola de la página:
+  // ahí el que habla es el reto de Cloudflare y su propio ruido.
+  diagnostics.attach(puente, "auth", { consola: false });
+
   puenteListo = (async () => {
     // No se espera a loadURL: mientras carga (y mientras Cloudflare muestra su
     // reto) se sondea la API, que responde al instante con 403 hasta que el
@@ -90,12 +96,16 @@ function crearPuente() {
         const estado = await ejecutar(
           "fetch('/api/auth/me', { credentials: 'include' }).then((r) => r.status).catch(() => 0)",
         );
-        if (typeof estado === "number" && estado > 0 && estado !== 403) return true;
+        if (typeof estado === "number" && estado > 0 && estado !== 403) {
+          diagnostics.escribir("info", ["el puente de auth quedó listo"]);
+          return true;
+        }
       } catch {
         // todavía no hay documento usable
       }
       await dormir(400);
     }
+    diagnostics.escribir("warn", ["el puente de auth no pasó el reto de Cloudflare"]);
     return false;
   })();
 
