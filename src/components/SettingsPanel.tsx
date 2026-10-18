@@ -135,6 +135,15 @@ export default function SettingsPanel({
             </div>
           </div>
 
+          {/* ── Notificaciones ── */}
+          <Section label="Notificaciones" />
+          <Toggle
+            label="Avisos de escritorio"
+            description="Aviso de Windows cuando llegan notificaciones nuevas, con el icono marcado en la barra de tareas."
+            checked={settings.avisosEscritorio}
+            onChange={(v) => onSet("avisosEscritorio", v)}
+          />
+
           {/* ── Actualizaciones ── */}
           <Section label="Actualizaciones" />
           <Toggle

@@ -17,6 +17,8 @@ const path = require("node:path");
 let tray = null;
 /** Devuelve la ventana del hub, o null si no existe. */
 let getHub = () => null;
+/** Cuántas notificaciones sin leer hay, para el tooltip. */
+let sinLeer = 0;
 
 function iconPath() {
   return path.join(__dirname, "..", "assets", "tray-icon.png");
@@ -82,11 +84,24 @@ function setEnabled(enabled, servicios) {
   if (tray) return; // ya existe: sólo refrescar el menú
 
   tray = new Tray(iconPath());
-  tray.setToolTip("Bling Launcher");
+  tray.setToolTip(tooltip());
   tray.setContextMenu(buildMenu(servicios));
   // Doble clic / clic izquierdo en el ícono restaura el hub.
   tray.on("click", focusearLauncher);
   tray.on("double-click", focusearLauncher);
+}
+
+/** "Bling Launcher · 3 sin leer": el tooltip cuenta lo que hay pendiente. */
+function tooltip() {
+  if (!sinLeer) return "Bling Launcher";
+  return `Bling Launcher · ${sinLeer} sin leer`;
+}
+
+/** Contador de notificaciones sin leer (para el tooltip de la bandeja). */
+function setContador(cantidad) {
+  const n = Number(cantidad);
+  sinLeer = Number.isFinite(n) && n > 0 ? n : 0;
+  if (tray) tray.setToolTip(tooltip());
 }
 
 /** Refresca el menú (p. ej. cuando cambia el catálogo de servicios). */
@@ -102,5 +117,5 @@ function setHubGetter(fn) {
   if (typeof fn === "function") getHub = fn;
 }
 
-module.exports = { setEnabled, refresh, setHubGetter };
+module.exports = { setEnabled, refresh, setHubGetter, setContador };
 

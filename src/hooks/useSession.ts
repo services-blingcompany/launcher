@@ -36,9 +36,12 @@ export function useSession() {
   }, []);
 
   // Contador de no leídas: al entrar, y cada minuto mientras haya sesión.
+  // Además se le informa al main, que es quien muestra el aviso nativo y
+  // marca el icono de la barra de tareas.
   useEffect(() => {
     if (!user) {
       setSinLeer(0);
+      window.bling.reportNotifications(0);
       return;
     }
 
@@ -47,7 +50,9 @@ export function useSession() {
       void window.bling
         .authNotifications()
         .then((r) => {
-          if (vivo) setSinLeer(r.count);
+          if (!vivo) return;
+          setSinLeer(r.count);
+          window.bling.reportNotifications(r.count);
         })
         .catch(() => {});
     };
@@ -77,6 +82,7 @@ export function useSession() {
     await window.bling.authLogout();
     setUser(null);
     setSinLeer(0);
+    window.bling.reportNotifications(0);
   }, []);
 
   return { user, cargando, sinLeer, login, logout };

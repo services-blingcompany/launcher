@@ -9,6 +9,12 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.8.0]
+
+- **Avisos de escritorio.** Cuando llegan notificaciones nuevas, Windows muestra un aviso nativo; al tocarlo se abre la bandeja de notificaciones en el launcher. El texto es genérico ("Tenés 3 notificaciones nuevas") a propósito: en la pantalla de bloqueo se lee sin pedir permiso, así que el contenido no viaja.
+- **Icono marcado.** Mientras haya algo sin leer, el icono del launcher en la barra de tareas queda marcado y el tooltip de la bandeja cuenta cuántas hay.
+- **Avisos de escritorio en Ajustes**, en su propia sección, para apagarlos.
+
 ## [1.7.0]
 
 - **Zoom de la interfaz.** Ctrl + agranda, Ctrl − achica y Ctrl 0 vuelve al 100 %, desde el hub y desde las ventanas de servicio. El nivel se recuerda entre sesiones y también se cambia desde Ajustes, donde se ve el porcentaje.

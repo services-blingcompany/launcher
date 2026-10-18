@@ -49,6 +49,12 @@ contextBridge.exposeInMainWorld("bling", {
   authLogout: () => ipcRenderer.invoke("auth:logout"),
   /** Contador de notificaciones sin leer (0 sin sesión). */
   authNotifications: () => ipcRenderer.invoke("auth:notifications"),
+  /**
+   * Le cuenta al main las notificaciones sin leer: con eso decide si hay
+   * que mostrar un aviso nativo y marcar el icono de la barra de tareas.
+   */
+  reportNotifications: (conteo) =>
+    ipcRenderer.send("bling:notificaciones", conteo),
   /** El main avisa cuando la sesión cambia (login, expiración o cierre). */
   onAuthChanged: (callback) => {
     const listener = (_event, user) => callback(user);

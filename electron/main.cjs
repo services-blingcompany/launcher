@@ -10,6 +10,7 @@ const tray = require("./tray.cjs");
 const auth = require("./auth.cjs");
 const contextMenu = require("./contextMenu.cjs");
 const diagnostics = require("./diagnostics.cjs");
+const notificaciones = require("./notificaciones.cjs");
 
 /**
  * Identidad de la app en Windows: tiene que ser el mismo appId que arma el
@@ -484,6 +485,13 @@ if (!gotTheLock) {
     recents.init();
     // Sesión de Bling: login nativo + perfil, sobre el jar compartido.
     auth.init({ getHub: () => launcherWindow });
+
+    // Avisos nativos + globito: el contador llega del renderer y acá se
+    // decide si hay algo nuevo que contar. El clic abre la bandeja.
+    notificaciones.init({
+      getHub: () => launcherWindow,
+      abrirServicio: openService,
+    });
 
     // La bandeja necesita saber cuál es el hub (puede haber ventanas de
     // servicios abiertas). Se registra el getter antes de aplicar ajustes.

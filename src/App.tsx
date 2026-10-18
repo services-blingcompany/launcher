@@ -25,6 +25,7 @@ const DEFAULT_SETTINGS: Settings = {
   abrirAlIniciar: false,
   minimizarBandeja: false,
   descargarActualizaciones: true,
+  avisosEscritorio: true,
   zoom: 0,
 };
 

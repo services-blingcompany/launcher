@@ -19,6 +19,8 @@ const DEFAULTS = {
   minimizarBandeja: false,
   /** Descargar las actualizaciones sin preguntar (se instalan al salir). */
   descargarActualizaciones: true,
+  /** Aviso nativo de Windows cuando llegan notificaciones nuevas. */
+  avisosEscritorio: true,
   /**
    * Nivel de zoom del renderer (Chromium: 1.2^zoom, así que 0 es 100 % y
    * cada 0,5 es ~10 %). Se cambia con Ctrl + / Ctrl − / Ctrl 0.
@@ -35,6 +37,7 @@ const VALIDAR = {
   abrirAlIniciar: esBooleano,
   minimizarBandeja: esBooleano,
   descargarActualizaciones: esBooleano,
+  avisosEscritorio: esBooleano,
   zoom: esNivelDeZoom,
 };
 

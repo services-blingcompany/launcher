@@ -38,6 +38,8 @@ export type Settings = {
   abrirAlIniciar: boolean;
   minimizarBandeja: boolean;
   descargarActualizaciones: boolean;
+  /** Aviso nativo de Windows cuando llegan notificaciones nuevas. */
+  avisosEscritorio: boolean;
   /** Nivel de zoom del renderer (1.2^zoom; 0 = 100 %). */
   zoom: number;
 };
@@ -126,6 +128,8 @@ interface BlingApi {
   authLogout(): Promise<boolean>;
   /** Notificaciones sin leer del usuario logueado. */
   authNotifications(): Promise<NotificationsCount>;
+  /** Informa al main el contador: avisos nativos y globito de la barra. */
+  reportNotifications(conteo: number): void;
   /** Aviso push del main cuando la sesión cambia. */
   onAuthChanged(callback: (user: BlingUser | null) => void): () => void;
 
