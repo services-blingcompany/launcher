@@ -8,6 +8,7 @@ const recents = require("./recents.cjs");
 const settings = require("./settings.cjs");
 const tray = require("./tray.cjs");
 const auth = require("./auth.cjs");
+const contextMenu = require("./contextMenu.cjs");
 
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 
@@ -177,6 +178,10 @@ function createLauncherWindow() {
     return { action: "deny" };
   });
 
+  // Menú de clic derecho (copiar, pegar, seleccionar todo): Electron no
+  // trae ninguno, y sin esto no se puede pegar la contraseña en el login.
+  contextMenu.attach(launcherWindow, { esDelSitio: isAllowedUrl });
+
   if (DEV_SERVER_URL) {
     launcherWindow.loadURL(DEV_SERVER_URL);
   } else {
@@ -232,6 +237,10 @@ function openService(serviceId, url, title) {
       openExternalAllowed(target);
     }
   });
+
+  // Dentro de los servicios el clic derecho hace falta igual (o más):
+  // copiar texto, pegar, copiar el enlace de una nota o el alias de alguien.
+  contextMenu.attach(win, { esDelSitio: isAllowedUrl });
 
   win.on("closed", () => serviceWindows.delete(serviceId));
 

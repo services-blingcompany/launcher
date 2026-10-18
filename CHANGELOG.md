@@ -9,6 +9,16 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.5.0]
+
+- **Menú de clic derecho.** Electron no trae ninguno, así que hasta ahora no se podía pegar la contraseña en el login, copiar el alias de BlingPay ni copiar texto dentro de los servicios. Ahora el clic derecho ofrece lo que corresponde en cada caso:
+  - en un campo de texto: deshacer, rehacer, cortar, copiar, pegar y seleccionar todo (cada uno se deshabilita cuando no aplica);
+  - sobre texto seleccionado: copiar y seleccionar todo;
+  - sobre una imagen: copiar imagen y guardar imagen…;
+  - sobre un enlace: abrirlo en la misma ventana si es del sitio, y siempre copiar el enlace.
+- Donde no hay nada que ofrecer no aparece nada, como en cualquier app.
+- El mismo menú está en el hub y en las ventanas de los servicios.
+
 ## [1.4.0]
 
 - **La derecha, a la altura de la izquierda.** El contenido ahora te saluda por tu nombre ("Buenas, Facundo.") cuando hay sesión, el buscador baja de la barra superior al cuerpo y pasa a ser el protagonista de la pantalla, y la ayuda de teclado se convierte en una línea discreta (antes eran tres cajitas que competían con el título).
