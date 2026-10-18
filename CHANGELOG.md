@@ -9,6 +9,12 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.12.0]
+
+- **Iniciar sesión con Google, adentro del launcher.** El diálogo de login ahora tiene "Continuar con Google": abre la página de login del sitio en una ventana del launcher (con su barra y la misma sesión) y, cuando entrás, el hub se entera al instante y aparece tu cuenta sin esperar. El popup de Google se abre como ventana hija del launcher: el token vuelve a la página como en el navegador.
+- **El launcher ya no se presenta como Electron.** El user agent pierde la huella `Electron/x.y.z` (queda el Chromium y el nombre del launcher), que es lo que hacía que Google rechazara su ventana de inicio de sesión.
+- **El puente de auth reintenta el reto de Cloudflare.** Si el primer intento queda a medias, recarga y prueba una vez más; si igual no pasa, vuelve a intentarlo más tarde en vez de quedarse sin sesión hasta reiniciar el launcher.
+
 ## [1.11.0]
 
 - **Atajos de navegación en las ventanas de servicio**, como en cualquier navegador: F5 o Ctrl R recargan, Alt + ← y Alt + → van atrás y adelante, y Ctrl W cierra la ventana.

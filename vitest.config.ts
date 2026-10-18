@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config";
 // Tailwind, así que no se cargan los plugins del build.
 export default defineConfig({
   test: {
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "electron/**/*.test.mjs"],
     environment: "node",
   },
 });

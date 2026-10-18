@@ -30,6 +30,37 @@ let esUrlPermitida = () => false;
 let abrirExterno = () => {};
 let attachZoom = () => {};
 let zoomGuardado = () => 0;
+let alCambiarAuth = () => {};
+
+/**
+ * Hosts de inicio de sesión de terceros que sí se abren dentro del launcher.
+ * Google devuelve el token a la página que abrió el popup (window.opener), así
+ * que mandarlo al navegador del sistema rompe el flujo: queda adentro, como
+ * una ventana hija del servicio.
+ */
+const HOSTS_ACCESO = new Set(["accounts.google.com"]);
+
+function esPopupDeAcceso(destino) {
+  try {
+    const url = new URL(String(destino));
+    return url.protocol === "https:" && HOSTS_ACCESO.has(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Las páginas del auth avisan cuando terminan de moverse: si el usuario entró
+ * (con Google, por ejemplo) el hub tiene que enterarse ya. Se limita a una
+ * llamada cada 1,5 s para no repetir consultas al perfil.
+ */
+let ultimoAvisoAuth = 0;
+function avisarAuth() {
+  const ahora = Date.now();
+  if (ahora - ultimoAvisoAuth < 1500) return;
+  ultimoAvisoAuth = ahora;
+  alCambiarAuth();
+}
 
 /** Cuántas ventanas de servicio hay abiertas. */
 function cantidad() {
@@ -192,17 +223,58 @@ function abrir({ id, url, title }) {
   const wc = contenido.webContents;
 
   // Navegación interna al mismo dominio queda en la ventana del servicio;
-  // todo lo demás se abre en el navegador del sistema.
+  // todo lo demás se abre en el navegador del sistema. La excepción son los
+  // popups de inicio de sesión de terceros (Google), que tienen que volver a
+  // la página que los abrió: se muestran como ventana hija del servicio.
   wc.setWindowOpenHandler(({ url: destino }) => {
+    if (esPopupDeAcceso(destino)) {
+      return {
+        action: "allow",
+        overrideBrowserWindowOptions: {
+          parent: ventana,
+          width: 520,
+          height: 720,
+          autoHideMenuBar: true,
+          minimizable: false,
+          maximizable: false,
+          fullscreenable: false,
+          backgroundColor: "#ffffff",
+          webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true,
+          },
+        },
+      };
+    }
     abrirExterno(destino);
     return { action: "deny" };
   });
+
+  // La ventana de Google no abre ventanas propias ni ofrece menús: se cierra
+  // sola al terminar, o la cierra el usuario (la página del sitio se entera y
+  // muestra "se cerró la ventana" en vez de quedarse muda). Del user agent se
+  // ocupa main.cjs, que lo deja sin la huella de Electron antes de que exista
+  // esta ventana.
+  wc.on("did-create-window", (hija) => {
+    hija.setMenuBarVisibility(false);
+    hija.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  });
+
   wc.on("will-navigate", (evento, destino) => {
     if (!esUrlPermitida(destino)) {
       evento.preventDefault();
       abrirExterno(destino);
     }
   });
+
+  // Las ventanas del auth (login, registro, recuperación, verificación) son
+  // las únicas donde puede aparecer una sesión nueva: al moverse, main.cjs
+  // vuelve a mirar quién está logueado.
+  if (id.startsWith("auth-")) {
+    wc.on("did-navigate", avisarAuth);
+    ventana.on("closed", avisarAuth);
+  }
 
   // La barra refleja lo que pasa en la página: título, navegación y carga.
   wc.on("page-title-updated", (_evento, nuevo) => {
@@ -255,6 +327,7 @@ function init(opciones = {}) {
   if (typeof opciones.abrirExterno === "function") abrirExterno = opciones.abrirExterno;
   if (typeof opciones.attachZoom === "function") attachZoom = opciones.attachZoom;
   if (typeof opciones.zoomGuardado === "function") zoomGuardado = opciones.zoomGuardado;
+  if (typeof opciones.alCambiarAuth === "function") alCambiarAuth = opciones.alCambiarAuth;
 
   ipcMain.on("bling:barra", (evento, nombre) => {
     accionar(porBarra.get(evento.sender.id), nombre);

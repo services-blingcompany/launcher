@@ -62,6 +62,12 @@ export default function App() {
   const { user, cargando, sinLeer, login, logout } = useSession();
   const [loginAbierto, setLoginAbierto] = useState(false);
 
+  // Si la sesión aparece por otro lado —la ventana del auth que abrió el
+  // botón de Google, por ejemplo— el diálogo de login ya no tiene sentido.
+  useEffect(() => {
+    if (user) setLoginAbierto(false);
+  }, [user]);
+
   useEffect(() => {
     void window.bling.appVersion().then(setVersion);
     void window.bling.getRecents().then(setRecents);

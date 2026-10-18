@@ -12,6 +12,7 @@ const contextMenu = require("./contextMenu.cjs");
 const diagnostics = require("./diagnostics.cjs");
 const notificaciones = require("./notificaciones.cjs");
 const ventanaServicio = require("./ventanaServicio.cjs");
+const userAgent = require("./userAgent.cjs");
 
 /**
  * Identidad de la app en Windows: tiene que ser el mismo appId que arma el
@@ -417,6 +418,15 @@ if (!gotTheLock) {
   });
 
   app.whenReady().then(() => {
+    // User agent sin la huella de Electron (userAgent.cjs): Google corta su
+    // ventana de inicio de sesión cuando ve una aplicación embebida. Tiene
+    // que ser global y antes de crear ventanas: el popup de Google hereda el
+    // de la sesión, y pisarlo después llega tarde (la primera request ya
+    // salió). Antes de whenReady el UA de Chromium no existe, y poner uno
+    // vacío hace que Cloudflare corte la conexión del sitio.
+    const ua = userAgent.limpiar(session.defaultSession.getUserAgent());
+    if (ua) app.userAgentFallback = ua;
+
     // Un servicio pedido por línea de comandos (o desde la jump list) se
     // abre apenas el hub avise que montó.
     servicioPendiente = servicioDeArgumentos(process.argv) || servicioPendiente;
@@ -455,6 +465,10 @@ if (!gotTheLock) {
       abrirExterno: openExternalAllowed,
       attachZoom,
       zoomGuardado,
+      // Las ventanas del auth (login, registro, recuperación) pueden terminar
+      // dejando la sesión iniciada, Google incluido: se revisa al instante en
+      // vez de esperar el chequeo de fondo de cinco minutos.
+      alCambiarAuth: () => auth.revisar(),
     });
 
     // La bandeja necesita saber cuál es el hub (puede haber ventanas de

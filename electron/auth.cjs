@@ -35,6 +35,15 @@ let puenteListo = null;
 /** Última sesión informada al renderer, para no repetir el mismo aviso. */
 let ultimoAviso = null;
 
+/** Cuándo falló el reto de Cloudflare por última vez, para no insistir de más. */
+let ultimoFallo = 0;
+
+/** Espera entre un fallo del reto y el próximo intento. */
+const PAUSA_TRAS_FALLAR = 60 * 1000;
+
+/** Cómo llegar al hub, para avisarle que cambió la sesión. */
+let obtenerHub = () => null;
+
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Ejecuta una expresión en el contexto de bling.uy (same-origin). */
@@ -49,7 +58,12 @@ async function ejecutar(expresion) {
  * de la pantalla, sin foco y sin entrada en la barra de tareas.
  */
 function crearPuente() {
-  if (puente && !puente.isDestroyed()) return puenteListo;
+  if (puente && !puente.isDestroyed()) {
+    // El puente quedó abierto pero sin pasar el reto: se vuelve a intentar
+    // en vez de responder que no hay sesión.
+    if (!puenteListo) puenteListo = prepararPuente();
+    return puenteListo;
+  }
 
   puente = new BrowserWindow({
     width: 1024,
@@ -85,31 +99,69 @@ function crearPuente() {
   // ahí el que habla es el reto de Cloudflare y su propio ruido.
   diagnostics.attach(puente, "auth", { consola: false });
 
-  puenteListo = (async () => {
+  puenteListo = prepararPuente();
+  return puenteListo;
+}
+
+/**
+ * Espera a que Cloudflare deje pasar la API, con la página ya cargada: se
+ * sondea la API, que responde 403 mientras el reto siga en pie.
+ */
+async function esperarReto() {
+  for (let i = 0; i < 40; i++) {
+    try {
+      const estado = await ejecutar(
+        "fetch('/api/auth/me', { credentials: 'include' }).then((r) => r.status).catch(() => 0)",
+      );
+      if (typeof estado === "number" && estado > 0 && estado !== 403) return true;
+    } catch {
+      // todavía no hay documento usable
+    }
+    await dormir(400);
+  }
+  return false;
+}
+
+/**
+ * Deja el puente listo para hablar con la API y cuenta qué pasó.
+ *
+ * El reto de Cloudflare a veces queda a medias (una conexión mala, un intento
+ * a medio resolver): recargar la página suele resolverlo, así que se intenta
+ * dos veces. Si aun así no pasa, el puente queda sin marcar y el próximo
+ * pedido lo vuelve a intentar, en vez de darlo por roto hasta reiniciar el
+ * launcher; entre intentos hay una pausa, para no encadenar esperas de medio
+ * minuto cada vez que alguien pide la sesión.
+ */
+async function prepararPuente() {
+  if (Date.now() - ultimoFallo < PAUSA_TRAS_FALLAR) return false;
+
+  for (let intento = 1; intento <= 2; intento++) {
     // No se espera a loadURL: mientras carga (y mientras Cloudflare muestra su
     // reto) se sondea la API, que responde al instante con 403 hasta que el
     // reto pasa. Así el puente queda listo apenas está listo, sin esperas fijas.
     void puente.loadURL(`${SITE}/auth/login`).catch(() => {});
 
-    for (let i = 0; i < 40; i++) {
-      try {
-        const estado = await ejecutar(
-          "fetch('/api/auth/me', { credentials: 'include' }).then((r) => r.status).catch(() => 0)",
-        );
-        if (typeof estado === "number" && estado > 0 && estado !== 403) {
-          diagnostics.escribir("info", ["el puente de auth quedó listo"]);
-          return true;
-        }
-      } catch {
-        // todavía no hay documento usable
-      }
-      await dormir(400);
+    if (await esperarReto()) {
+      ultimoFallo = 0;
+      diagnostics.escribir("info", [
+        intento === 1
+          ? "el puente de auth quedó listo"
+          : `el puente de auth quedó listo en el intento ${intento}`,
+      ]);
+      return true;
     }
-    diagnostics.escribir("warn", ["el puente de auth no pasó el reto de Cloudflare"]);
-    return false;
-  })();
 
-  return puenteListo;
+    if (intento === 1) {
+      diagnostics.escribir("warn", [
+        "el puente de auth no pasó el reto de Cloudflare; se recarga y se reintenta",
+      ]);
+    }
+  }
+
+  diagnostics.escribir("warn", ["el puente de auth no pasó el reto de Cloudflare"]);
+  ultimoFallo = Date.now();
+  puenteListo = null;
+  return false;
 }
 
 /** Asegura el puente y ejecuta la expresión adentro. */
@@ -342,6 +394,8 @@ function cerrarPuente() {
  * ser null si sólo quedan ventanas de servicios abiertas).
  */
 function init({ getHub }) {
+  obtenerHub = typeof getHub === "function" ? getHub : () => null;
+
   ipcMain.handle("auth:status", async () => {
     const user = await perfil();
     ultimoAviso = user ? String(user.id) : "invitado";
@@ -387,4 +441,14 @@ function haySesion() {
   return ultimoAviso !== "invitado";
 }
 
-module.exports = { init, perfil, cerrarPuente, haySesion, SITE };
+/**
+ * Revisa la sesión ahora mismo y avisa al hub si cambió (sólo si cambió).
+ * La usa el launcher cuando una ventana del auth navega o se cierra: sirve
+ * para el login con Google, que termina en una ventana y no en el formulario
+ * del hub.
+ */
+function revisar() {
+  avisar(obtenerHub);
+}
+
+module.exports = { init, perfil, cerrarPuente, haySesion, revisar, SITE };
