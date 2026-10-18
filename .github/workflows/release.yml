@@ -32,6 +32,11 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      # Si los tests no pasan, no se publica nada: mejor que falle acá y no
+      # que llegue un instalador roto a los que ya tienen el launcher.
+      - name: Tests
+        run: npm test
+
       # El tag debe coincidir con la versión de package.json: si no,
       # electron-builder publicaría un latest.yml con otra versión y los
       # clientes instalados se confundirían.

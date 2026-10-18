@@ -1,0 +1,32 @@
+# Chequeos de cada push a main y de cada pull request: tests y tipos.
+# Armar el instalador es aparte (release.yml, con tags vX.Y.Z).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Lógica del launcher: catálogo, allowlist, zoom, normalización.
+      - name: Tests
+        run: npm test
+
+      # El build incluye el typecheck (tsc --noEmit).
+      - name: Tipos y build del renderer
+        run: npm run build
