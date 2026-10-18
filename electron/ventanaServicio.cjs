@@ -60,6 +60,63 @@ function setZoom(nivel) {
   }
 }
 
+/** Ejecuta una acción de la barra sobre esa ventana (botón o atajo). */
+function accionar(registro, nombre) {
+  if (!registro) return;
+  const { ventana, contenido } = registro;
+  if (ventana.isDestroyed()) return;
+  const wc = contenido.webContents;
+
+  switch (nombre) {
+    case "atras":
+      wc.navigationHistory.goBack();
+      break;
+    case "adelante":
+      wc.navigationHistory.goForward();
+      break;
+    case "recargar":
+      wc.reload();
+      break;
+    case "externo":
+      abrirExterno(wc.getURL());
+      break;
+    case "minimizar":
+      ventana.minimize();
+      break;
+    case "maximizar":
+      if (ventana.isMaximized()) ventana.unmaximize();
+      else ventana.maximize();
+      break;
+    case "cerrar":
+      ventana.close();
+      break;
+    default:
+      return;
+  }
+  avisar(registro);
+}
+
+/**
+ * Atajos de navegación, como en un navegador: F5 y Ctrl R recargan, Alt y
+ * las flechas van atrás o adelante, y Ctrl W cierra la ventana. Electron no
+ * trae ninguno con el menú de la app apagado, así que se atienden a mano
+ * sobre la página del servicio (que no tiene renderer propio que los lea).
+ */
+function attachAtajos(wc, registro) {
+  wc.on("before-input-event", (evento, tecla) => {
+    if (tecla.type !== "keyDown") return;
+    const key = String(tecla.key || "").toLowerCase();
+    let accion = null;
+    if (tecla.key === "F5" || (tecla.control && !tecla.shift && key === "r")) accion = "recargar";
+    else if (tecla.control && key === "w") accion = "cerrar";
+    else if (tecla.alt && tecla.key === "ArrowLeft") accion = "atras";
+    else if (tecla.alt && tecla.key === "ArrowRight") accion = "adelante";
+    if (!accion) return;
+    evento.preventDefault();
+    accionar(registro, accion);
+  });
+}
+
 /**
  * Abre un servicio embebido en su propia ventana. Si ya está abierto, sólo
  * la enfoca (idempotente, como un launcher de verdad).
@@ -172,9 +229,11 @@ function abrir({ id, url, title }) {
   });
 
   // Zoom: acá no hay renderer propio que atienda los atajos, así que se
-  // aplican desde el proceso principal sobre la página embebida.
+  // aplican desde el proceso principal sobre la página embebida. Igual que
+  // los atajos de navegación (F5, Ctrl R, Ctrl W, Alt + flechas).
   wc.setZoomLevel(zoomGuardado());
   attachZoom(wc);
+  attachAtajos(wc, entrada);
 
   diagnostics.attachContenido(barra.webContents, `barra:${id}`);
   diagnostics.attachContenido(wc, `servicio:${id}`);
@@ -198,39 +257,7 @@ function init(opciones = {}) {
   if (typeof opciones.zoomGuardado === "function") zoomGuardado = opciones.zoomGuardado;
 
   ipcMain.on("bling:barra", (evento, nombre) => {
-    const entrada = porBarra.get(evento.sender.id);
-    if (!entrada) return;
-    const { ventana, contenido } = entrada;
-    if (ventana.isDestroyed()) return;
-    const wc = contenido.webContents;
-
-    switch (nombre) {
-      case "atras":
-        wc.navigationHistory.goBack();
-        break;
-      case "adelante":
-        wc.navigationHistory.goForward();
-        break;
-      case "recargar":
-        wc.reload();
-        break;
-      case "externo":
-        abrirExterno(wc.getURL());
-        break;
-      case "minimizar":
-        ventana.minimize();
-        break;
-      case "maximizar":
-        if (ventana.isMaximized()) ventana.unmaximize();
-        else ventana.maximize();
-        break;
-      case "cerrar":
-        ventana.close();
-        break;
-      default:
-        return;
-    }
-    avisar(entrada);
+    accionar(porBarra.get(evento.sender.id), nombre);
   });
 }
 

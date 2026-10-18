@@ -9,6 +9,11 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.11.0]
+
+- **Atajos de navegación en las ventanas de servicio**, como en cualquier navegador: F5 o Ctrl R recargan, Alt + ← y Alt + → van atrás y adelante, y Ctrl W cierra la ventana.
+- **El diagnóstico dice si había sesión** (con cuenta o sin cuenta), sin un solo dato de la cuenta.
+
 ## [1.10.0]
 
 - **Crear cuenta y recuperar la contraseña, sin salir del launcher.** Los dos atajos del login abren las páginas del auth en una ventana del launcher —con su barra y la misma sesión— en vez del navegador del sistema. Lo mismo para "Verificar mi cuenta" cuando el correo todavía no está confirmado.

@@ -214,6 +214,10 @@ function reporte() {
   if (typeof datos.servicios === "number") {
     lineas.push(fila("Ventanas", `${datos.servicios} de servicio abiertas`));
   }
+  if (typeof datos.sesion === "boolean") {
+    // Sólo sí o no: el reporte se comparte y no lleva datos de la cuenta.
+    lineas.push(fila("Sesión", datos.sesion ? "con cuenta" : "sin cuenta"));
+  }
   lineas.push(fila("Datos", app.getPath("userData")));
   lineas.push(fila("Registro", archivoLog || "(sin registro)"));
 

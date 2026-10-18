@@ -354,6 +354,7 @@ diagnostics.init({
         : null,
     ajustes: settings.load(),
     servicios: ventanaServicio.cantidad(),
+    sesion: auth.haySesion(),
   }),
 });
 

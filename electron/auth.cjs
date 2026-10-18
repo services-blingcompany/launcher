@@ -375,4 +375,16 @@ function init({ getHub }) {
   void crearPuente();
 }
 
-module.exports = { init, perfil, cerrarPuente, SITE };
+/**
+ * Si hay sesión, sin pegarle a la red: es lo último que se le avisó al hub.
+ * null = todavía no se consultó el perfil ni una vez.
+ *
+ * Sólo sí o no: no expone la cuenta, así que puede ir en el diagnóstico que
+ * el usuario comparte.
+ */
+function haySesion() {
+  if (ultimoAviso === null) return null;
+  return ultimoAviso !== "invitado";
+}
+
+module.exports = { init, perfil, cerrarPuente, haySesion, SITE };
