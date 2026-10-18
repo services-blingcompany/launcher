@@ -9,6 +9,12 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.9.0]
+
+- **Las ventanas de servicio ahora son del launcher.** Cada servicio abre con una barra propia: atrás, adelante, recargar (con aviso de carga), el título de la página, abrir en el navegador y los controles de ventana (minimizar, maximizar, cerrar). Se acabó la ventana pelada con el marco de Windows.
+- **Zoom en los servicios.** Ctrl +, Ctrl − y Ctrl 0 también funcionan ahí, sobre la página; la barra mantiene su tamaño.
+- **Ventanas de servicio en el diagnóstico**, para saber con qué contexto se reportó un problema.
+
 ## [1.8.0]
 
 - **Avisos de escritorio.** Cuando llegan notificaciones nuevas, Windows muestra un aviso nativo; al tocarlo se abre la bandeja de notificaciones en el launcher. El texto es genérico ("Tenés 3 notificaciones nuevas") a propósito: en la pantalla de bloqueo se lee sin pedir permiso, así que el contenido no viaja.

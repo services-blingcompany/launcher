@@ -81,6 +81,22 @@ function cola(lineas = LINEAS_REPORTE) {
   }
 }
 
+/** Los errores de consola del renderer, con el prefijo de la etiqueta. */
+function engancharConsola(wc, prefijo) {
+  // Electron nuevo manda (evento, detalles) y el viejo (evento, nivel, …):
+  // se aceptan las dos formas. Sólo los errores: los avisos de las páginas
+  // de los servicios son ruido que tapa lo que importa.
+  wc.on("console-message", (_evento, ...args) => {
+    const detalles = args[0] && typeof args[0] === "object" ? args[0] : null;
+    const nivel = detalles ? detalles.level : args[0];
+    if (nivel !== "error" && nivel !== 3) return;
+    escribir("error", [
+      prefijo + "consola del renderer:",
+      detalles ? detalles.message : args[1],
+    ]);
+  });
+}
+
 /**
  * Engancha los avisos de una ventana: caída del proceso de render, carga
  * fallida, error de preload y los errores que salen por la consola del
@@ -109,20 +125,39 @@ function attach(win, etiqueta, { consola = true } = {}) {
     escribir("error", [prefijo + "error en el preload", ruta, error]);
   });
 
-  // Electron nuevo manda (evento, detalles) y el viejo (evento, nivel, …):
-  // se aceptan las dos formas. Sólo los errores: los avisos de las páginas
-  // de los servicios son ruido que tapa lo que importa. En las ventanas que
-  // cargan páginas de terceros (el puente de auth) se apaga del todo.
   if (!consola) return;
-  wc.on("console-message", (_evento, ...args) => {
-    const detalles = args[0] && typeof args[0] === "object" ? args[0] : null;
-    const nivel = detalles ? detalles.level : args[0];
-    if (nivel !== "error" && nivel !== 3) return;
+  engancharConsola(wc, prefijo);
+}
+
+/**
+ * Engancha la página embebida de una ventana de servicio. Va aparte de la
+ * ventana porque esa página vive en su propia vista, con su propio proceso
+ * de render: interesa saber si no cargó o si se colgó, con la misma etiqueta
+ * del servicio para que el reporte diga cuál fue.
+ */
+function attachContenido(wc, etiqueta) {
+  const prefijo = `[${etiqueta}] `;
+
+  wc.on("unresponsive", () => escribir("warn", [prefijo + "la página dejó de responder"]));
+  wc.on("responsive", () => escribir("info", [prefijo + "la página volvió a responder"]));
+
+  wc.on("render-process-gone", (_evento, detalles) => {
     escribir("error", [
-      prefijo + "consola del renderer:",
-      detalles ? detalles.message : args[1],
+      prefijo + "se cayó el render de la página:",
+      `${detalles.reason} (código ${detalles.exitCode})`,
     ]);
   });
+
+  wc.on("did-fail-load", (_evento, codigo, descripcion, url, esPrincipal) => {
+    if (!esPrincipal) return;
+    escribir("warn", [prefijo + `la página no cargó (${codigo} ${descripcion})`, url]);
+  });
+
+  wc.on("preload-error", (_evento, ruta, error) => {
+    escribir("error", [prefijo + "error en el preload", ruta, error]);
+  });
+
+  engancharConsola(wc, prefijo);
 }
 
 /** Fila del reporte, con la etiqueta alineada. */
@@ -169,9 +204,15 @@ function reporte() {
   }
   if (datos.ajustes) {
     const valores = Object.entries(datos.ajustes)
-      .map(([clave, valor]) => `${clave}=${valor ? "sí" : "no"}`)
+      .map(([clave, valor]) => {
+        if (typeof valor === "number") return `${clave}=${valor}`;
+        return `${clave}=${valor ? "sí" : "no"}`;
+      })
       .join(" · ");
     lineas.push(fila("Ajustes", valores));
+  }
+  if (typeof datos.servicios === "number") {
+    lineas.push(fila("Ventanas", `${datos.servicios} de servicio abiertas`));
   }
   lineas.push(fila("Datos", app.getPath("userData")));
   lineas.push(fila("Registro", archivoLog || "(sin registro)"));
@@ -242,4 +283,4 @@ function init({ datos } = {}) {
   });
 }
 
-module.exports = { init, attach, escribir, reporte };
+module.exports = { init, attach, attachContenido, escribir, reporte };

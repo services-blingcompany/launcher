@@ -11,6 +11,7 @@ const auth = require("./auth.cjs");
 const contextMenu = require("./contextMenu.cjs");
 const diagnostics = require("./diagnostics.cjs");
 const notificaciones = require("./notificaciones.cjs");
+const ventanaServicio = require("./ventanaServicio.cjs");
 
 /**
  * Identidad de la app en Windows: tiene que ser el mismo appId que arma el
@@ -23,8 +24,6 @@ const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 
 /** Ventana principal (el hub). */
 let launcherWindow = null;
-/** Ventanas embebidas por servicio, para no abrir dos veces el mismo. */
-const serviceWindows = new Map();
 
 /**
  * true mientras el usuario pidió salir de verdad (bandeja → Salir, o
@@ -144,26 +143,28 @@ function zoomGuardado() {
 }
 
 /**
- * Aplica el zoom a todas las ventanas abiertas. Se acota a ±3 niveles
- * (~57 % … ~173 %), que es lo que tiene sentido en una UI de escritorio.
+ * Aplica el zoom de la interfaz. Se acota a ±3 niveles (~57 % … ~173 %),
+ * que es lo que tiene sentido en una UI de escritorio. En las ventanas de
+ * servicio el zoom va a la página embebida: la barra queda siempre igual.
  */
 function aplicarZoom(nivel, { persistir = true } = {}) {
   const acotado = Math.min(4, Math.max(-3, Math.round(nivel * 2) / 2));
   if (persistir) settings.set("zoom", acotado);
-  for (const win of BrowserWindow.getAllWindows()) {
-    if (!win.isDestroyed()) win.webContents.setZoomLevel(acotado);
+  if (launcherWindow && !launcherWindow.isDestroyed()) {
+    launcherWindow.webContents.setZoomLevel(acotado);
   }
+  ventanaServicio.setZoom(acotado);
   // El panel de ajustes muestra el valor, así que se le avisa.
   avisarAjustes(settings.load());
 }
 
 /**
- * Ctrl + / Ctrl − / Ctrl 0 en una ventana de servicio. Son páginas ajenas
- * (no hay renderer nuestro al que pedirle el atajo) y Electron no trae
- * aceleradores de zoom con el menú apagado, así que se atienden a mano.
+ * Ctrl + / Ctrl − / Ctrl 0 sobre la página de un servicio. Son páginas
+ * ajenas (no hay renderer nuestro al que pedirle el atajo) y Electron no
+ * trae aceleradores de zoom con el menú apagado, así que se atienden a mano.
  */
-function attachZoom(win) {
-  win.webContents.on("before-input-event", (evento, entrada) => {
+function attachZoom(wc) {
+  wc.on("before-input-event", (evento, entrada) => {
     if (!entrada.control || entrada.type !== "keyDown") return;
     const paso = { "+": 0.5, "=": 0.5, "-": -0.5 }[entrada.key];
     if (entrada.key === "0") aplicarZoom(0);
@@ -265,7 +266,12 @@ function createLauncherWindow() {
 
   // Menú de clic derecho (copiar, pegar, seleccionar todo): Electron no
   // trae ninguno, y sin esto no se puede pegar la contraseña en el login.
-  contextMenu.attach(launcherWindow, { esDelSitio: isAllowedUrl });
+  contextMenu.attach({
+    webContents: launcherWindow.webContents,
+    ventana: launcherWindow,
+    esDelSitio: isAllowedUrl,
+    cargar: (url) => launcherWindow.loadURL(url),
+  });
   diagnostics.attach(launcherWindow, "hub");
 
   // Zoom recordado. Los atajos del hub los atiende el renderer (React), así
@@ -284,63 +290,11 @@ function createLauncherWindow() {
 }
 
 /**
- * Abre un servicio embebido en su propia ventana. Si ya está abierto,
- * sólo la enfoca (idempotente, como un launcher de verdad).
+ * Abre un servicio embebido en su propia ventana (barra del launcher +
+ * página del servicio). Si ya está abierto, sólo la enfoca.
  */
 function openService(serviceId, url, title) {
-  if (!isAllowedUrl(url)) return false;
-
-  const existing = serviceWindows.get(serviceId);
-  if (existing && !existing.isDestroyed()) {
-    if (existing.isMinimized()) existing.restore();
-    existing.focus();
-    return true;
-  }
-
-  const win = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    minWidth: 960,
-    minHeight: 600,
-    show: false,
-    backgroundColor: "#09090b",
-    title: title || "Bling",
-    icon: path.join(__dirname, "..", "assets", "icon.ico"),
-    webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-    },
-  });
-
-  win.once("ready-to-show", () => win.show());
-
-  // Navegación interna al mismo dominio queda en la ventana del servicio;
-  // todo lo demás se abre en el navegador del sistema.
-  win.webContents.setWindowOpenHandler(({ url: target }) => {
-    openExternalAllowed(target);
-    return { action: "deny" };
-  });
-  win.webContents.on("will-navigate", (event, target) => {
-    if (!isAllowedUrl(target)) {
-      event.preventDefault();
-      openExternalAllowed(target);
-    }
-  });
-
-  // Dentro de los servicios el clic derecho hace falta igual (o más):
-  // copiar texto, pegar, copiar el enlace de una nota o el alias de alguien.
-  contextMenu.attach(win, { esDelSitio: isAllowedUrl });
-  diagnostics.attach(win, `servicio:${serviceId}`);
-  win.webContents.setZoomLevel(zoomGuardado());
-  attachZoom(win);
-
-  win.on("closed", () => serviceWindows.delete(serviceId));
-
-  serviceWindows.set(serviceId, win);
-  diagnostics.escribir("info", [`abriendo ${serviceId}`, url]);
-  win.loadURL(url);
-  return true;
+  return ventanaServicio.abrir({ id: serviceId, url, title });
 }
 
 // ── IPC del renderer ────────────────────────────────────────────────
@@ -399,6 +353,7 @@ diagnostics.init({
         ? { ...launcherWindow.getBounds(), maximizada: launcherWindow.isMaximized() }
         : null,
     ajustes: settings.load(),
+    servicios: ventanaServicio.cantidad(),
   }),
 });
 
@@ -491,6 +446,14 @@ if (!gotTheLock) {
     notificaciones.init({
       getHub: () => launcherWindow,
       abrirServicio: openService,
+    });
+
+    // Ventanas de servicio: barra del launcher arriba, página abajo.
+    ventanaServicio.init({
+      esUrlPermitida: isAllowedUrl,
+      abrirExterno: openExternalAllowed,
+      attachZoom,
+      zoomGuardado,
     });
 
     // La bandeja necesita saber cuál es el hub (puede haber ventanas de
