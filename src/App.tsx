@@ -12,6 +12,7 @@ import AccountPanel from "./components/AccountPanel";
 import { datosDeUsuario, useSession } from "./hooks/useSession";
 import { SERVICES } from "./data/services";
 import { normalizar } from "./lib/normalizar";
+import { nivelDeTeclaZoom } from "./lib/zoom";
 import type { Service } from "./data/services";
 import type {
   Settings,
@@ -24,6 +25,7 @@ const DEFAULT_SETTINGS: Settings = {
   abrirAlIniciar: false,
   minimizarBandeja: false,
   descargarActualizaciones: true,
+  zoom: 0,
 };
 
 /**
@@ -90,14 +92,42 @@ export default function App() {
       const svc = SERVICES.find((s) => s.id === id);
       if (svc) abrir(svc);
     });
+    // El main también cambia ajustes por su cuenta: Ctrl +/- es zoom.
+    const offAjustes = window.bling.onSettingsChanged(setSettings);
+
+    // Un servicio pedido antes de que existiera esta ventana (jump list o
+    // --abrir=) se abre apenas se monta.
+    void window.bling.takePendingService().then((id) => {
+      const svc = SERVICES.find((s) => s.id === id);
+      if (svc) abrir(svc);
+    });
 
     return () => {
       offAvailable();
       offProgress();
       offDownloaded();
       offTray();
+      offAjustes();
     };
   }, []);
+
+  /**
+   * Ctrl + / Ctrl − / Ctrl 0: tamaño de la interfaz. En el hub se atiende acá
+   * (y no en el proceso principal) para que el zoom y lo que muestra el panel
+   * de ajustes salgan siempre del mismo estado. Las ventanas de servicio, que
+   * son páginas ajenas, sí lo resuelven en el main.
+   */
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!e.ctrlKey && !e.metaKey) return;
+      const nivel = nivelDeTeclaZoom(e.key, settings.zoom);
+      if (nivel === null) return;
+      e.preventDefault();
+      void window.bling.setSetting("zoom", nivel).then(setSettings);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [settings.zoom]);
 
   async function revisarActualizaciones() {
     if (buscando) return;

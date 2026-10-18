@@ -38,6 +38,8 @@ export type Settings = {
   abrirAlIniciar: boolean;
   minimizarBandeja: boolean;
   descargarActualizaciones: boolean;
+  /** Nivel de zoom del renderer (1.2^zoom; 0 = 100 %). */
+  zoom: number;
 };
 
 /** Entrada mínima del catálogo que el renderer manda a la bandeja. */
@@ -109,6 +111,10 @@ interface BlingApi {
     value: Settings[K],
   ): Promise<Settings>;
   setCatalog(servicios: CatalogEntry[]): void;
+  /** El main avisa cuando cambia un ajuste por su cuenta (zoom con Ctrl +/-). */
+  onSettingsChanged(callback: (settings: Settings) => void): () => void;
+  /** Servicio pedido desde afuera (jump list, --abrir=) y todavía sin abrir. */
+  takePendingService(): Promise<string | null>;
   onOpenService(callback: (id: string) => void): () => void;
 
   // ── Sesión ──

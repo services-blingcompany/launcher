@@ -11,6 +11,13 @@ const auth = require("./auth.cjs");
 const contextMenu = require("./contextMenu.cjs");
 const diagnostics = require("./diagnostics.cjs");
 
+/**
+ * Identidad de la app en Windows: tiene que ser el mismo appId que arma el
+ * instalador (package.json → build.appId). De eso dependen el agrupado en
+ * la barra de tareas, la jump list y las notificaciones nativas.
+ */
+app.setAppUserModelId("uy.blingcompany.launcher");
+
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 
 /** Ventana principal (el hub). */
@@ -130,6 +137,82 @@ function saveWindowState(win) {
   }
 }
 
+/** Nivel de zoom guardado (Chromium: 1.2^nivel, 0 = 100 %). */
+function zoomGuardado() {
+  return settings.load().zoom;
+}
+
+/**
+ * Aplica el zoom a todas las ventanas abiertas. Se acota a ±3 niveles
+ * (~57 % … ~173 %), que es lo que tiene sentido en una UI de escritorio.
+ */
+function aplicarZoom(nivel, { persistir = true } = {}) {
+  const acotado = Math.min(4, Math.max(-3, Math.round(nivel * 2) / 2));
+  if (persistir) settings.set("zoom", acotado);
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.setZoomLevel(acotado);
+  }
+  // El panel de ajustes muestra el valor, así que se le avisa.
+  avisarAjustes(settings.load());
+}
+
+/**
+ * Ctrl + / Ctrl − / Ctrl 0 en una ventana de servicio. Son páginas ajenas
+ * (no hay renderer nuestro al que pedirle el atajo) y Electron no trae
+ * aceleradores de zoom con el menú apagado, así que se atienden a mano.
+ */
+function attachZoom(win) {
+  win.webContents.on("before-input-event", (evento, entrada) => {
+    if (!entrada.control || entrada.type !== "keyDown") return;
+    const paso = { "+": 0.5, "=": 0.5, "-": -0.5 }[entrada.key];
+    if (entrada.key === "0") aplicarZoom(0);
+    else if (paso !== undefined) aplicarZoom(zoomGuardado() + paso);
+    else return;
+    evento.preventDefault();
+  });
+}
+
+/** Manda los ajustes al hub (el zoom cambia desde el teclado, no del panel). */
+function avisarAjustes(ajustes) {
+  if (launcherWindow && !launcherWindow.isDestroyed()) {
+    launcherWindow.webContents.send("bling:settings", ajustes);
+  }
+}
+
+/** Id de servicio pedido desde afuera (`--abrir=news`) y todavía sin abrir. */
+let servicioPendiente = null;
+
+function servicioDeArgumentos(argv) {
+  const arg = (argv || []).find(
+    (a) => typeof a === "string" && a.startsWith("--abrir="),
+  );
+  return arg ? arg.slice("--abrir=".length) : null;
+}
+
+/**
+ * Tareas de la jump list (clic derecho en el icono de la barra de tareas):
+ * los servicios del catálogo, con el mismo `--abrir=` que el arranque. Sólo
+ * en la app instalada: en dev el ejecutable es el de Electron y la tarea
+ * abriría cualquier cosa.
+ */
+function actualizarTareas() {
+  if (!app.isPackaged) return;
+  try {
+    app.setUserTasks(
+      catalogoServicios.slice(0, 5).map((servicio) => ({
+        program: process.execPath,
+        args: `--abrir=${servicio.id}`,
+        title: servicio.name,
+        description: `Abrir ${servicio.name}`,
+        iconPath: process.execPath,
+        iconIndex: 0,
+      })),
+    );
+  } catch (err) {
+    console.warn("[app] no se pudo armar la jump list:", err.message);
+  }
+}
+
 function createLauncherWindow() {
   const saved = loadWindowState();
   const visible = saved && boundsAreVisible(saved);
@@ -183,6 +266,10 @@ function createLauncherWindow() {
   // trae ninguno, y sin esto no se puede pegar la contraseña en el login.
   contextMenu.attach(launcherWindow, { esDelSitio: isAllowedUrl });
   diagnostics.attach(launcherWindow, "hub");
+
+  // Zoom recordado. Los atajos del hub los atiende el renderer (React), así
+  // que acá sólo se aplica el nivel guardado.
+  launcherWindow.webContents.setZoomLevel(zoomGuardado());
 
   if (DEV_SERVER_URL) {
     launcherWindow.loadURL(DEV_SERVER_URL);
@@ -244,6 +331,8 @@ function openService(serviceId, url, title) {
   // copiar texto, pegar, copiar el enlace de una nota o el alias de alguien.
   contextMenu.attach(win, { esDelSitio: isAllowedUrl });
   diagnostics.attach(win, `servicio:${serviceId}`);
+  win.webContents.setZoomLevel(zoomGuardado());
+  attachZoom(win);
 
   win.on("closed", () => serviceWindows.delete(serviceId));
 
@@ -291,6 +380,10 @@ function applySetting(ajustes, key) {
   if (key === "descargarActualizaciones" || key === undefined) {
     updates.setAutoDownload(ajustes.descargarActualizaciones);
   }
+  if (key === "zoom" || key === undefined) {
+    // Ya se guardó desde acá (o el panel lo mandó por IPC): no se reescribe.
+    aplicarZoom(ajustes.zoom, { persistir: false });
+  }
 }
 
 settings.init({ onApply: applySetting });
@@ -308,13 +401,25 @@ diagnostics.init({
   }),
 });
 
-// El renderer manda su catálogo para el submenú de la bandeja.
+// El renderer manda su catálogo para el submenú de la bandeja y la jump list.
 ipcMain.on("bling:set-catalog", (_event, servicios) => {
   if (!Array.isArray(servicios)) return;
   catalogoServicios = servicios
     .filter((s) => s && typeof s.id === "string" && typeof s.name === "string")
     .map((s) => ({ id: s.id, name: s.name }));
   tray.refresh(catalogoServicios);
+  actualizarTareas();
+});
+
+/**
+ * Servicio pedido antes de que el hub existiera (arranque con --abrir= o
+ * jump list). El renderer lo pregunta al montar: así no se pierde el pedido
+ * por llegar antes de que hubiera quien escuchara.
+ */
+ipcMain.handle("bling:servicio-pendiente", () => {
+  const id = servicioPendiente;
+  servicioPendiente = null;
+  return id;
 });
 
 const gotTheLock = app.requestSingleInstanceLock();
@@ -322,15 +427,19 @@ if (!gotTheLock) {
   // Segunda instancia: sólo enfocar la ventana existente.
   app.quit();
 } else {
-  app.on("second-instance", () => {
+  app.on("second-instance", (_evento, argv) => {
+    const pedido = servicioDeArgumentos(argv);
     // Si el hub se cerró pero quedaron ventanas de servicio abiertas,
     // launcherWindow es null: hay que recrearla, no ignorar el evento.
     if (!launcherWindow || launcherWindow.isDestroyed()) {
+      if (pedido) servicioPendiente = pedido;
       createLauncherWindow();
       return;
     }
     if (launcherWindow.isMinimized()) launcherWindow.restore();
     launcherWindow.focus();
+    // La instancia nueva puede venir de una tarea de la jump list.
+    if (pedido) launcherWindow.webContents.send("tray:open-service", pedido);
   });
 
   Menu.setApplicationMenu(null);
@@ -351,6 +460,10 @@ if (!gotTheLock) {
   });
 
   app.whenReady().then(() => {
+    // Un servicio pedido por línea de comandos (o desde la jump list) se
+    // abre apenas el hub avise que montó.
+    servicioPendiente = servicioDeArgumentos(process.argv) || servicioPendiente;
+
     // Por defecto Electron rechaza TODOS los permisos en silencio: la red
     // social pediría notificaciones o cámara para los lives y nunca
     // funcionarían. Allowlist explícita; el resto se rechaza.

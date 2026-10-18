@@ -9,6 +9,13 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.7.0]
+
+- **Zoom de la interfaz.** Ctrl + agranda, Ctrl − achica y Ctrl 0 vuelve al 100 %, desde el hub y desde las ventanas de servicio. El nivel se recuerda entre sesiones y también se cambia desde Ajustes, donde se ve el porcentaje.
+- **Content Security Policy.** El renderer declara una política cerrada —nada de red, sólo lo que sirve el propio bundle— así que Electron dejó de avisar en cada arranque y un hipotético script inyectado ya no podría pedir ni cargar nada de afuera.
+- **Identidad de app.** El launcher se identifica con el mismo appId del instalador: agrupado correcto en la barra de tareas y base para las notificaciones nativas.
+- **Jump list.** El clic derecho en el icono de la barra de tareas lista los servicios del catálogo y abre el launcher directo en el elegido (`--abrir=<servicio>`), incluso si ya estaba abierto.
+
 ## [1.6.0]
 
 - **"Acerca de" con reporte de problema.** En Ajustes hay una sección nueva con la versión instalada y un acceso a las novedades. Desde ahí, "Reportar" arma el diagnóstico (versión de la app, Electron, Chromium, Node, Windows, tamaño de la ventana, ajustes y las últimas líneas del registro), deja escribir qué pasó y lo copia o lo guarda como .txt. No lleva correo, ni alias, ni tokens, ni cookies.

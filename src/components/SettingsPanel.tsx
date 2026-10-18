@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { MessageSquare, Newspaper, X, Trash2, RefreshCw } from "lucide-react";
+import { MessageSquare, Minus, Newspaper, Plus, X, Trash2, RefreshCw } from "lucide-react";
 import Sparkle from "./Sparkle";
 import ReportDialog from "./ReportDialog";
+import { PASO_ZOOM, ZOOM_MAX, ZOOM_MIN, acotarZoom, porcentajeDeZoom } from "../lib/zoom";
 import type { Settings, UpdateCheckResult } from "../bling";
 
 /** Página de novedades: la misma que usa el aviso de actualización. */
@@ -95,6 +96,44 @@ export default function SettingsPanel({
             checked={settings.minimizarBandeja}
             onChange={(v) => onSet("minimizarBandeja", v)}
           />
+          <div className="mt-2.5 flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+            <div className="min-w-0">
+              <div className="text-xs font-light text-white/85">
+                Tamaño de la interfaz
+              </div>
+              <div className="mt-0.5 text-[10px] font-light leading-relaxed text-white/40">
+                Ctrl +, Ctrl − y Ctrl 0, desde cualquier ventana.
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => onSet("zoom", acotarZoom(settings.zoom - PASO_ZOOM))}
+                disabled={settings.zoom <= ZOOM_MIN}
+                aria-label="Reducir el tamaño de la interfaz"
+                className="rounded-lg border border-white/15 p-1.5 text-white/60 transition-colors hover:border-white/30 hover:text-white disabled:opacity-40"
+              >
+                <Minus size={11} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onSet("zoom", 0)}
+                title="Volver al 100 %"
+                className="w-11 rounded-lg py-1 text-center font-mono text-[10px] text-white/60 transition-colors hover:text-white"
+              >
+                {porcentajeDeZoom(settings.zoom)}
+              </button>
+              <button
+                type="button"
+                onClick={() => onSet("zoom", acotarZoom(settings.zoom + PASO_ZOOM))}
+                disabled={settings.zoom >= ZOOM_MAX}
+                aria-label="Agrandar el tamaño de la interfaz"
+                className="rounded-lg border border-white/15 p-1.5 text-white/60 transition-colors hover:border-white/30 hover:text-white disabled:opacity-40"
+              >
+                <Plus size={11} />
+              </button>
+            </div>
+          </div>
 
           {/* ── Actualizaciones ── */}
           <Section label="Actualizaciones" />

@@ -19,10 +19,24 @@ const DEFAULTS = {
   minimizarBandeja: false,
   /** Descargar las actualizaciones sin preguntar (se instalan al salir). */
   descargarActualizaciones: true,
+  /**
+   * Nivel de zoom del renderer (Chromium: 1.2^zoom, así que 0 es 100 % y
+   * cada 0,5 es ~10 %). Se cambia con Ctrl + / Ctrl − / Ctrl 0.
+   */
+  zoom: 0,
 };
 
-/** Nombres de ajuste válidos → tipo. Fuente de verdad para el IPC. */
-const KEYS = new Set(Object.keys(DEFAULTS));
+const esBooleano = (valor) => typeof valor === "boolean";
+const esNivelDeZoom = (valor) =>
+  typeof valor === "number" && Number.isFinite(valor) && valor >= -3 && valor <= 4;
+
+/** Validador por ajuste: por el IPC sólo entra el tipo que corresponde. */
+const VALIDAR = {
+  abrirAlIniciar: esBooleano,
+  minimizarBandeja: esBooleano,
+  descargarActualizaciones: esBooleano,
+  zoom: esNivelDeZoom,
+};
 
 function statePath() {
   return path.join(app.getPath("userData"), "settings.json");
@@ -32,11 +46,11 @@ function load() {
   try {
     const raw = JSON.parse(fs.readFileSync(statePath(), "utf8"));
     if (!raw || typeof raw !== "object") return { ...DEFAULTS };
-    // Sólo se aceptan claves conocidas y booleanas: nada de campos extra
-    // heredados de una versión vieja ni de valores raros.
+    // Sólo se aceptan claves conocidas y del tipo que corresponde: nada de
+    // campos extra heredados de una versión vieja ni de valores raros.
     const out = { ...DEFAULTS };
-    for (const key of KEYS) {
-      if (typeof raw[key] === "boolean") out[key] = raw[key];
+    for (const [key, valida] of Object.entries(VALIDAR)) {
+      if (valida(raw[key])) out[key] = raw[key];
     }
     return out;
   } catch {
@@ -55,7 +69,7 @@ function save(next) {
 
 /** Escribe un ajuste. Devuelve los ajustes ya actualizados. */
 function set(key, value) {
-  if (!KEYS.has(key) || typeof value !== "boolean") return load();
+  if (!VALIDAR[key] || !VALIDAR[key](value)) return load();
   const next = { ...load(), [key]: value };
   save(next);
   return next;

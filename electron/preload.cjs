@@ -25,6 +25,14 @@ contextBridge.exposeInMainWorld("bling", {
     ipcRenderer.invoke("bling:settings-set", key, value),
   /** Manda el catálogo al proceso principal (para el menú de bandeja). */
   setCatalog: (servicios) => ipcRenderer.send("bling:set-catalog", servicios),
+  /** El proceso principal avisa cuando cambia un ajuste por su cuenta. */
+  onSettingsChanged: (callback) => {
+    const listener = (_event, ajustes) => callback(ajustes);
+    ipcRenderer.on("bling:settings", listener);
+    return () => ipcRenderer.removeListener("bling:settings", listener);
+  },
+  /** Servicio pedido desde afuera (jump list, --abrir=) y todavía sin abrir. */
+  takePendingService: () => ipcRenderer.invoke("bling:servicio-pendiente"),
   /** El proceso principal pide abrir un servicio vía bandeja. */
   onOpenService: (callback) => {
     const listener = (_event, id) => callback(id);
