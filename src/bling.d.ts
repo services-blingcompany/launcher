@@ -90,6 +90,48 @@ export type AuthLoginResult = {
 /** Contador de notificaciones sin leer. */
 export type NotificationsCount = { count: number; autenticado: boolean };
 
+/** App del catálogo remoto de licencias (GET /api/v1/licenses). */
+export type LicenciaApp = {
+  key: string;
+  name: string;
+  description: string;
+  requiredTier: string;
+  webUrl: string | null;
+  hasAccess: boolean;
+  /** Última versión activa por plataforma ({"win-x64": "1.2.0"}). */
+  versions: Record<string, string>;
+};
+
+/** Respuesta del catálogo de licencias desde el proceso principal. */
+export type LicenciasCatalogoResult = {
+  ok: boolean;
+  apps?: LicenciaApp[];
+  plataforma?: string;
+  /** Motivo cuando ok=false: sin-sesion | sin-conexion | servidor | ... */
+  codigo?: string;
+};
+
+/** Resultado de pedir la descarga de una app. */
+export type LicenciaDescargaResult = {
+  ok: boolean;
+  key?: string;
+  version?: string;
+  archivo?: string;
+  /** sin-sesion | sin-licencia | sin-version | sin-descargas | servidor | red | integridad | en-curso */
+  codigo?: string;
+};
+
+/** Progreso de descarga de una app (push del proceso principal). */
+export type LicenciaProgreso = {
+  key: string;
+  transferidos: number;
+  total: number;
+  listo?: boolean;
+};
+
+/** App descargada en disco, lista para instalar. */
+export type LicenciaInstalada = { version: string; archivo: string };
+
 /** Credenciales del formulario nativo. */
 export type AuthCredentials = {
   email: string;
@@ -139,6 +181,20 @@ interface BlingApi {
   reportNotifications(conteo: number): void;
   /** Aviso push del main cuando la sesión cambia. */
   onAuthChanged(callback: (user: BlingUser | null) => void): () => void;
+
+  // ── Licencias de apps ──
+  /** Catálogo remoto con los flags de licencia del usuario de la sesión. */
+  licenciasCatalogo(): Promise<LicenciasCatalogoResult>;
+  /** Baja el binario de una app (URL firmada + verificación sha256). */
+  licenciasDescargar(key: string): Promise<LicenciaDescargaResult>;
+  /** Versión descargada en disco de una app, o null. */
+  licenciasInstalado(key: string): Promise<LicenciaInstalada | null>;
+  /** Ejecuta el instalador ya descargado. */
+  licenciasInstalar(key: string): Promise<boolean>;
+  /** Progreso de descarga de apps (push del proceso principal). */
+  onLicenciaProgreso(
+    callback: (progreso: LicenciaProgreso | null) => void,
+  ): () => void;
 
   // ── Diagnóstico ──
   /** Reporte de entorno y últimas líneas del registro, sin datos de la cuenta. */

@@ -1,12 +1,20 @@
 export type ServiceStatus = "available" | "soon";
 
+/** Estado de licencia del usuario para un servicio, según el catálogo remoto. */
+export type ServicioLicencia = {
+  hasAccess: boolean;
+  requiredTier: string;
+  /** Última versión por plataforma ({"win-x64": "1.2.0"}); vacío = sin binarios. */
+  versions: Record<string, string>;
+};
+
 export type Service = {
   id: string;
   name: string;
   tagline: string;
   /** URL de producción. Vacío = todavía no sale (tarjeta "Próximamente"). */
   url?: string;
-  icon: "newspaper" | "users" | "trending-up" | "shopping-bag" | "rocket";
+  icon: "newspaper" | "users" | "trending-up" | "shopping-bag" | "rocket" | "calculator";
   /** rgb del acento, para la luz que sigue al cursor. */
   accentRgb: string;
   /** Hex del texto/icono del acento. */
@@ -14,6 +22,14 @@ export type Service = {
   badge?: string;
   /** Tarjeta grande arriba de todo (sólo una). */
   featured?: boolean;
+  /**
+   * Producto del backend de licencias que habilita este servicio. Si tiene,
+   * el launcher pide el catálogo remoto (GET /api/v1/licenses) y decide con
+   * `licencia` si se abre, se descarga o se invita a los planes.
+   */
+  licenseKey?: string;
+  /** Estado de licencia del usuario; lo completa useLicencias desde el backend. */
+  licencia?: ServicioLicencia;
   status: ServiceStatus;
 };
 
@@ -43,6 +59,17 @@ export const SERVICES: Service[] = [
     icon: "users",
     accentRgb: "16, 185, 129",
     accent: "text-emerald-400",
+    status: "available",
+  },
+  {
+    id: "contable",
+    name: "Contable",
+    tagline: "Facturación y gestión contable: en la web o instalado en tu PC.",
+    url: "https://contable.bling.uy",
+    icon: "calculator",
+    accentRgb: "34, 211, 238",
+    accent: "text-cyan-400",
+    licenseKey: "contable",
     status: "available",
   },
   {

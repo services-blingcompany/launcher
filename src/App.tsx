@@ -10,6 +10,7 @@ import UserMenu from "./components/UserMenu";
 import LoginDialog from "./components/LoginDialog";
 import AccountPanel from "./components/AccountPanel";
 import { datosDeUsuario, useSession } from "./hooks/useSession";
+import { useLicencias } from "./hooks/useLicencias";
 import { SERVICES } from "./data/services";
 import { normalizar } from "./lib/normalizar";
 import { nivelDeTeclaZoom } from "./lib/zoom";
@@ -29,6 +30,13 @@ const DEFAULT_SETTINGS: Settings = {
   atajoGlobal: false,
   zoom: 0,
 };
+
+/**
+ * A dónde van los usuarios sin licencia de una app. Hoy es la sección
+ * Facturación de ajustes (donde se compran planes); cuando exista la
+ * página de planes, se cambia acá (un solo lugar).
+ */
+const URL_PLANES = "https://bling.uy/bling/settings";
 
 /**
  * Pantalla del launcher (layout horizontal): rail con campana + reloj a
@@ -62,6 +70,9 @@ export default function App() {
   // ── Sesión de Bling (login nativo + jar compartido con los servicios) ──
   const { user, cargando, sinLeer, login, logout } = useSession();
   const [loginAbierto, setLoginAbierto] = useState(false);
+
+  // ── Licencias de apps (catálogo remoto + descargas de escritorio) ──
+  const licencias = useLicencias(user);
 
   // Si la sesión aparece por otro lado —la ventana del auth que abrió el
   // botón de Google, por ejemplo— el diálogo de login ya no tiene sentido.
@@ -198,6 +209,11 @@ export default function App() {
   /** Abre un servicio y lo registra como reciente. */
   const abrir = useCallback((service: Service) => {
     if (service.status !== "available" || !service.url) return;
+    // Sin licencia vigente no se abre: el camino son los planes.
+    if (service.licenseKey && service.licencia && !service.licencia.hasAccess) {
+      void window.bling.openExternal(URL_PLANES);
+      return;
+    }
     void window.bling
       .openService({
         id: service.id,
@@ -215,15 +231,52 @@ export default function App() {
     void window.bling.openExternal(service.url);
   }, []);
 
+  /** Descarga el binario de una app con licencia a la carpeta del launcher. */
+  const descargarApp = useCallback(
+    (service: Service) => {
+      if (service.licenseKey) void licencias.descargar(service.licenseKey);
+    },
+    [licencias.descargar],
+  );
+
+  /** Ejecuta el instalador ya descargado. */
+  const instalarApp = useCallback(
+    (service: Service) => {
+      if (service.licenseKey) void licencias.instalar(service.licenseKey);
+    },
+    [licencias.instalar],
+  );
+
+  /** Página de planes en el navegador del sistema. */
+  const verPlanes = useCallback(() => {
+    void window.bling.openExternal(URL_PLANES);
+  }, []);
+
+  /**
+   * Catálogo visible: el estático del launcher con el estado de licencia del
+   * catálogo remoto pisado encima (por key de producto). Sin sesión o sin
+   * respuesta, los servicios con licencia quedan sin `licencia` y la fila
+   * se comporta como una web más (el gate de la propia app resuelve).
+   */
+  const servicios = useMemo(
+    () =>
+      SERVICES.map((s) => {
+        if (!s.licenseKey) return s;
+        const licencia = licencias.apps[s.licenseKey];
+        return licencia ? { ...s, licencia } : s;
+      }),
+    [licencias.apps],
+  );
+
   const destacado = useMemo(
-    () => SERVICES.find((s) => s.featured) ?? SERVICES[0],
-    [],
+    () => servicios.find((s) => s.featured) ?? servicios[0],
+    [servicios],
   );
 
   const { recientesVisibles, disponibles, proximos, navegables } =
     useMemo(() => {
       const q = normalizar(query);
-      const coincidencias = SERVICES.filter(
+      const coincidencias = servicios.filter(
         (s) =>
           s.id !== destacado.id &&
           (!q ||
@@ -255,7 +308,7 @@ export default function App() {
       ];
 
       return { recientesVisibles, disponibles, proximos, navegables };
-    }, [query, recents, destacado]);
+    }, [query, recents, destacado, servicios]);
 
   // ── Selección con teclado ──
   const [seleccion, setSeleccion] = useState<string | null>(null);
@@ -330,9 +383,31 @@ export default function App() {
   const bajada = cuenta
     ? "Tu sesión está activa: cada servicio se abre con vos adentro."
     : "Entrás una vez y te conoce todo el ecosistema.";
-  const totalDisponibles = SERVICES.filter(
+  const totalDisponibles = servicios.filter(
     (s) => s.status === "available",
   ).length;
+
+  /**
+   * Props de licencia de una fila del catálogo: versión para la plataforma
+   * actual, descarga en curso, versión guardada y acciones, todo armado
+   * desde el estado del hook de licencias.
+   */
+  const propsLicencia = (s: Service) => ({
+    version: s.licenseKey
+      ? licencias.apps[s.licenseKey]?.versions?.[licencias.plataforma] ?? null
+      : null,
+    guardada: s.licenseKey
+      ? licencias.guardadas[s.licenseKey]?.version ?? null
+      : null,
+    descarga: s.licenseKey && licencias.descargas[s.licenseKey]
+      ? { percent: licencias.descargas[s.licenseKey].percent }
+      : null,
+    bajando: s.licenseKey ? !!licencias.bajando[s.licenseKey] : false,
+    error: s.licenseKey ? licencias.errores[s.licenseKey] || null : null,
+    onDescargar: descargarApp,
+    onInstalar: instalarApp,
+    onVerPlanes: verPlanes,
+  });
 
   return (
     <div className="flex h-full flex-col bg-[#09090b] text-white antialiased">
@@ -471,6 +546,7 @@ export default function App() {
                           key={s.id}
                           service={s}
                           selected={s.id === seleccion}
+                          {...propsLicencia(s)}
                           onOpen={abrir}
                           onOpenExternal={abrirEnNavegador}
                         />
@@ -489,6 +565,7 @@ export default function App() {
                           key={s.id}
                           service={s}
                           selected={s.id === seleccion}
+                          {...propsLicencia(s)}
                           onOpen={abrir}
                           onOpenExternal={abrirEnNavegador}
                         />
@@ -556,7 +633,7 @@ export default function App() {
                 sinLeer={sinLeer}
                 version={version}
                 disponibles={totalDisponibles}
-                total={SERVICES.length}
+                total={servicios.length}
                 update={update}
                 alDia={alDia}
                 buscando={buscando}

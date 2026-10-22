@@ -1,9 +1,10 @@
 import type { MouseEvent } from "react";
-import { ArrowUpRight, Newspaper } from "lucide-react";
+import { ArrowUpRight, Calculator, Newspaper } from "lucide-react";
 import type { Service } from "../data/services";
 
 const ICONS = {
   newspaper: Newspaper,
+  calculator: Calculator,
 } as const;
 
 /**

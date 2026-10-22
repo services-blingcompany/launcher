@@ -8,6 +8,7 @@ const recents = require("./recents.cjs");
 const settings = require("./settings.cjs");
 const tray = require("./tray.cjs");
 const auth = require("./auth.cjs");
+const licencias = require("./licencias.cjs");
 const acceso = require("./acceso.cjs");
 const contextMenu = require("./contextMenu.cjs");
 const diagnostics = require("./diagnostics.cjs");
@@ -46,7 +47,7 @@ let catalogoServicios = [];
  * lista. Un XSS en cualquier servicio nunca podrá ejecutar código local
  * ni abrir dominios ajenos a Bling.
  */
-const ALLOWED_HOSTS = new Set(["bling.uy", "www.bling.uy"]);
+const ALLOWED_HOSTS = new Set(["bling.uy", "www.bling.uy", "contable.bling.uy"]);
 
 function isAllowedUrl(value) {
   try {
@@ -517,6 +518,10 @@ if (!gotTheLock) {
     aplicarAtajoGlobal(settings.load().atajoGlobal);
     // Sesión de Bling: login nativo + perfil, sobre el jar compartido.
     auth.init({ getHub: () => launcherWindow });
+
+    // Licencias de apps: catálogo remoto y descarga de binarios (usa el
+    // puente de auth para hablar con el backend).
+    licencias.init();
 
     // Avisos nativos + globito: el contador llega del renderer y acá se
     // decide si hay algo nuevo que contar. El clic abre la bandeja.

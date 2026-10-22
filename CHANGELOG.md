@@ -9,6 +9,13 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.16.0]
+
+- **Catálogo de apps con licencias.** El launcher ya no es sólo un navegador de servicios: muestra las apps del ecosistema con el estado de tu cuenta. Si tu plan incluye una app, la fila lo dice ("En tu plan"); si no, dice qué plan la trae y el botón "Ver planes" te lleva a bling.uy.
+- **Descargá el Contable a tu PC.** Con licencia vigente, el botón "Descargar" baja la última versión de escritorio al launcher, con progreso visible. El archivo se verifica contra la huella que publica Bling antes de guardarse: si no coincide, se descarta y se avisa.
+- **Instalar de un toque.** Cuando la descarga quedó guardada, el botón pasa a "Instalar" y ejecuta el instalador. La versión ya descargada no se vuelve a bajar.
+- **El catálogo llega con tu sesión puesta.** Quien tiene sesión activa ve sus apps desbloqueadas al instante; quien cierra sesión vuelve al catálogo sin licencias.
+
 ## [1.15.0]
 
 - **Atajo global para traer el launcher al frente.** Con **Ctrl + Shift + B** el launcher aparece desde cualquier aplicación, incluso si lo habías minimizado o escondido en la bandeja. Si otra aplicación ya usa esa combinación, prueba con **Ctrl + Alt + B**; si ninguna queda libre, lo deja anotado y el interruptor no tiene efecto (nunca le pisa el atajo a otro programa). Viene **apagado**: se enciende en Ajustes → General, y ahí mismo dice qué combinación quedó activa.

@@ -451,4 +451,4 @@ function revisar() {
   avisar(obtenerHub);
 }
 
-module.exports = { init, perfil, cerrarPuente, haySesion, revisar, SITE };
+module.exports = { init, perfil, enPagina, cerrarPuente, haySesion, revisar, SITE };

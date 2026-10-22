@@ -64,6 +64,22 @@ contextBridge.exposeInMainWorld("bling", {
     return () => ipcRenderer.removeListener("auth:changed", listener);
   },
 
+  // ── Licencias de apps ──
+  /** Catálogo remoto con los flags de licencia del usuario ({ ok, apps?, codigo? }). */
+  licenciasCatalogo: () => ipcRenderer.invoke("licencias:catalogo"),
+  /** Baja el binario de una app (URL firmada + verificación sha256). */
+  licenciasDescargar: (key) => ipcRenderer.invoke("licencias:descargar", key),
+  /** Versión descargada en disco de una app ({ version, archivo } o null). */
+  licenciasInstalado: (key) => ipcRenderer.invoke("licencias:instalado", key),
+  /** Ejecuta el instalador ya descargado. Devuelve true si arrancó. */
+  licenciasInstalar: (key) => ipcRenderer.invoke("licencias:instalar", key),
+  /** Progreso de descarga de apps (push del proceso principal). */
+  onLicenciaProgreso: (callback) => {
+    const listener = (_event, payload) => callback(payload);
+    ipcRenderer.on("licencias:progreso", listener);
+    return () => ipcRenderer.removeListener("licencias:progreso", listener);
+  },
+
   // ── Diagnóstico ──
   /** Reporte de entorno y últimas líneas del registro, sin datos de la cuenta. */
   getDiagnostics: () => ipcRenderer.invoke("bling:diagnostico"),

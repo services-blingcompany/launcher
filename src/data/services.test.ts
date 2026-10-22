@@ -20,10 +20,10 @@ describe("catálogo de servicios", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("lo que está disponible tiene URL https del sitio", () => {
+  it("lo que está disponible tiene URL https del sitio (o su subdominio)", () => {
     for (const servicio of SERVICES.filter((s) => s.status === "available")) {
       expect(servicio.url, `${servicio.id} dice disponible y no tiene URL`).toMatch(
-        /^https:\/\/(www\.)?bling\.uy(\/|$)/,
+        /^https:\/\/([a-z0-9-]+\.)?bling\.uy(\/|$)/i,
       );
     }
   });
@@ -43,6 +43,31 @@ describe("catálogo de servicios", () => {
       expect(servicio.accentRgb, `${servicio.id} tiene un accentRgb raro`).toMatch(
         /^\d{1,3}, \d{1,3}, \d{1,3}$/,
       );
+    }
+  });
+});
+
+describe("servicios con licencia", () => {
+  const licenciados = SERVICES.filter((s) => s.licenseKey);
+
+  it("el contable está en el catálogo y se habilita por licencia", () => {
+    expect(licenciados.map((s) => s.licenseKey)).toContain("contable");
+  });
+
+  it("las keys de licencia son únicas y de un solo producto", () => {
+    const keys = licenciados.map((s) => s.licenseKey);
+    expect(new Set(keys).size).toBe(keys.length);
+    for (const key of keys) {
+      expect(key).toMatch(/^[a-z0-9][a-z0-9-]*$/);
+    }
+  });
+
+  it("todo servicio con licencia está disponible y tiene URL", () => {
+    for (const servicio of licenciados) {
+      expect(servicio.status, `${servicio.id} tiene licencia y no está disponible`).toBe(
+        "available",
+      );
+      expect(servicio.url, `${servicio.id} tiene licencia y no tiene URL`).toBeTruthy();
     }
   });
 });
