@@ -15,6 +15,7 @@ tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 - **Descargá el Contable a tu PC.** Con licencia vigente, el botón "Descargar" baja la última versión de escritorio al launcher, con progreso visible. El archivo se verifica contra la huella que publica Bling antes de guardarse: si no coincide, se descarta y se avisa.
 - **Instalar de un toque.** Cuando la descarga quedó guardada, el botón pasa a "Instalar" y ejecuta el instalador. La versión ya descargada no se vuelve a bajar.
 - **El catálogo llega con tu sesión puesta.** Quien tiene sesión activa ve sus apps desbloqueadas al instante; quien cierra sesión vuelve al catálogo sin licencias.
+- **"Ver planes" lleva al catálogo de planes de Bling.** El botón abre la página pública de planes (precios y características de cada plan), en bling.uy.
 
 ## [1.15.0]
 
