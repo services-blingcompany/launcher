@@ -9,6 +9,15 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.18.0]
+
+- **Soporte adentro del launcher, con sidebar.** Un botón nuevo al lado de Ajustes (el redondel de salvavidas) abre la pantalla de soporte: la lista de tus tickets a la izquierda, la conversación a la derecha, y Escape te vuelve al catálogo. Mismo look de siempre, sin salir de la app.
+- **El ticket se abre desde el chat, sin formularios.** Apretás "Nuevo", escribís lo que necesitás y recién ahí se abre el ticket: el ID (por ejemplo BLING-0007) queda visible arriba de la conversación y el asunto lo arma Bling con lo que escribiste.
+- **Hasta 4 capturas por mensaje.** Pegás la imagen con Ctrl+V o la elegís con el botón de cámara. Las pesadas se comprimen en tu PC antes de subir (máximo 1600 px) y el servidor las guarda en AVIF; las miniaturas se ven dentro del chat.
+- **¿Querés ofrecer más datos de tu equipo?** Al abrir un ticket preguntamos si querés compartir sistema operativo, versión del launcher, idioma y zona horaria. Si lo activás, ese bloque viaja con tu primer mensaje; si no, no se manda nada. Viene apagado.
+- **Cerrar y reabrir, desde el encabezado.** Cuando el equipo da por resuelto el ticket lo podés reabrir desde el mismo chat, y si querés cerrarlo vos, también.
+- La lógica de topes y formato del soporte quedó en un módulo propio, con pruebas.
+
 ## [1.17.0]
 
 - **Abrir el Contable instalado, de un toque.** Si el Contable ya está en tu PC, la fila muestra "Abrir" y lanza directo la app de escritorio (sin pasar por la web ni por el instalador). Si todavía no está, sigue el camino de siempre: Descargar y Instalar.

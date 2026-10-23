@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Search, Globe, X, Settings as SettingsIcon } from "lucide-react";
+import { Search, Globe, X, Settings as SettingsIcon, LifeBuoy } from "lucide-react";
 import TitleBar from "./components/TitleBar";
 import Rail from "./components/Rail";
 import FeaturedCard from "./components/FeaturedCard";
 import ServiceRow from "./components/ServiceRow";
 import UpdateToast, { UpdateBadge } from "./components/UpdateToast";
 import SettingsPanel from "./components/SettingsPanel";
+import SupportPanel from "./components/SupportPanel";
 import UserMenu from "./components/UserMenu";
 import LoginDialog from "./components/LoginDialog";
 import AccountPanel from "./components/AccountPanel";
@@ -65,6 +66,9 @@ export default function App() {
   // ── Ajustes ──
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [ajustesAbiertos, setAjustesAbiertos] = useState(false);
+
+  // ── Soporte: chat de tickets, vista propia bajo la barra de título ──
+  const [soporteAbierto, setSoporteAbierto] = useState(false);
 
   // ── Sesión de Bling (login nativo + jar compartido con los servicios) ──
   const { user, cargando, sinLeer, login, logout } = useSession();
@@ -341,8 +345,12 @@ export default function App() {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const enBuscador = document.activeElement === inputRef.current;
+      // Con un diálogo encima (ajustes, soporte, login) los atajos del
+      // catálogo quedan apagados: escribir en un chat no tiene que mover la
+      // selección ni lanzar servicios. Escape lo resuelve cada diálogo.
+      const hayDialogo = document.querySelector('[role="dialog"]') !== null;
 
-      if (e.key === "/" && !enBuscador) {
+      if (e.key === "/" && !enBuscador && !hayDialogo) {
         e.preventDefault();
         inputRef.current?.focus();
         return;
@@ -352,6 +360,7 @@ export default function App() {
         setQuery("");
         return;
       }
+      if (hayDialogo) return;
 
       // ↑↓ recorren los resultados aunque el foco esté en el buscador
       // (como en Spotlight o Raycast).
@@ -440,6 +449,16 @@ export default function App() {
               {update && !toastVisible && (
                 <UpdateBadge update={update} onOpen={() => setToastVisible(true)} />
               )}
+
+              <button
+                type="button"
+                onClick={() => setSoporteAbierto(true)}
+                aria-label="Soporte"
+                title="Soporte"
+                className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 transition-colors hover:border-[#ffcc00]/40 hover:text-white"
+              >
+                <LifeBuoy size={13} />
+              </button>
 
               <button
                 type="button"
@@ -672,6 +691,14 @@ export default function App() {
       {/* ── Login nativo ── */}
       {loginAbierto && (
         <LoginDialog onCerrar={() => setLoginAbierto(false)} onLogin={login} />
+      )}
+
+      {/* ── Soporte: chat de tickets ── */}
+      {soporteAbierto && (
+        <SupportPanel
+          userId={user?.id ?? null}
+          onCerrar={() => setSoporteAbierto(false)}
+        />
       )}
 
       {/* ── Panel de ajustes ── */}

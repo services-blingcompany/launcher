@@ -9,6 +9,7 @@ const settings = require("./settings.cjs");
 const tray = require("./tray.cjs");
 const auth = require("./auth.cjs");
 const licencias = require("./licencias.cjs");
+const soporte = require("./soporte.cjs");
 const acceso = require("./acceso.cjs");
 const contextMenu = require("./contextMenu.cjs");
 const diagnostics = require("./diagnostics.cjs");
@@ -522,6 +523,9 @@ if (!gotTheLock) {
     // Licencias de apps: catálogo remoto y descarga de binarios (usa el
     // puente de auth para hablar con el backend).
     licencias.init();
+
+    // Soporte: chat de tickets del launcher (mismo puente de auth).
+    soporte.init();
 
     // Avisos nativos + globito: el contador llega del renderer y acá se
     // decide si hay algo nuevo que contar. El clic abre la bandeja.

@@ -146,6 +146,69 @@ export type AuthCredentials = {
   rememberMe?: boolean;
 };
 
+// ── Soporte (chat de tickets) ──
+
+/** Ticket de soporte (GET/POST /api/v1/tickets). */
+export type SoporteTicket = {
+  id: number;
+  /** El ID visible, ej. "BLING-0007". */
+  ticket_number: string;
+  /** "support" es el chat directo; los tipos viejos son del FeedbackModal. */
+  type: "report" | "suggestion" | "bug" | "other" | "support" | string;
+  title: string;
+  description: string;
+  status: "open" | "in_progress" | "resolved" | "closed" | string;
+  /** Chat asociado: de ahí salen los mensajes; su estado manda sobre el ticket. */
+  chat_id: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Adjunto de un mensaje (el endpoint de upload ya devuelve AVIF). */
+export type SoporteAdjunto = {
+  url: string;
+  filename: string;
+  type: string;
+  size: number;
+};
+
+/** Mensaje de la conversación de un ticket. */
+export type SoporteMensaje = {
+  id: number;
+  chat_id: number;
+  sender_id: number | null;
+  content: string;
+  attachments: SoporteAdjunto[] | null;
+  is_deleted: boolean;
+  created_at: string;
+  sender_name?: string | null;
+  sender_avatar?: string | null;
+};
+
+/** Fallo común de cualquier acción de soporte (el detalle suele venir del backend). */
+export type SoporteFallo = {
+  ok: false;
+  /** sin-sesion | sin-licencia | tope | sin-conexion | servidor | capturas | error */
+  codigo: string;
+  detalle: string | null;
+};
+
+export type SoporteListaResult = { ok: true; tickets: SoporteTicket[] } | SoporteFallo;
+export type SoporteMensajesResult =
+  | { ok: true; mensajes: SoporteMensaje[] }
+  | SoporteFallo;
+export type SoporteNuevoResult = { ok: true; ticket: SoporteTicket } | SoporteFallo;
+export type SoporteResponderResult =
+  | { ok: true; mensaje: SoporteMensaje }
+  | SoporteFallo;
+export type SoporteSubirResult =
+  | { ok: true; adjunto: SoporteAdjunto }
+  | SoporteFallo;
+export type SoporteImagenResult =
+  | { ok: true; dataUrl: string }
+  | SoporteFallo;
+export type SoporteAccionResult = { ok: true } | SoporteFallo;
+
 interface BlingApi {
   openService(service: BlingServiceRequest): Promise<boolean>;
   openExternal(url: string): Promise<void>;
@@ -210,6 +273,40 @@ interface BlingApi {
   onLicenciaEjecutable(
     callback: (aviso: { key: string; presente: boolean } | null) => void,
   ): () => void;
+
+  // ── Soporte (chat de tickets) ──
+  /** Tickets de soporte del usuario. */
+  soporteLista(): Promise<SoporteListaResult>;
+  /** Conversación de un ticket, más nuevo primero (la UI la da vuelta). */
+  soporteMensajes(chatId: number): Promise<SoporteMensajesResult>;
+  /** Abre un ticket con el primer mensaje; el título lo deriva el backend. */
+  soporteNuevo(payload: {
+    mensaje: string;
+    /** Bloque de datos del equipo si el usuario ofreció compartirlos. */
+    datosEquipo?: string | null;
+    /** Hasta 4 capturas ya subidas con soporteSubir. */
+    capturas?: SoporteAdjunto[];
+  }): Promise<SoporteNuevoResult>;
+  /** Responde en la conversación de un ticket. */
+  soporteResponder(payload: {
+    chatId: number;
+    contenido: string;
+    capturas?: SoporteAdjunto[];
+  }): Promise<SoporteResponderResult>;
+  /** Cierra el ticket (el estado se deriva del chat). */
+  soporteCerrar(chatId: number): Promise<SoporteAccionResult>;
+  /** Reabre un ticket cerrado. */
+  soporteReabrir(chatId: number): Promise<SoporteAccionResult>;
+  /** Sube UNA captura (bytes comprimidos en base64) y devuelve su adjunto. */
+  soporteSubir(archivo: {
+    nombre: string;
+    tipo: string;
+    base64: string;
+  }): Promise<SoporteSubirResult>;
+  /** Baja una captura de /uploads como data URL (para poder mostrarla). */
+  soporteImagen(url: string): Promise<SoporteImagenResult>;
+  /** Set esencial de datos del equipo, ya armado por el proceso principal. */
+  soporteDatosEquipo(): Promise<string>;
 
   // ── Diagnóstico ──
   /** Reporte de entorno y últimas líneas del registro, sin datos de la cuenta. */

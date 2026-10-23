@@ -90,6 +90,26 @@ contextBridge.exposeInMainWorld("bling", {
     return () => ipcRenderer.removeListener("licencias:ejecutable", listener);
   },
 
+  // ── Soporte (chat de tickets) ──
+  /** Tickets de soporte del usuario ({ ok, tickets?, codigo?, detalle? }). */
+  soporteLista: () => ipcRenderer.invoke("soporte:lista"),
+  /** Conversación de un ticket ({ ok, mensajes?, ... }), más nuevo primero. */
+  soporteMensajes: (chatId) => ipcRenderer.invoke("soporte:mensajes", chatId),
+  /** Abre un ticket con el primer mensaje (+ capturas ya subidas). */
+  soporteNuevo: (payload) => ipcRenderer.invoke("soporte:nuevo", payload),
+  /** Responde en la conversación de un ticket. */
+  soporteResponder: (payload) => ipcRenderer.invoke("soporte:responder", payload),
+  /** Cierra el ticket (el estado se deriva del chat). */
+  soporteCerrar: (chatId) => ipcRenderer.invoke("soporte:cerrar", chatId),
+  /** Reabre un ticket cerrado. */
+  soporteReabrir: (chatId) => ipcRenderer.invoke("soporte:reabrir", chatId),
+  /** Sube UNA captura (el backend la convierte a AVIF). */
+  soporteSubir: (archivo) => ipcRenderer.invoke("soporte:subir", archivo),
+  /** Baja una captura de /uploads como data URL (por el reto de Cloudflare). */
+  soporteImagen: (url) => ipcRenderer.invoke("soporte:imagen", url),
+  /** Set esencial de datos del equipo (para el bloque opcional). */
+  soporteDatosEquipo: () => ipcRenderer.invoke("soporte:datos-equipo"),
+
   // ── Diagnóstico ──
   /** Reporte de entorno y últimas líneas del registro, sin datos de la cuenta. */
   getDiagnostics: () => ipcRenderer.invoke("bling:diagnostico"),
