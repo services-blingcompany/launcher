@@ -4,6 +4,8 @@ const { app, net, ipcMain, BrowserWindow, shell } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
+const http = require("node:http");
+const { spawn } = require("node:child_process");
 const auth = require("./auth.cjs");
 const logica = require("./licenciasLogica.cjs");
 
@@ -28,14 +30,6 @@ const logica = require("./licenciasLogica.cjs");
  * llega por second-instance. El ticket de 7 días lo renueva después la
  * propia app contra /renew; acá sólo se consigue y se entrega.
  */
-const { app, net, ipcMain, BrowserWindow, shell } = require("electron");
-const fs = require("node:fs");
-const path = require("node:path");
-const http = require("node:http");
-const crypto = require("node:crypto");
-const { spawn } = require("node:child_process");
-const auth = require("./auth.cjs");
-const logica = require("./licenciasLogica.cjs");
 
 /** Vida máxima de una descarga: corta a propósito (la URL firmada dura 5 min). */
 const DESCARGA_TIMEOUT_MS = 15 * 60 * 1000;

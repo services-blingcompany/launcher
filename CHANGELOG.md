@@ -9,6 +9,10 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.18.1]
+
+- **El hub vuelve a arrancar desde el código fuente.** El commit de 1.17.0 dejó dos bloques de imports al inicio de `licencias.cjs` y eso frenaba la carga del proceso principal con un error de sintaxis. Ninguna batería lo veía (ni TypeScript ni vitest parsean los módulos de Electron): sólo lo frenaba arrancar la app. El launcher instalado no estaba afectado porque venía de una compilación anterior.
+
 ## [1.18.0]
 
 - **Soporte adentro del launcher, con sidebar.** Un botón nuevo al lado de Ajustes (el redondel de salvavidas) abre la pantalla de soporte: la lista de tus tickets a la izquierda, la conversación a la derecha, y Escape te vuelve al catálogo. Mismo look de siempre, sin salir de la app.
