@@ -11,7 +11,7 @@ export type EstadoDescarga = { percent: number; transferidos: number; total: num
 
 /** Mensajes para cada código de error que puede devolver el proceso principal. */
 const MENSAJES: Record<string, string> = {
-  "sin-sesion": "Iniciá sesión para descargar.",
+  "sin-sesion": "Iniciá sesión para descargar o abrir.",
   "sin-licencia": "Tu plan no incluye esta app.",
   "sin-version": "Todavía no hay versión para tu sistema.",
   "sin-descargas": "Las descargas no están disponibles todavía.",
@@ -19,6 +19,7 @@ const MENSAJES: Record<string, string> = {
   red: "No se pudo descargar. Revisá tu conexión.",
   integridad: "El archivo no pasó la verificación y se descartó.",
   "en-curso": "Ya se está descargando.",
+  "no-instalada": "La app todavía no está instalada en tu PC.",
 };
 
 export function mensajeDeError(codigo: string): string {
@@ -40,6 +41,7 @@ export function useLicencias(user: BlingUser | null) {
   const [bajando, setBajando] = useState<Record<string, boolean>>({});
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [guardadas, setGuardadas] = useState<Record<string, LicenciaInstalada>>({});
+  const [ejecutables, setEjecutables] = useState<Record<string, boolean>>({});
 
   const userId = user?.id ?? null;
 
@@ -49,6 +51,7 @@ export function useLicencias(user: BlingUser | null) {
     if (userId === null) {
       setApps({});
       setGuardadas({});
+      setEjecutables({});
       return;
     }
     void window.bling.licenciasCatalogo().then((r) => {
@@ -87,6 +90,34 @@ export function useLicencias(user: BlingUser | null) {
       });
     }
   }, [apps]);
+
+  // ── Apps con ejecutable nativo ya instalado en la PC ──
+  useEffect(() => {
+    let vivo = true;
+    const claves = Object.values(apps)
+      .filter((a) => a.hasAccess)
+      .map((a) => a.key);
+    for (const key of claves) {
+      void window.bling.licenciasEjecutable(key).then((presente) => {
+        if (!vivo || !presente) return;
+        setEjecutables((prev) => ({ ...prev, [key]: true }));
+      });
+    }
+    return () => {
+      vivo = false;
+    };
+  }, [apps]);
+
+  // ── El main avisa cuando el exe aparece (tras instalar) ──
+  useEffect(() => {
+    const off = window.bling.onLicenciaEjecutable((aviso) => {
+      if (!aviso) return;
+      setEjecutables((prev) =>
+        aviso.presente ? { ...prev, [aviso.key]: true } : prev,
+      );
+    });
+    return off;
+  }, []);
 
   // ── Progreso que empuja el proceso principal ──
   useEffect(() => {
@@ -131,5 +162,29 @@ export function useLicencias(user: BlingUser | null) {
     await window.bling.licenciasInstalar(key);
   }, []);
 
-  return { apps, plataforma, descargas, bajando, errores, guardadas, descargar, instalar };
+  /**
+   * Abre la app nativa instalada en la PC con su ticket de licencia (el
+   * main pide el ticket, monta el canal local y la spawnea).
+   */
+  const abrir = useCallback(async (key: string) => {
+    setErrores((prev) => ({ ...prev, [key]: "" }));
+    const r = await window.bling.licenciasAbrir(key);
+    if (!r.ok) {
+      setErrores((prev) => ({ ...prev, [key]: mensajeDeError(r.codigo ?? "red") }));
+    }
+    return r;
+  }, []);
+
+  return {
+    apps,
+    plataforma,
+    descargas,
+    bajando,
+    errores,
+    guardadas,
+    ejecutables,
+    descargar,
+    instalar,
+    abrir,
+  };
 }

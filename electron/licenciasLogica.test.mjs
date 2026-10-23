@@ -1,8 +1,16 @@
 import { describe, expect, it } from "vitest";
 import logica from "./licenciasLogica.cjs";
 
-const { plataformaDe, esClaveValida, nombreArchivo, codigoDeEstado, integridadOk, parsearManifest } =
-  logica;
+const {
+  plataformaDe,
+  esClaveValida,
+  nombreArchivo,
+  codigoDeEstado,
+  integridadOk,
+  parsearManifest,
+  ejecutablesPara,
+  argumentoTicket,
+} = logica;
 
 describe("plataformaDe", () => {
   it("mapea el proceso actual a la convención del backend", () => {
@@ -91,5 +99,30 @@ describe("parsearManifest", () => {
     expect(parsearManifest("{}")).toBe(null);
     expect(parsearManifest(JSON.stringify({ version: "1.0.0" }))).toBe(null);
     expect(parsearManifest(null)).toBe(null);
+  });
+});
+
+describe("ejecutablesPara", () => {
+  it("cruza las raíces de instalación con las carpetas posibles de la app", () => {
+    expect(
+      ejecutablesPara("contable", ["C:/Users/x/AppData/Local/Programs", "C:/Program Files"]),
+    ).toEqual([
+      "C:/Users/x/AppData/Local/Programs/Bling Contable/Bling Contable.exe",
+      "C:/Users/x/AppData/Local/Programs/bling-contable/Bling Contable.exe",
+      "C:/Program Files/Bling Contable/Bling Contable.exe",
+      "C:/Program Files/bling-contable/Bling Contable.exe",
+    ]);
+  });
+
+  it("claves sin app nativa no tienen dónde buscar", () => {
+    expect(ejecutablesPara("noticias", ["C:/x"])).toEqual([]);
+    expect(ejecutablesPara("../etc", ["C:/x"])).toEqual([]);
+    expect(ejecutablesPara("", ["C:/x"])).toEqual([]);
+  });
+});
+
+describe("argumentoTicket", () => {
+  it("arma el par puerto:nonce que el contable parsea con el prefijo", () => {
+    expect(argumentoTicket(45123, "abc123")).toBe("--bling-ticket=45123:abc123");
   });
 });

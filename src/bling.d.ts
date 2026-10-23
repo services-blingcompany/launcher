@@ -132,6 +132,13 @@ export type LicenciaProgreso = {
 /** App descargada en disco, lista para instalar. */
 export type LicenciaInstalada = { version: string; archivo: string };
 
+/** Resultado de abrir la app nativa con su ticket de licencia. */
+export type LicenciaAbrirResult = {
+  ok: boolean;
+  /** no-instalada | sin-sesion | sin-licencia | sin-version | servidor | red */
+  codigo?: string;
+};
+
 /** Credenciales del formulario nativo. */
 export type AuthCredentials = {
   email: string;
@@ -191,9 +198,17 @@ interface BlingApi {
   licenciasInstalado(key: string): Promise<LicenciaInstalada | null>;
   /** Ejecuta el instalador ya descargado. */
   licenciasInstalar(key: string): Promise<boolean>;
+  /** Abre la app nativa instalada con su ticket de licencia. */
+  licenciasAbrir(key: string): Promise<LicenciaAbrirResult>;
+  /** ¿Está el ejecutable nativo de la app instalado en la PC? */
+  licenciasEjecutable(key: string): Promise<boolean>;
   /** Progreso de descarga de apps (push del proceso principal). */
   onLicenciaProgreso(
     callback: (progreso: LicenciaProgreso | null) => void,
+  ): () => void;
+  /** Push del main: el exe nativo de la app apareció en la PC. */
+  onLicenciaEjecutable(
+    callback: (aviso: { key: string; presente: boolean } | null) => void,
   ): () => void;
 
   // ── Diagnóstico ──

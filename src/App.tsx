@@ -246,6 +246,14 @@ export default function App() {
     [licencias.instalar],
   );
 
+  /** Abre la app nativa instalada en la PC, con su ticket de licencia. */
+  const abrirApp = useCallback(
+    (service: Service) => {
+      if (service.licenseKey) void licencias.abrir(service.licenseKey);
+    },
+    [licencias.abrir],
+  );
+
   /** Página de planes en el navegador del sistema. */
   const verPlanes = useCallback(() => {
     void window.bling.openExternal(URL_PLANES);
@@ -388,8 +396,8 @@ export default function App() {
 
   /**
    * Props de licencia de una fila del catálogo: versión para la plataforma
-   * actual, descarga en curso, versión guardada y acciones, todo armado
-   * desde el estado del hook de licencias.
+   * actual, descarga en curso, versión guardada, exe nativo en la PC y
+   * acciones, todo armado desde el estado del hook de licencias.
    */
   const propsLicencia = (s: Service) => ({
     version: s.licenseKey
@@ -398,6 +406,7 @@ export default function App() {
     guardada: s.licenseKey
       ? licencias.guardadas[s.licenseKey]?.version ?? null
       : null,
+    ejecutable: s.licenseKey ? !!licencias.ejecutables[s.licenseKey] : false,
     descarga: s.licenseKey && licencias.descargas[s.licenseKey]
       ? { percent: licencias.descargas[s.licenseKey].percent }
       : null,
@@ -405,6 +414,7 @@ export default function App() {
     error: s.licenseKey ? licencias.errores[s.licenseKey] || null : null,
     onDescargar: descargarApp,
     onInstalar: instalarApp,
+    onAbrir: abrirApp,
     onVerPlanes: verPlanes,
   });
 

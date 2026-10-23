@@ -73,11 +73,21 @@ contextBridge.exposeInMainWorld("bling", {
   licenciasInstalado: (key) => ipcRenderer.invoke("licencias:instalado", key),
   /** Ejecuta el instalador ya descargado. Devuelve true si arrancó. */
   licenciasInstalar: (key) => ipcRenderer.invoke("licencias:instalar", key),
+  /** Abre la app nativa instalada con su ticket de licencia. */
+  licenciasAbrir: (key) => ipcRenderer.invoke("licencias:abrir", key),
+  /** ¿Está el ejecutable nativo de la app en la PC? */
+  licenciasEjecutable: (key) => ipcRenderer.invoke("licencias:ejecutable", key),
   /** Progreso de descarga de apps (push del proceso principal). */
   onLicenciaProgreso: (callback) => {
     const listener = (_event, payload) => callback(payload);
     ipcRenderer.on("licencias:progreso", listener);
     return () => ipcRenderer.removeListener("licencias:progreso", listener);
+  },
+  /** El main avisa que el exe nativo de la app apareció en la PC. */
+  onLicenciaEjecutable: (callback) => {
+    const listener = (_event, payload) => callback(payload);
+    ipcRenderer.on("licencias:ejecutable", listener);
+    return () => ipcRenderer.removeListener("licencias:ejecutable", listener);
   },
 
   // ── Diagnóstico ──

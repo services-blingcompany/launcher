@@ -9,6 +9,13 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.17.0]
+
+- **Abrir el Contable instalado, de un toque.** Si el Contable ya está en tu PC, la fila muestra "Abrir" y lanza directo la app de escritorio (sin pasar por la web ni por el instalador). Si todavía no está, sigue el camino de siempre: Descargar y Instalar.
+- **El Contable no te va a pedir iniciar sesión.** El launcher es el único que cuida tu sesión de Bling: al abrir la app instalada le entrega un pase de licencia de 7 días que la propia app renueva sola mientras tu plan siga vigente. Si el pase vence o el plan ya no incluye el Contable, la app te devuelve al launcher.
+- **Tras instalar, el pase llega solo.** En cuanto el instalador termina de copiar los archivos, el launcher detecta que la app apareció y le entrega el pase; si la app ya se había abierto sola, lo recibe igual.
+- La lógica de rutas de instalación quedó en el módulo de licencias, con pruebas.
+
 ## [1.16.0]
 
 - **Catálogo de apps con licencias.** El launcher ya no es sólo un navegador de servicios: muestra las apps del ecosistema con el estado de tu cuenta. Si tu plan incluye una app, la fila lo dice ("En tu plan"); si no, dice qué plan la trae y el botón "Ver planes" te lleva a bling.uy.

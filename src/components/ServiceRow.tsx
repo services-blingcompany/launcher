@@ -29,8 +29,9 @@ const ICONS = {
  * cursor con --mx/--my. Si está "soon" queda bloqueada.
  *
  * Los servicios con licencia (licenseKey) muestran su estado: "En tu plan",
- * "Plan X" con acceso a los planes, o los botones de Descargar/Instalar del
- * binario de escritorio, con su progreso y sus errores.
+ * "Plan X" con acceso a los planes, el botón Abrir cuando la app nativa ya
+ * está instalada en la PC, o los botones de Descargar/Instalar del binario,
+ * con su progreso y sus errores.
  *
  * `selected` la marca cuando el usuario la recorre con ↑↓. La acción
  * secundaria (abrir en el navegador del sistema) es un botón aparte:
@@ -42,12 +43,14 @@ export default function ServiceRow({
   descarga = null,
   bajando = null,
   guardada = null,
+  ejecutable = null,
   version = null,
   error = null,
   onOpen,
   onOpenExternal,
   onDescargar,
   onInstalar,
+  onAbrir,
   onVerPlanes,
 }: {
   service: Service;
@@ -57,6 +60,8 @@ export default function ServiceRow({
   bajando?: boolean | null;
   /** Versión del binario ya guardada en disco (null si no hay). */
   guardada?: string | null;
+  /** ¿La app nativa está instalada en la PC (exe presente)? */
+  ejecutable?: boolean | null;
   /** Versión del binario disponible para la plataforma actual (null si no hay). */
   version?: string | null;
   error?: string | null;
@@ -64,6 +69,7 @@ export default function ServiceRow({
   onOpenExternal: (service: Service) => void;
   onDescargar?: (service: Service) => void;
   onInstalar?: (service: Service) => void;
+  onAbrir?: (service: Service) => void;
   onVerPlanes?: () => void;
 }) {
   const Icon = ICONS[service.icon];
@@ -76,6 +82,8 @@ export default function ServiceRow({
   const sinLicencia = conLicencia && service.licencia !== undefined && !service.licencia.hasAccess;
   const binarioListo = conLicencia && service.licencia?.hasAccess && version;
   const yaGuardada = binarioListo && guardada === version;
+  // Instalada gana sobre el estado del instalador: si el exe está, se abre.
+  const nativaInstalada = ejecutable === true;
 
   function seguirCursor(e: MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -203,7 +211,26 @@ export default function ServiceRow({
           </button>
         ) : (
           <>
-            {binarioListo && bajando ? (
+            {nativaInstalada ? (
+              <button
+                type="button"
+                aria-label={`Abrir ${service.name} (app instalada en tu PC)`}
+                title="Abrir la app instalada"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAbrir?.(service);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase transition-colors"
+                style={{
+                  color: `rgb(${service.accentRgb})`,
+                  background: `rgba(${service.accentRgb}, 0.08)`,
+                  borderColor: `rgba(${service.accentRgb}, 0.25)`,
+                }}
+              >
+                <Play size={8} />
+                Abrir
+              </button>
+            ) : binarioListo && bajando ? (
               <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase text-white/60">
                 {descarga?.percent ?? 0} %
               </span>
