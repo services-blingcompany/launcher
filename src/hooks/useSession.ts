@@ -9,9 +9,33 @@ import type { AuthLoginResult, BlingUser } from "../bling";
  * con las ventanas de los servicios). Acá sólo se refleja, y el main avisa
  * cuando cambia (login, expiración, cierre).
  */
+/** Clave del cach� local del �ltimo usuario conocido (s�lo para pintar r�pido). */
+const CACHE_SESION = "bling-launcher-sesion";
+
+function leerCacheSesion(): BlingUser | null {
+  try {
+    return JSON.parse(localStorage.getItem(CACHE_SESION) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function guardarCacheSesion(u: BlingUser | null) {
+  try {
+    if (u) localStorage.setItem(CACHE_SESION, JSON.stringify(u));
+    else localStorage.removeItem(CACHE_SESION);
+  } catch {
+    // sin storage disponible no pasa nada: se vuelve al estado por defecto
+  }
+}
+
 export function useSession() {
-  const [user, setUser] = useState<BlingUser | null>(null);
-  const [cargando, setCargando] = useState(true);
+  // La sesión vive en el main (la validaci�n depende del reto de Cloudflare y
+  // puede tardar). Se cachea el �ltimo usuario conocido para que el bot�n de
+  // login / el avatar se pinten al instante en cada arranque, sin esperar la
+  // consulta; cuando el main responde, se reconcilia y se actualiza el cach�.
+  const [user, setUser] = useState<BlingUser | null>(() => leerCacheSesion());
+  const [cargando, setCargando] = useState(false);
   const [sinLeer, setSinLeer] = useState(0);
 
   // Estado inicial + avisos que empuja el main.
@@ -22,11 +46,13 @@ export function useSession() {
       if (!vivo) return;
       setUser(u);
       setCargando(false);
+      guardarCacheSesion(u);
     });
 
     const off = window.bling.onAuthChanged((u) => {
       setUser(u);
       setCargando(false);
+      guardarCacheSesion(u);
     });
 
     return () => {
@@ -72,7 +98,10 @@ export function useSession() {
         password,
         rememberMe,
       });
-      if (resultado.ok) setUser(resultado.user ?? null);
+      if (resultado.ok) {
+        setUser(resultado.user ?? null);
+        guardarCacheSesion(resultado.user ?? null);
+      }
       return resultado;
     },
     [],
@@ -81,6 +110,7 @@ export function useSession() {
   const logout = useCallback(async () => {
     await window.bling.authLogout();
     setUser(null);
+    guardarCacheSesion(null);
     setSinLeer(0);
     window.bling.reportNotifications(0);
   }, []);
