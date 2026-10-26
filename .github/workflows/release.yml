@@ -54,6 +54,15 @@ jobs:
       - name: Generar iconos
         run: npm run icons
 
+      - name: Verificar secrets de Google
+        shell: bash
+        env:
+          BLING_GOOGLE_CLIENT_ID: ${{ secrets.BLING_GOOGLE_CLIENT_ID }}
+          BLING_GOOGLE_CLIENT_SECRET: ${{ secrets.BLING_GOOGLE_CLIENT_SECRET }}
+        run: |
+          if [ -n "$BLING_GOOGLE_CLIENT_ID" ]; then echo "BLING_GOOGLE_CLIENT_ID: presente (${#BLING_GOOGLE_CLIENT_ID} car.)"; else echo "::warning::BLING_GOOGLE_CLIENT_ID vacio"; fi
+          if [ -n "$BLING_GOOGLE_CLIENT_SECRET" ]; then echo "BLING_GOOGLE_CLIENT_SECRET: presente (${#BLING_GOOGLE_CLIENT_SECRET} car.)"; else echo "::warning::BLING_GOOGLE_CLIENT_SECRET vacio"; fi
+
       - name: Build de Windows (NSIS)
         # Inyecta las credenciales OAuth de Google en el .asar del launcher
         # (scripts/inyectar-credenciales.cjs). Nunca se commitean: viven en los

@@ -21,13 +21,12 @@ const client_id =
 const client_secret = process.env.BLING_GOOGLE_CLIENT_SECRET || "";
 
 if (!client_secret) {
-  console.error(
-    "\n[inyectar-credenciales] Falta BLING_GOOGLE_CLIENT_SECRET.\n" +
-      "  Seteala antes de empaquetar, p. ej.:\n" +
-      "    BLING_GOOGLE_CLIENT_SECRET=... npm run dist\n" +
-      "  El ejecutable no podr� iniciar sesi�n con Google sin ella.\n"
+  console.warn(
+    "\n[inyectar-credenciales] AVISO: falta BLING_GOOGLE_CLIENT_SECRET.\n" +
+      "  Se compila igual, pero el login con Google NO va a funcionar en este build.\n" +
+      "  Cargala como secret en GitHub (Settings -> Secrets -> Actions) o en la env:\n" +
+      "    BLING_GOOGLE_CLIENT_SECRET=... npm run dist\n"
   );
-  process.exit(1);
 }
 
 const destino = path.join(__dirname, "..", "electron", "credentials.cjs");

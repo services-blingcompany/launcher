@@ -9,7 +9,7 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
-## [1.19.0]
+## [1.19.1]
 
 - **Entrá con Google sin recordar tu cuenta.** El botón "Continuar con Google" ahora abre Google en **tu navegador de siempre**, donde ya tenés la sesión iniciada: un clic y listo, en vez de una ventana aparte que pedía volver a poner el usuario y la contraseña.
 - **Cómo funciona por adentro.** El launcher usa OAuth con PKCE y un redirect local (RFC 8252): el navegador confirma con Google y el launcher recibe el resultado de forma segura, sin guardar credenciales. La sesión queda en todo el ecosistema Bling, igual que si entrás por la web.
