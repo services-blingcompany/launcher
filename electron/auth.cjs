@@ -502,7 +502,7 @@ function init({ getHub }) {
       error: "No se pudo iniciar sesion con Google en este momento. Probá de nuevo o usá tu correo y contraseña.",
     });
     if (!clientGoogleSecret) {
-      console.warn("[auth:google] falta BLING_GOOGLE_CLIENT_SECRET");
+      diagnostics.escribir("error", ["[auth:google] falta BLING_GOOGLE_CLIENT_SECRET"]);
       return generico();
     }
     try {
@@ -514,7 +514,10 @@ function init({ getHub }) {
       if (resultado.ok) avisar(getHub);
       return resultado;
     } catch (err) {
-      console.warn("[auth:google] error en el flujo de Google:", err && err.message);
+      diagnostics.escribir("error", [
+        "[auth:google] fallo el flujo de Google:",
+        (err && err.message) || String(err),
+      ]);
       return generico();
     }
   });
