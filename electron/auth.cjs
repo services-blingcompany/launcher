@@ -494,16 +494,19 @@ function init({ getHub }) {
   // Login con Google en el navegador del sistema: abre Google afuera, recibe el
   // token por redirect local y lo cambia por la sesion de Bling.
   ipcMain.handle("auth:google-sistema", async () => {
-    // Los detalles del fallo (config, OAuth, red) NO se muestran al usuario:
-    // pueden filtrar rutas o nombres internos. Se registran en el log y a la
-    // UI va un mensaje generico. Nunca se devuelven errores de codigo.
-    const generico = () => ({
-      ok: false,
-      error: "No se pudo iniciar sesion con Google en este momento. Probá de nuevo o usá tu correo y contraseña.",
-    });
+    // Los detalles del fallo (config, OAuth, red) NO se muestran al usuario.
+    // Cada motivo tiene un mensaje seguro y distinto, sin nombres internos.
+    const mensajeDe = (err) => {
+      const m = String((err && err.message) || err || "");
+      if (/navegador/i.test(m)) return "No se pudo abrir tu navegador para iniciar sesion con Google.";
+      if (/tiempo agotado|tardo/i.test(m)) return "Tardo demasiado el inicio de sesion con Google. Probá de nuevo.";
+      if (/state|verificaci/i.test(m)) return "No se pudo verificar la seguridad del inicio de sesion. Probá de nuevo.";
+      if (/cliente|client|secret|401|403|invalid|grant/i.test(m)) return "Google no reconocio esta aplicacion. El acceso con Google no esta disponible en esta version.";
+      return "No se pudo iniciar sesion con Google en este momento. Probá de nuevo o usá tu correo y contraseña.";
+    };
     if (!clientGoogleSecret) {
       diagnostics.escribir("error", ["[auth:google] falta BLING_GOOGLE_CLIENT_SECRET"]);
-      return generico();
+      return { ok: false, error: "El acceso con Google no esta disponible en esta version. Usá tu correo y contraseña." };
     }
     try {
       const { accessToken } = await oauthSistema.iniciarSesionGoogle({
@@ -518,7 +521,7 @@ function init({ getHub }) {
         "[auth:google] fallo el flujo de Google:",
         (err && err.message) || String(err),
       ]);
-      return generico();
+      return { ok: false, error: mensajeDe(err) };
     }
   });
 
