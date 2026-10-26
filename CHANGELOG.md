@@ -9,6 +9,12 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.19.2]
+
+- **Login sin espera.** El botón de inicio de sesión ahora aparece al instante en cada arranque: se recuerda la última sesión conocida y después se confirma en segundo fondo, sin el rato en que quedaba cargando.
+- **Actualizaciones detectadas más seguido.** El launcher busca versiones nuevas cada 30 minutos (antes cada 4 horas) y te avisa con el cartel dorado al lado de los botones.
+- **Login con Google más confiable.** Se unificó la configuración de Google (`BLING_GOOGLE_CLIENT_ID` / `BLING_GOOGLE_CLIENT_SECRET`) y, si falta el secreto, se avisa claro en vez de fallar a mitad de camino.
+
 ## [1.19.1]
 
 - **Entrá con Google sin recordar tu cuenta.** El botón "Continuar con Google" ahora abre Google en **tu navegador de siempre**, donde ya tenés la sesión iniciada: un clic y listo, en vez de una ventana aparte que pedía volver a poner el usuario y la contraseña.
