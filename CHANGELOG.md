@@ -9,6 +9,13 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.19.4]
+
+- **Sin errores de programación en pantalla.** Si algo falla al entrar con Google, ahora ves un mensaje claro; los detalles técnicos se quedan en el log, nunca en el cartel.
+- **Un solo botón de Google** en la pantalla de acceso, que usa tu navegador de siempre.
+- **Tu foto de perfil** se muestra bien al entrar con Google (antes a veces salían las iniciales).
+- **Se arregló un cierre inesperado** que podía pasar al cerrar una ventana (error "Object has been destroyed").
+
 ## [1.19.3]
 
 - Igual que la 1.19.2, con la credencial de Google embebida en el build: el login con Google sale del navegador de siempre sin pedirte la cuenta. (Release para asegurar que el secreto quedó adentro del instalador.)
