@@ -75,7 +75,8 @@ function mostrarSinConexion(entrada, motivo) {
 
 /** Lo que la barra necesita saber de la ventana, en un solo objeto. */
 function avisar({ ventana, barra, contenido, nombre }) {
-  if (ventana.isDestroyed() || barra.webContents.isDestroyed()) return;
+  if (ventana.isDestroyed() || barra.webContents.isDestroyed() || contenido.webContents.isDestroyed())
+    return;
   const wc = contenido.webContents;
   const tituloPagina = wc.getTitle();
   barra.webContents.send("bling:barra-estado", {
@@ -230,7 +231,9 @@ function abrir({ id, url, title }) {
   }
 
   // La ventana aparece apenas está lista la barra (no espera al sitio).
-  barra.webContents.once("did-finish-load", () => ventana.show());
+  barra.webContents.once("did-finish-load", () => {
+    if (!ventana.isDestroyed()) ventana.show();
+  });
 
   const wc = contenido.webContents;
 
@@ -269,8 +272,11 @@ function abrir({ id, url, title }) {
   // ocupa main.cjs, que lo deja sin la huella de Electron antes de que exista
   // esta ventana.
   wc.on("did-create-window", (hija) => {
+    if (hija.isDestroyed()) return;
     hija.setMenuBarVisibility(false);
-    hija.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+    if (!hija.webContents.isDestroyed()) {
+      hija.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+    }
   });
 
   wc.on("will-navigate", (evento, destino) => {
@@ -305,7 +311,7 @@ function abrir({ id, url, title }) {
 
   // La barra refleja lo que pasa en la página: título, navegación y carga.
   wc.on("page-title-updated", (_evento, nuevo) => {
-    ventana.setTitle(nuevo);
+    if (!ventana.isDestroyed()) ventana.setTitle(nuevo);
     avisar(entrada);
   });
   for (const evento of [
