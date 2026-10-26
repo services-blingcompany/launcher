@@ -1,4 +1,4 @@
-﻿# Changelog del Bling Launcher
+# Changelog del Bling Launcher
 
 Todo lo notable del launcher, con la versiÃ³n mÃ¡s nueva arriba.
 

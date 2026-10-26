@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Eye, EyeOff, Loader2, X } from "lucide-react";
 import Sparkle from "./Sparkle";

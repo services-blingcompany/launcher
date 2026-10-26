@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const { ipcMain, session, BrowserWindow } = require("electron");
 const diagnostics = require("./diagnostics.cjs");

@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const { app, net, ipcMain, BrowserWindow } = require("electron");
 const fs = require("node:fs");
