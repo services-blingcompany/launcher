@@ -33,8 +33,8 @@ const destino = path.join(__dirname, "..", "electron", "credentials.cjs");
 const contenido = `// Generado por scripts/inyectar-credenciales.cjs en el build. No commitear.
 "use strict";
 module.exports = {
-  GOOGLE_CLIENT_ID: ${JSON.stringify(client_id)},
-  GOOGLE_CLIENT_SECRET: ${JSON.stringify(client_secret)},
+  BLING_GOOGLE_CLIENT_ID: ${JSON.stringify(client_id)},
+  BLING_GOOGLE_CLIENT_SECRET: ${JSON.stringify(client_secret)},
 };
 `;
 

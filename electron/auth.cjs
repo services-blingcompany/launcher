@@ -9,20 +9,19 @@ const oauthSistema = require("./oauth-sistema.cjs");
  * cliente tipo Desktop/Installed (acepta redirect a http://127.0.0.1). Se puede
  * sobreescribir por variables de entorno sin tocar el código.
  */
-const GOOGLE_CLIENT_ID =
-  leerCredencial("GOOGLE_CLIENT_ID") ||
-  process.env.BLING_GOOGLE_CLIENT_ID ||
-  "872789804159-kv6bg1e60eh2iqv719dtnutqkh0nvlbk.apps.googleusercontent.com";
-
-function leerCredencial(clave) {
-  if (process.env["BLING_" + clave]) return process.env["BLING_" + clave];
+function leerCredencial(nombre) {
+  if (process.env[nombre]) return process.env[nombre];
   try {
-    return require("./credentials.cjs")[clave] || "";
+    return require("./credentials.cjs")[nombre] || "";
   } catch {
     return "";
   }
 }
-const GOOGLE_CLIENT_SECRET = leerCredencial("GOOGLE_CLIENT_SECRET");
+
+const clientGoogleId =
+  leerCredencial("BLING_GOOGLE_CLIENT_ID") ||
+  "872789804159-kv6bg1e60eh2iqv719dtnutqkh0nvlbk.apps.googleusercontent.com";
+const clientGoogleSecret = leerCredencial("BLING_GOOGLE_CLIENT_SECRET");
 
 /**
  * Sesión de Bling dentro del launcher.
@@ -495,10 +494,18 @@ function init({ getHub }) {
   // Login con Google en el navegador del sistema: abre Google afuera, recibe el
   // token por redirect local y lo cambia por la sesion de Bling.
   ipcMain.handle("auth:google-sistema", async () => {
+    if (!clientGoogleSecret) {
+      return {
+        ok: false,
+        error:
+          "Falta la configuración de Google (BLING_GOOGLE_CLIENT_SECRET). " +
+          "Cargá las variables de entorno o electron/credentials.cjs.",
+      };
+    }
     try {
       const { accessToken } = await oauthSistema.iniciarSesionGoogle({
-        clientId: GOOGLE_CLIENT_ID,
-        clientSecret: GOOGLE_CLIENT_SECRET,
+        clientId: clientGoogleId,
+        clientSecret: clientGoogleSecret,
       });
       const resultado = await loginSocial("google", accessToken);
       if (resultado.ok) avisar(getHub);
