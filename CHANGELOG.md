@@ -9,6 +9,10 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.19.3]
+
+- Igual que la 1.19.2, con la credencial de Google embebida en el build: el login con Google sale del navegador de siempre sin pedirte la cuenta. (Release para asegurar que el secreto quedó adentro del instalador.)
+
 ## [1.19.2]
 
 - **Login sin espera.** El botón de inicio de sesión ahora aparece al instante en cada arranque: se recuerda la última sesión conocida y después se confirma en segundo fondo, sin el rato en que quedaba cargando.
