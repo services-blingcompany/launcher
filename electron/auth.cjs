@@ -10,19 +10,19 @@ const oauthSistema = require("./oauth-sistema.cjs");
  * sobreescribir por variables de entorno sin tocar el código.
  */
 const GOOGLE_CLIENT_ID =
+  leerCredencial("GOOGLE_CLIENT_ID") ||
   process.env.BLING_GOOGLE_CLIENT_ID ||
   "872789804159-kv6bg1e60eh2iqv719dtnutqkh0nvlbk.apps.googleusercontent.com";
 
-function leerClientSecret() {
-  if (process.env.BLING_GOOGLE_CLIENT_SECRET) return process.env.BLING_GOOGLE_CLIENT_SECRET;
+function leerCredencial(clave) {
+  if (process.env["BLING_" + clave]) return process.env["BLING_" + clave];
   try {
-    const creds = require("./credentials.cjs");
-    return creds.GOOGLE_CLIENT_SECRET || "";
+    return require("./credentials.cjs")[clave] || "";
   } catch {
     return "";
   }
 }
-const GOOGLE_CLIENT_SECRET = leerClientSecret();
+const GOOGLE_CLIENT_SECRET = leerCredencial("GOOGLE_CLIENT_SECRET");
 
 /**
  * Sesión de Bling dentro del launcher.
