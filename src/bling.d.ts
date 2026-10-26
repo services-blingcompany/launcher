@@ -75,6 +75,8 @@ export type BlingUser = {
   role: string;
   is_verified: boolean;
   is_active: boolean;
+  /** Avatar del perfil (lo devuelve el login con Google/redes). */
+  avatar_url?: string | null;
   persona?: BlingPersona | null;
   empresa?: BlingEmpresa | null;
 };

@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 const { ipcMain, session, BrowserWindow } = require("electron");
 const diagnostics = require("./diagnostics.cjs");
@@ -7,7 +7,7 @@ const oauthSistema = require("./oauth-sistema.cjs");
 /**
  * Cliente OAuth de Google para el login en el navegador del sistema. Es un
  * cliente tipo Desktop/Installed (acepta redirect a http://127.0.0.1). Se puede
- * sobreescribir por variables de entorno sin tocar el código.
+ * sobreescribir por variables de entorno sin tocar el cÃ³digo.
  */
 function leerCredencial(nombre) {
   if (process.env[nombre]) return process.env[nombre];
@@ -24,49 +24,49 @@ const clientGoogleId =
 const clientGoogleSecret = leerCredencial("BLING_GOOGLE_CLIENT_SECRET");
 
 /**
- * Sesión de Bling dentro del launcher.
+ * SesiÃ³n de Bling dentro del launcher.
  *
- * Cómo funciona (y por qué así):
- *  - El renderer vive en file:// y no puede pegarle a bling.uy (CORS), así que
+ * CÃ³mo funciona (y por quÃ© asÃ­):
+ *  - El renderer vive en file:// y no puede pegarle a bling.uy (CORS), asÃ­ que
  *    el login viaja por IPC.
- *  - Cloudflare le sirve su reto ("Just a moment…") a cualquier request que no
- *    salga de una página de verdad: el fetch del proceso principal recibe el
+ *  - Cloudflare le sirve su reto ("Just a momentâ€¦") a cualquier request que no
+ *    salga de una pÃ¡gina de verdad: el fetch del proceso principal recibe el
  *    HTML del reto aunque mande las cookies. Por eso existe el PUENTE: una
  *    ventana con bling.uy cargado, fuera de la pantalla del usuario, que hace
- *    los fetch same-origin como los haría la web.
+ *    los fetch same-origin como los harÃ­a la web.
  *  - El puente usa session.defaultSession, el MISMO jar que las ventanas de
- *    los servicios: entrás una vez acá y Bling Noticias, Social o Fundadores
+ *    los servicios: entrÃ¡s una vez acÃ¡ y Bling Noticias, Social o Fundadores
  *    ya te conocen.
  *
  * Las credenciales nunca se guardan: viajan al backend y vuelven como cookies
- * httpOnly + el token que la web también usa en localStorage de bling.uy.
+ * httpOnly + el token que la web tambiÃ©n usa en localStorage de bling.uy.
  */
 
-/** Origen real del ecosistema: auth, API y servicios cuelgan de acá. */
+/** Origen real del ecosistema: auth, API y servicios cuelgan de acÃ¡. */
 const SITE = "https://bling.uy";
 
-/** Cookies de sesión que se limpian al cerrar sesión. */
+/** Cookies de sesiÃ³n que se limpian al cerrar sesiÃ³n. */
 const SESSION_COOKIES = ["access_token", "refresh_token", "auth_session", "auth_role", "csrf_token"];
 
 /** Ventana puente (una sola) y su promesa de "listo" (reto de Cloudflare pasado). */
 let puente = null;
 let puenteListo = null;
 
-/** Última sesión informada al renderer, para no repetir el mismo aviso. */
+/** Ãšltima sesiÃ³n informada al renderer, para no repetir el mismo aviso. */
 let ultimoAviso = null;
 
-/** Cuándo falló el reto de Cloudflare por última vez, para no insistir de más. */
+/** CuÃ¡ndo fallÃ³ el reto de Cloudflare por Ãºltima vez, para no insistir de mÃ¡s. */
 let ultimoFallo = 0;
 
-/** Espera entre un fallo del reto y el próximo intento. */
+/** Espera entre un fallo del reto y el prÃ³ximo intento. */
 const PAUSA_TRAS_FALLAR = 60 * 1000;
 
-/** Cómo llegar al hub, para avisarle que cambió la sesión. */
+/** CÃ³mo llegar al hub, para avisarle que cambiÃ³ la sesiÃ³n. */
 let obtenerHub = () => null;
 
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** Ejecuta una expresión en el contexto de bling.uy (same-origin). */
+/** Ejecuta una expresiÃ³n en el contexto de bling.uy (same-origin). */
 async function ejecutar(expresion) {
   if (!puente || puente.isDestroyed()) throw new Error("sin puente");
   return puente.webContents.executeJavaScript(expresion, true);
@@ -74,13 +74,13 @@ async function ejecutar(expresion) {
 
 /**
  * Crea (una sola vez) la ventana puente y espera a que el reto de Cloudflare
- * haya pasado. La ventana es real —Cloudflare exige render— pero vive fuera
+ * haya pasado. La ventana es real â€”Cloudflare exige renderâ€” pero vive fuera
  * de la pantalla, sin foco y sin entrada en la barra de tareas.
  */
 function crearPuente() {
   if (puente && !puente.isDestroyed()) {
-    // El puente quedó abierto pero sin pasar el reto: se vuelve a intentar
-    // en vez de responder que no hay sesión.
+    // El puente quedÃ³ abierto pero sin pasar el reto: se vuelve a intentar
+    // en vez de responder que no hay sesiÃ³n.
     if (!puenteListo) puenteListo = prepararPuente();
     return puenteListo;
   }
@@ -102,8 +102,8 @@ function crearPuente() {
   });
 
   // Es una ventana nuestra, cargada con nuestro propio sitio: no abre popups
-  // ni se va a otro origen. Sin esto, cualquier window.open de la página
-  // crearía una ventana nueva sin control.
+  // ni se va a otro origen. Sin esto, cualquier window.open de la pÃ¡gina
+  // crearÃ­a una ventana nueva sin control.
   puente.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   puente.webContents.on("will-navigate", (event, url) => {
     if (!String(url).startsWith(SITE)) event.preventDefault();
@@ -115,8 +115,8 @@ function crearPuente() {
   });
 
   // Las fallas del puente son "no me puedo loguear": tienen que quedar en
-  // el registro para poder mirarlas después. Sin la consola de la página:
-  // ahí el que habla es el reto de Cloudflare y su propio ruido.
+  // el registro para poder mirarlas despuÃ©s. Sin la consola de la pÃ¡gina:
+  // ahÃ­ el que habla es el reto de Cloudflare y su propio ruido.
   diagnostics.attach(puente, "auth", { consola: false });
 
   puenteListo = prepararPuente();
@@ -124,7 +124,7 @@ function crearPuente() {
 }
 
 /**
- * Espera a que Cloudflare deje pasar la API, con la página ya cargada: se
+ * Espera a que Cloudflare deje pasar la API, con la pÃ¡gina ya cargada: se
  * sondea la API, que responde 403 mientras el reto siga en pie.
  */
 async function esperarReto() {
@@ -135,7 +135,7 @@ async function esperarReto() {
       );
       if (typeof estado === "number" && estado > 0 && estado !== 403) return true;
     } catch {
-      // todavía no hay documento usable
+      // todavÃ­a no hay documento usable
     }
     await dormir(400);
   }
@@ -143,14 +143,14 @@ async function esperarReto() {
 }
 
 /**
- * Deja el puente listo para hablar con la API y cuenta qué pasó.
+ * Deja el puente listo para hablar con la API y cuenta quÃ© pasÃ³.
  *
- * El reto de Cloudflare a veces queda a medias (una conexión mala, un intento
- * a medio resolver): recargar la página suele resolverlo, así que se intenta
- * dos veces. Si aun así no pasa, el puente queda sin marcar y el próximo
+ * El reto de Cloudflare a veces queda a medias (una conexiÃ³n mala, un intento
+ * a medio resolver): recargar la pÃ¡gina suele resolverlo, asÃ­ que se intenta
+ * dos veces. Si aun asÃ­ no pasa, el puente queda sin marcar y el prÃ³ximo
  * pedido lo vuelve a intentar, en vez de darlo por roto hasta reiniciar el
  * launcher; entre intentos hay una pausa, para no encadenar esperas de medio
- * minuto cada vez que alguien pide la sesión.
+ * minuto cada vez que alguien pide la sesiÃ³n.
  */
 async function prepararPuente() {
   if (Date.now() - ultimoFallo < PAUSA_TRAS_FALLAR) return false;
@@ -158,33 +158,33 @@ async function prepararPuente() {
   for (let intento = 1; intento <= 2; intento++) {
     // No se espera a loadURL: mientras carga (y mientras Cloudflare muestra su
     // reto) se sondea la API, que responde al instante con 403 hasta que el
-    // reto pasa. Así el puente queda listo apenas está listo, sin esperas fijas.
+    // reto pasa. AsÃ­ el puente queda listo apenas estÃ¡ listo, sin esperas fijas.
     void puente.loadURL(`${SITE}/auth/login`).catch(() => {});
 
     if (await esperarReto()) {
       ultimoFallo = 0;
       diagnostics.escribir("info", [
         intento === 1
-          ? "el puente de auth quedó listo"
-          : `el puente de auth quedó listo en el intento ${intento}`,
+          ? "el puente de auth quedÃ³ listo"
+          : `el puente de auth quedÃ³ listo en el intento ${intento}`,
       ]);
       return true;
     }
 
     if (intento === 1) {
       diagnostics.escribir("warn", [
-        "el puente de auth no pasó el reto de Cloudflare; se recarga y se reintenta",
+        "el puente de auth no pasÃ³ el reto de Cloudflare; se recarga y se reintenta",
       ]);
     }
   }
 
-  diagnostics.escribir("warn", ["el puente de auth no pasó el reto de Cloudflare"]);
+  diagnostics.escribir("warn", ["el puente de auth no pasÃ³ el reto de Cloudflare"]);
   ultimoFallo = Date.now();
   puenteListo = null;
   return false;
 }
 
-/** Asegura el puente y ejecuta la expresión adentro. */
+/** Asegura el puente y ejecuta la expresiÃ³n adentro. */
 async function enPagina(expresion) {
   const listo = await crearPuente();
   if (!listo) throw new Error("cloudflare");
@@ -192,7 +192,7 @@ async function enPagina(expresion) {
 }
 
 /**
- * Perfil de la sesión activa, o null si no hay sesión. El token sale del
+ * Perfil de la sesiÃ³n activa, o null si no hay sesiÃ³n. El token sale del
  * localStorage de bling.uy (como en la web) y las cookies viajan solas.
  */
 async function perfil() {
@@ -231,7 +231,7 @@ async function perfil() {
   }
 }
 
-/** Avisa al renderer SÓLO cuando la sesión cambió de verdad. */
+/** Avisa al renderer SÃ“LO cuando la sesiÃ³n cambiÃ³ de verdad. */
 function avisar(getHub) {
   const hub = getHub && getHub();
   if (!hub || hub.isDestroyed()) return;
@@ -245,12 +245,12 @@ function avisar(getHub) {
 
 /**
  * Login nativo contra /api/auth/login (mismos mensajes que la web). Al entrar,
- * el token queda también en el localStorage de bling.uy, igual que si el
+ * el token queda tambiÃ©n en el localStorage de bling.uy, igual que si el
  * usuario hubiera usado el formulario del sitio: los servicios lo usan.
  */
 async function login({ email, password, rememberMe } = {}) {
   if (!email || !password) {
-    return { ok: false, error: "Completá tu correo y contraseña." };
+    return { ok: false, error: "CompletÃ¡ tu correo y contraseÃ±a." };
   }
 
   const cuerpo = JSON.stringify({ email, password, rememberMe: !!rememberMe });
@@ -284,7 +284,7 @@ async function login({ email, password, rememberMe } = {}) {
       };
     })()`);
   } catch {
-    return { ok: false, error: "No pudimos conectar con Bling. Revisá tu conexión." };
+    return { ok: false, error: "No pudimos conectar con Bling. RevisÃ¡ tu conexiÃ³n." };
   }
 
   if (r.status >= 200 && r.status < 300) {
@@ -300,26 +300,26 @@ async function login({ email, password, rememberMe } = {}) {
       return {
         ok: false,
         necesitaVerificar: true,
-        error: "Tu cuenta todavía no está verificada. Te mandamos un código por correo.",
+        error: "Tu cuenta todavÃ­a no estÃ¡ verificada. Te mandamos un cÃ³digo por correo.",
       };
     }
     if (r.html) {
-      return { ok: false, error: "Bling está tardando en responder. Probá de nuevo en un rato." };
+      return { ok: false, error: "Bling estÃ¡ tardando en responder. ProbÃ¡ de nuevo en un rato." };
     }
   }
 
   if (r.status === 429) {
-    return { ok: false, error: "Demasiados intentos. Esperá un momento e intentá de nuevo." };
+    return { ok: false, error: "Demasiados intentos. EsperÃ¡ un momento e intentÃ¡ de nuevo." };
   }
 
   if (r.status >= 500) {
-    return { ok: false, error: "Sistema en mantenimiento. Probá de nuevo en unos minutos." };
+    return { ok: false, error: "Sistema en mantenimiento. ProbÃ¡ de nuevo en unos minutos." };
   }
 
-  return { ok: false, error: "Correo electrónico o contraseña incorrectos." };
+  return { ok: false, error: "Correo electrÃ³nico o contraseÃ±a incorrectos." };
 }
 
-/** Cierra sesión en el backend y borra las cookies del jar compartido. */
+/** Cierra sesiÃ³n en el backend y borra las cookies del jar compartido. */
 async function logout() {
   try {
     await enPagina(`(async () => {
@@ -336,8 +336,8 @@ async function logout() {
       return true;
     })()`);
   } catch {
-    // Aunque el backend no conteste, acá se limpia igual: si el usuario pidió
-    // salir, la sesión local no puede quedar viva.
+    // Aunque el backend no conteste, acÃ¡ se limpia igual: si el usuario pidiÃ³
+    // salir, la sesiÃ³n local no puede quedar viva.
   }
 
   for (const name of SESSION_COOKIES) {
@@ -351,7 +351,7 @@ async function logout() {
         );
       }
     } catch {
-      // no había cookie que borrar
+      // no habÃ­a cookie que borrar
     }
   }
 
@@ -359,7 +359,7 @@ async function logout() {
   return true;
 }
 
-/** Contador de notificaciones sin leer (0 si no hay sesión o no se puede). */
+/** Contador de notificaciones sin leer (0 si no hay sesiÃ³n o no se puede). */
 async function notificaciones() {
   try {
     const r = await enPagina(`(async () => {
@@ -369,7 +369,7 @@ async function notificaciones() {
       const cabeceras = { Authorization: 'Bearer ' + token };
       const opciones = { credentials: 'include', cache: 'no-store', headers: cabeceras };
 
-      // Primero el contador del backend; si no está, se cuentan las no leídas
+      // Primero el contador del backend; si no estÃ¡, se cuentan las no leÃ­das
       // de la lista (que es como lo hace la propia web).
       try {
         const res = await fetch('/api/v1/notifications/count', opciones);
@@ -411,7 +411,7 @@ function cerrarPuente() {
 
 /**
  * Engancha los handlers de auth. `getHub` devuelve la ventana principal (puede
- * ser null si sólo quedan ventanas de servicios abiertas).
+ * ser null si sÃ³lo quedan ventanas de servicios abiertas).
  */
 async function loginSocial(provider, token) {
   const cuerpo = JSON.stringify({ provider, token, account_type: null });
@@ -494,13 +494,16 @@ function init({ getHub }) {
   // Login con Google en el navegador del sistema: abre Google afuera, recibe el
   // token por redirect local y lo cambia por la sesion de Bling.
   ipcMain.handle("auth:google-sistema", async () => {
+    // Los detalles del fallo (config, OAuth, red) NO se muestran al usuario:
+    // pueden filtrar rutas o nombres internos. Se registran en el log y a la
+    // UI va un mensaje generico. Nunca se devuelven errores de codigo.
+    const generico = () => ({
+      ok: false,
+      error: "No se pudo iniciar sesion con Google en este momento. Probá de nuevo o usá tu correo y contraseña.",
+    });
     if (!clientGoogleSecret) {
-      return {
-        ok: false,
-        error:
-          "Falta la configuración de Google (BLING_GOOGLE_CLIENT_SECRET). " +
-          "Cargá las variables de entorno o electron/credentials.cjs.",
-      };
+      console.warn("[auth:google] falta BLING_GOOGLE_CLIENT_SECRET");
+      return generico();
     }
     try {
       const { accessToken } = await oauthSistema.iniciarSesionGoogle({
@@ -511,7 +514,8 @@ function init({ getHub }) {
       if (resultado.ok) avisar(getHub);
       return resultado;
     } catch (err) {
-      return { ok: false, error: err.message || "No se pudo iniciar sesion con Google." };
+      console.warn("[auth:google] error en el flujo de Google:", err && err.message);
+      return generico();
     }
   });
 
@@ -523,24 +527,24 @@ function init({ getHub }) {
 
   ipcMain.handle("auth:notifications", () => notificaciones());
 
-  // Chequeo de fondo cada 5 minutos: si el token venció con la app abierta,
-  // la UI se entera sola y vuelve a mostrar "Iniciar sesión".
+  // Chequeo de fondo cada 5 minutos: si el token venciÃ³ con la app abierta,
+  // la UI se entera sola y vuelve a mostrar "Iniciar sesiÃ³n".
   setInterval(() => {
     if (ultimoAviso && ultimoAviso !== "invitado" && puente && !puente.isDestroyed()) {
       avisar(getHub);
     }
   }, 5 * 60 * 1000).unref?.();
 
-  // Calentar el puente ya: así el primer authStatus del renderer responde al
+  // Calentar el puente ya: asÃ­ el primer authStatus del renderer responde al
   // toque en vez de esperar el reto de Cloudflare.
   void crearPuente();
 }
 
 /**
- * Si hay sesión, sin pegarle a la red: es lo último que se le avisó al hub.
- * null = todavía no se consultó el perfil ni una vez.
+ * Si hay sesiÃ³n, sin pegarle a la red: es lo Ãºltimo que se le avisÃ³ al hub.
+ * null = todavÃ­a no se consultÃ³ el perfil ni una vez.
  *
- * Sólo sí o no: no expone la cuenta, así que puede ir en el diagnóstico que
+ * SÃ³lo sÃ­ o no: no expone la cuenta, asÃ­ que puede ir en el diagnÃ³stico que
  * el usuario comparte.
  */
 function haySesion() {
@@ -549,7 +553,7 @@ function haySesion() {
 }
 
 /**
- * Revisa la sesión ahora mismo y avisa al hub si cambió (sólo si cambió).
+ * Revisa la sesiÃ³n ahora mismo y avisa al hub si cambiÃ³ (sÃ³lo si cambiÃ³).
  * La usa el launcher cuando una ventana del auth navega o se cierra: sirve
  * para el login con Google, que termina en una ventana y no en el formulario
  * del hub.

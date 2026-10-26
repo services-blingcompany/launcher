@@ -138,7 +138,7 @@ export function datosDeUsuario(user: BlingUser) {
   return {
     nombre,
     alias: persona?.alias || empresa?.alias || null,
-    avatar: persona?.avatar_url || empresa?.avatar_url || null,
+    avatar: persona?.avatar_url || empresa?.avatar_url || user.avatar_url || null,
     iniciales: iniciales || "?",
     esEmpresa: user.account_type === "EMPRESA",
   };
