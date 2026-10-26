@@ -9,6 +9,12 @@ release sale documentada sin tocar nada a mano.
 Formato de cada sección: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el próximo `## `) va al release.
 
+## [1.19.0]
+
+- **Entrá con Google sin recordar tu cuenta.** El botón "Continuar con Google" ahora abre Google en **tu navegador de siempre**, donde ya tenés la sesión iniciada: un clic y listo, en vez de una ventana aparte que pedía volver a poner el usuario y la contraseña.
+- **Cómo funciona por adentro.** El launcher usa OAuth con PKCE y un redirect local (RFC 8252): el navegador confirma con Google y el launcher recibe el resultado de forma segura, sin guardar credenciales. La sesión queda en todo el ecosistema Bling, igual que si entrás por la web.
+- El login con correo y contraseña sigue igual, por si preferís usarlo.
+
 ## [1.18.1]
 
 - **El hub vuelve a arrancar desde el código fuente.** El commit de 1.17.0 dejó dos bloques de imports al inicio de `licencias.cjs` y eso frenaba la carga del proceso principal con un error de sintaxis. Ninguna batería lo veía (ni TypeScript ni vitest parsean los módulos de Electron): sólo lo frenaba arrancar la app. El launcher instalado no estaba afectado porque venía de una compilación anterior.
