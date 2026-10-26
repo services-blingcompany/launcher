@@ -2,6 +2,27 @@
 
 const { ipcMain, session, BrowserWindow } = require("electron");
 const diagnostics = require("./diagnostics.cjs");
+const oauthSistema = require("./oauth-sistema.cjs");
+
+/**
+ * Cliente OAuth de Google para el login en el navegador del sistema. Es un
+ * cliente tipo Desktop/Installed (acepta redirect a http://127.0.0.1). Se puede
+ * sobreescribir por variables de entorno sin tocar el código.
+ */
+const GOOGLE_CLIENT_ID =
+  process.env.BLING_GOOGLE_CLIENT_ID ||
+  "872789804159-kv6bg1e60eh2iqv719dtnutqkh0nvlbk.apps.googleusercontent.com";
+
+function leerClientSecret() {
+  if (process.env.BLING_GOOGLE_CLIENT_SECRET) return process.env.BLING_GOOGLE_CLIENT_SECRET;
+  try {
+    const creds = require("./credentials.cjs");
+    return creds.GOOGLE_CLIENT_SECRET || "";
+  } catch {
+    return "";
+  }
+}
+const GOOGLE_CLIENT_SECRET = leerClientSecret();
 
 /**
  * Sesión de Bling dentro del launcher.
@@ -393,6 +414,69 @@ function cerrarPuente() {
  * Engancha los handlers de auth. `getHub` devuelve la ventana principal (puede
  * ser null si sólo quedan ventanas de servicios abiertas).
  */
+async function loginSocial(provider, token) {
+  const cuerpo = JSON.stringify({ provider, token, account_type: null });
+
+  let r;
+  try {
+    r = await enPagina(`(async () => {
+      const res = await fetch('/api/auth/social', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: ${JSON.stringify(cuerpo)},
+      });
+
+      const tipo = res.headers.get('content-type') || '';
+      if (!tipo.includes('json')) return { status: res.status, html: true };
+
+      const datos = await res.json().catch(() => ({}));
+
+      if (datos.requires_linking) {
+        return { status: res.status, html: false, requires_linking: true };
+      }
+
+      if (res.ok && datos.access_token) {
+        localStorage.setItem('access_token', datos.access_token);
+        if (datos.user && datos.user.avatar_url) {
+          localStorage.setItem('bling_user_avatar', datos.user.avatar_url);
+        }
+      }
+
+      return {
+        status: res.status,
+        html: false,
+        detalle: typeof datos.detail === 'string' ? datos.detail : null,
+        user: datos.user || null,
+        has_alias: datos.has_alias,
+        account_type: datos.account_type,
+        role: datos.role,
+      };
+    })()`);
+  } catch {
+    return { ok: false, error: "No pudimos conectar con Bling. Revisa tu conexion." };
+  }
+
+  if (r.requires_linking) {
+    return {
+      ok: false,
+      requiereVincular: true,
+      error: "Ese correo ya tiene una cuenta con contrasena. Inicia sesion para vincular Google.",
+    };
+  }
+
+  if (r.status >= 200 && r.status < 300) {
+    const user = r.user || (await perfil());
+    ultimoAviso = user ? String(user.id) : "invitado";
+    return { ok: true, user, has_alias: r.has_alias, account_type: r.account_type, role: r.role };
+  }
+
+  if (r.html) {
+    return { ok: false, error: "Bling esta tardando en responder. Prueba de nuevo en un rato." };
+  }
+  return { ok: false, error: r.detalle || "No se pudo iniciar sesion con la red social." };
+}
+
 function init({ getHub }) {
   obtenerHub = typeof getHub === "function" ? getHub : () => null;
 
@@ -406,6 +490,22 @@ function init({ getHub }) {
     const resultado = await login(credenciales);
     if (resultado.ok) avisar(getHub);
     return resultado;
+  });
+
+  // Login con Google en el navegador del sistema: abre Google afuera, recibe el
+  // token por redirect local y lo cambia por la sesion de Bling.
+  ipcMain.handle("auth:google-sistema", async () => {
+    try {
+      const { accessToken } = await oauthSistema.iniciarSesionGoogle({
+        clientId: GOOGLE_CLIENT_ID,
+        clientSecret: GOOGLE_CLIENT_SECRET,
+      });
+      const resultado = await loginSocial("google", accessToken);
+      if (resultado.ok) avisar(getHub);
+      return resultado;
+    } catch (err) {
+      return { ok: false, error: err.message || "No se pudo iniciar sesion con Google." };
+    }
   });
 
   ipcMain.handle("auth:logout", async () => {

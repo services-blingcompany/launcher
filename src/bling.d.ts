@@ -243,6 +243,8 @@ interface BlingApi {
   authStatus(): Promise<BlingUser | null>;
   /** Login nativo contra bling.uy; las cookies quedan en el jar compartido. */
   authLogin(credenciales: AuthCredentials): Promise<AuthLoginResult>;
+  /** Login con Google en el navegador del sistema (usa la cuenta ya abierta). */
+  authGoogleSistema(): Promise<AuthLoginResult>;
   /** Cierra sesión en el backend y borra las cookies locales. */
   authLogout(): Promise<boolean>;
   /** Notificaciones sin leer del usuario logueado. */

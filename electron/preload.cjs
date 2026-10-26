@@ -47,6 +47,8 @@ contextBridge.exposeInMainWorld("bling", {
   authStatus: () => ipcRenderer.invoke("auth:status"),
   /** Login nativo. Devuelve { ok, user?, error?, necesitaVerificar? }. */
   authLogin: (credenciales) => ipcRenderer.invoke("auth:login", credenciales),
+  /** Login con Google en el navegador del sistema. */
+  authGoogleSistema: () => ipcRenderer.invoke("auth:google-sistema"),
   /** Cierra sesión en el backend y borra las cookies del jar compartido. */
   authLogout: () => ipcRenderer.invoke("auth:logout"),
   /** Contador de notificaciones sin leer (0 sin sesión). */

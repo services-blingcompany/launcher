@@ -3,3 +3,6 @@ dist/
 release/
 *.log
 .DS_Store
+
+# Credenciales OAuth locales (no commitear)
+electron/credentials.cjs
