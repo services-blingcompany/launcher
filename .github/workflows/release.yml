@@ -55,6 +55,13 @@ jobs:
         run: npm run icons
 
       - name: Build de Windows (NSIS)
+        # Inyecta las credenciales OAuth de Google en el .asar del launcher
+        # (scripts/inyectar-credenciales.cjs). Nunca se commitean: viven en los
+        # secrets del repo. Requieren los secrets BLING_GOOGLE_CLIENT_ID y
+        # BLING_GOOGLE_CLIENT_SECRET (cliente tipo Desktop de Google Cloud).
+        env:
+          BLING_GOOGLE_CLIENT_ID: ${{ secrets.BLING_GOOGLE_CLIENT_ID }}
+          BLING_GOOGLE_CLIENT_SECRET: ${{ secrets.BLING_GOOGLE_CLIENT_SECRET }}
         run: npm run dist
 
       # El cuerpo del release sale del CHANGELOG.md: se extrae la sección
