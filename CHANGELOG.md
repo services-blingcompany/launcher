@@ -9,6 +9,10 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.19.13]
+
+- Mejor detección de la verificación de Cloudflare para que el launcher conecte con Bling sin trabarse.
+
 ## [1.19.12]
 
 - Al entrar con Google, el launcher ya muestra tu cuenta de inmediato (antes el botón quedaba igual aunque entraras).

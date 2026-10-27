@@ -136,7 +136,7 @@ async function esperarReto() {
   for (let i = 0; i < 40; i++) {
     try {
       const estado = await ejecutar(
-        "fetch('/api/auth/me', { credentials: 'include' }).then((r) => r.status).catch(() => 0)",
+        "fetch('/api/auth/me', { credentials: 'include' }).then((r) => ((r.headers.get('content-type') || '').includes('json') ? 200 : r.status)).catch(() => 0)",
       );
       if (typeof estado === "number" && estado > 0 && estado !== 403) return true;
     } catch {
