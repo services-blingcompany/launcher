@@ -34,9 +34,9 @@ const DEFAULT_SETTINGS: Settings = {
 
 /**
  * A dónde van los usuarios sin licencia de una app: el catálogo público
- * de planes (/auth/plans en bling.uy). Un solo lugar para cambiarlo.
+ * de planes (/planes en bling.uy). Un solo lugar para cambiarlo.
  */
-const URL_PLANES = "https://bling.uy/auth/plans";
+const URL_PLANES = "https://bling.uy/planes";
 
 /**
  * Pantalla del launcher (layout horizontal): rail con campana + reloj a
