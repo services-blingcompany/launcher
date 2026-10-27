@@ -17,6 +17,12 @@ const notificaciones = require("./notificaciones.cjs");
 const ventanaServicio = require("./ventanaServicio.cjs");
 const userAgent = require("./userAgent.cjs");
 
+// Neutraliza las señales de "automatización" que Chromium expone (como
+// navigator.webdriver = true). Cloudflare las usa para detectar bots y bloquear
+// el reto de verificación del puente de auth. Con esto la ventana parece un
+// navegador común y el reto de Cloudflare se completa.
+app.commandLine.appendSwitch("disable-blink-features", "AutomationControlled");
+
 /**
  * Identidad de la app en Windows: tiene que ser el mismo appId que arma el
  * instalador (package.json → build.appId). De eso dependen el agrupado en

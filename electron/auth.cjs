@@ -101,6 +101,11 @@ function crearPuente() {
     },
   });
 
+  // Cloudflare exige render para su reto (por eso la ventana es real), pero
+  // vive fuera de pantalla y sin foco para no molestar. La señal de
+  // navigator.webdriver se neutraliza en main.cjs (disable-blink-features) para
+  // que Cloudflare no la trate como bot.
+
   // Es una ventana nuestra, cargada con nuestro propio sitio: no abre popups
   // ni se va a otro origen. Sin esto, cualquier window.open de la página
   // crearía una ventana nueva sin control.
