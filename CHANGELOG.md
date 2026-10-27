@@ -9,6 +9,10 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.19.6]
+
+- Los avisos del acceso con Google suenan tranquilos y profesionales (nunca exponen errores internos). Se repararon también algunos textos con acentos rotos.
+
 ## [1.19.5]
 
 - Mejora en el aviso de acceso con Google: si algo falla, el mensaje indica el motivo (sin datos técnicos) para poder resolverlo.
