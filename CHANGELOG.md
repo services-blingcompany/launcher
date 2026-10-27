@@ -9,6 +9,10 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.19.8]
+
+- El acceso con Google ahora toma las credenciales estén donde estén (Secrets o Variables de GitHub). Si el secret se cargó en la pestaña equivocada, esta versión lo agarra igual.
+
 ## [1.19.7]
 
 - Igual que la 1.19.6, compilada con las credenciales de Google verificadas: el acceso con Google sale de tu navegador sin pedir la cuenta.
