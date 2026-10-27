@@ -518,7 +518,16 @@ function init({ getHub }) {
         clientSecret: clientGoogleSecret,
       });
       const resultado = await loginSocial("google", accessToken);
-      if (resultado.ok) avisar(getHub);
+      if (resultado.ok) {
+        avisar(getHub);
+        // La UI se actualiza con el usuario que ya devolvió el backend, sin
+        // depender de volver a consultar el perfil (que puede fallar si
+        // Cloudflare molesta). Así el botón cambia a penas se entra.
+        const hub = getHub && getHub();
+        if (hub && !hub.isDestroyed()) {
+          hub.webContents.send("auth:changed", resultado.user ?? null);
+        }
+      }
       return resultado;
     } catch (err) {
       diagnostics.escribir("error", [
