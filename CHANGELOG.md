@@ -9,6 +9,10 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.19.10]
+
+- Se arregló el acceso con Google: ahora sí completa el inicio de sesión y entra a la cuenta (antes se trababa al volver del navegador).
+
 ## [1.19.9]
 
 - Credenciales de Google actualizadas al cliente nuevo. Si falta el secreto, el build avisa en vez de publicar un launcher con el acceso roto.
