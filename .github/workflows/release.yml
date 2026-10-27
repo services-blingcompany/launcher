@@ -57,8 +57,8 @@ jobs:
       - name: Verificar secrets de Google
         shell: bash
         env:
-          BLING_GOOGLE_CLIENT_ID: ${{ secrets.BLING_GOOGLE_CLIENT_ID }}
-          BLING_GOOGLE_CLIENT_SECRET: ${{ secrets.BLING_GOOGLE_CLIENT_SECRET }}
+          BLING_GOOGLE_CLIENT_ID: ${{ secrets.BLING_GOOGLE_CLIENT_ID || vars.BLING_GOOGLE_CLIENT_ID }}
+          BLING_GOOGLE_CLIENT_SECRET: ${{ secrets.BLING_GOOGLE_CLIENT_SECRET || vars.BLING_GOOGLE_CLIENT_SECRET }}
         run: |
           if [ -n "$BLING_GOOGLE_CLIENT_ID" ]; then echo "BLING_GOOGLE_CLIENT_ID: presente (${#BLING_GOOGLE_CLIENT_ID} car.)"; else echo "::warning::BLING_GOOGLE_CLIENT_ID vacio"; fi
           if [ -n "$BLING_GOOGLE_CLIENT_SECRET" ]; then echo "BLING_GOOGLE_CLIENT_SECRET: presente (${#BLING_GOOGLE_CLIENT_SECRET} car.)"; else echo "::warning::BLING_GOOGLE_CLIENT_SECRET vacio"; fi
@@ -69,8 +69,8 @@ jobs:
         # secrets del repo. Requieren los secrets BLING_GOOGLE_CLIENT_ID y
         # BLING_GOOGLE_CLIENT_SECRET (cliente tipo Desktop de Google Cloud).
         env:
-          BLING_GOOGLE_CLIENT_ID: ${{ secrets.BLING_GOOGLE_CLIENT_ID }}
-          BLING_GOOGLE_CLIENT_SECRET: ${{ secrets.BLING_GOOGLE_CLIENT_SECRET }}
+          BLING_GOOGLE_CLIENT_ID: ${{ secrets.BLING_GOOGLE_CLIENT_ID || vars.BLING_GOOGLE_CLIENT_ID }}
+          BLING_GOOGLE_CLIENT_SECRET: ${{ secrets.BLING_GOOGLE_CLIENT_SECRET || vars.BLING_GOOGLE_CLIENT_SECRET }}
         run: npm run dist
 
       # El cuerpo del release sale del CHANGELOG.md: se extrae la sección
