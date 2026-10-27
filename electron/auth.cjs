@@ -20,7 +20,7 @@ function leerCredencial(nombre) {
 
 const clientGoogleId =
   leerCredencial("BLING_GOOGLE_CLIENT_ID") ||
-  "872789804159-kv6bg1e60eh2iqv719dtnutqkh0nvlbk.apps.googleusercontent.com";
+  "872789804159-d26i9vaqjebkhqhs52sdaglrsk0o8sv2.apps.googleusercontent.com";
 const clientGoogleSecret = leerCredencial("BLING_GOOGLE_CLIENT_SECRET");
 
 /**

@@ -17,16 +17,17 @@ const path = require("node:path");
 
 const client_id =
   process.env.BLING_GOOGLE_CLIENT_ID ||
-  "872789804159-kv6bg1e60eh2iqv719dtnutqkh0nvlbk.apps.googleusercontent.com";
+  "872789804159-d26i9vaqjebkhqhs52sdaglrsk0o8sv2.apps.googleusercontent.com";
 const client_secret = process.env.BLING_GOOGLE_CLIENT_SECRET || "";
 
 if (!client_secret) {
-  console.warn(
-    "\n[inyectar-credenciales] AVISO: falta BLING_GOOGLE_CLIENT_SECRET.\n" +
-      "  Se compila igual, pero el login con Google NO va a funcionar en este build.\n" +
-      "  Cargala como secret en GitHub (Settings -> Secrets -> Actions) o en la env:\n" +
-      "    BLING_GOOGLE_CLIENT_SECRET=... npm run dist\n"
+  console.error(
+    "\n[inyectar-credenciales] FALTA BLING_GOOGLE_CLIENT_SECRET en el build.\n" +
+      "  El login con Google NO va a funcionar y no se debe publicar un launcher roto.\n" +
+      "  Revisá que el secret BLING_GOOGLE_CLIENT_SECRET exista en GitHub\n" +
+      "  (Settings -> Secrets and variables -> Actions) con el valor correcto.\n"
   );
+  process.exit(1);
 }
 
 const destino = path.join(__dirname, "..", "electron", "credentials.cjs");
