@@ -6,17 +6,17 @@ const path = require("node:path");
 const { autoUpdater } = require("electron-updater");
 
 /**
- * Actualizaciones: detecciÃ³n, descarga e instalaciÃ³n.
+ * Actualizaciones: detección, descarga e instalación.
  *
- * En producciÃ³n usa electron-updater, que se apoya en los releases de
+ * En producción usa electron-updater, que se apoya en los releases de
  * GitHub del propio repo: baja el instalador (con descarga diferencial
- * vÃ­a blockmap) y lo instala al salir o al pedirlo. No hay servidor
+ * vía blockmap) y lo instala al salir o al pedirlo. No hay servidor
  * propio ni costo de hosting.
  *
- * El proceso principal es el Ãºnico que habla con GitHub y con el disco;
- * el renderer sÃ³lo recibe estados por IPC.
+ * El proceso principal es el único que habla con GitHub y con el disco;
+ * el renderer sólo recibe estados por IPC.
  *
- * Para probar el UI sin publicar nada (sÃ³lo en dev):
+ * Para probar el UI sin publicar nada (sólo en dev):
  *   BLING_UPDATE_DEBUG=1.2.0 npm start
  */
 const UPDATE_REPO = "services-blingcompany/launcher";
@@ -24,13 +24,13 @@ const CHECK_INTERVAL_MS = 30 * 60 * 1000; // cada 30 min
 const FIRST_CHECK_DELAY_MS = 5000; // no apurar la ventana al arrancar
 const REQUEST_TIMEOUT_MS = 8000;
 
-/** Ãšltima versiÃ³n nueva conocida (UpdateInfo) o null si no hay. */
+/** �altima versión nueva conocida (UpdateInfo) o null si no hay. */
 let current = null;
-/** VersiÃ³n que el usuario descartÃ³ con la X (no volver a auto-molestar). */
+/** Versión que el usuario descartó con la X (no volver a auto-molestar). */
 let dismissedVersion = null;
-/** Ãšltimo progreso de descarga, o null si no hay descarga en curso. */
+/** �altimo progreso de descarga, o null si no hay descarga en curso. */
 let progress = null;
-/** true cuando la versiÃ³n nueva ya estÃ¡ descargada y lista para instalar. */
+/** true cuando la versión nueva ya está descargada y lista para instalar. */
 let downloaded = false;
 /** Validador de dominios para los enlaces de "Novedades". */
 let openLink = null;
@@ -59,7 +59,7 @@ function persist(patch) {
   }
 }
 
-/** "v1.2.3" â†’ [1, 2, 3]. Devuelve null si no es un semver parseable. */
+/** "v1.2.3" �  [1, 2, 3]. Devuelve null si no es un semver parseable. */
 function parseVersion(value) {
   const m = String(value ?? "")
     .trim()
@@ -68,7 +68,7 @@ function parseVersion(value) {
   return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
 }
 
-/** Â¿candidate es mÃ¡s nueva que base? */
+/** ¿candidate es más nueva que base? */
 function isNewer(candidate, base) {
   const a = parseVersion(candidate);
   const b = parseVersion(base);
@@ -77,10 +77,10 @@ function isNewer(candidate, base) {
     if (a[i] > b[i]) return true;
     if (a[i] < b[i]) return false;
   }
-  return false; // misma versiÃ³n
+  return false; // misma versión
 }
 
-/** Primer pÃ¡rrafo del changelog, sin viÃ±etas, para el toast. */
+/** Primer párrafo del changelog, sin viñetas, para el toast. */
 function firstLine(notes) {
   // electron-updater puede devolver string o [{version, note}].
   let text = notes;
@@ -89,14 +89,14 @@ function firstLine(notes) {
     .split("\n")
     .map((s) => s.trim())
     .find(Boolean)
-    ?.replace(/^[-*â€¢\s]+/, "") ?? "";
+    ?.replace(/^[-*⬢\s]+/, "") ?? "";
 }
 
 function releaseUrl(version) {
   return `https://github.com/${UPDATE_REPO}/releases/tag/v${version}`;
 }
 
-/** UpdateInfo de electron-updater â†’ la forma que consume el renderer. */
+/** UpdateInfo de electron-updater �  la forma que consume el renderer. */
 function toUpdateInfo(info) {
   const version = String(info?.version ?? "").replace(/^v/i, "");
   return {
@@ -125,10 +125,10 @@ function snapshot() {
   };
 }
 
-// â”€â”€ Modo dev: chequeo contra GitHub sin instalar nada â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// electron-updater sÃ³lo funciona con la app empaquetada, asÃ­ que en
+// ���� Modo dev: chequeo contra GitHub sin instalar nada ��������������������������������
+// electron-updater sólo funciona con la app empaquetada, así que en
 // desarrollo se mantiene un chequeo liviano contra la API de GitHub
-// (y la simulaciÃ³n por variable de entorno) para poder probar el UI.
+// (y la simulación por variable de entorno) para poder probar el UI.
 async function fetchLatestDev() {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -144,7 +144,7 @@ async function fetchLatestDev() {
         },
       },
     );
-    // 404 = todavÃ­a no hay releases publicados: silencio total.
+    // 404 = todavía no hay releases publicados: silencio total.
     if (!res.ok) return null;
     const data = await res.json();
     const version = String(data.tag_name ?? "").replace(/^v/i, "");
@@ -167,7 +167,7 @@ async function checkDev({ notify = true } = {}) {
         version: debug.replace(/^v/i, ""),
         notes:
           process.env.BLING_UPDATE_DEBUG_NOTES ||
-          "Nueva versiÃ³n de prueba con mejoras de rendimiento y detalles visuales.",
+          "Nueva versión de prueba con mejoras de rendimiento y detalles visuales.",
         url: releaseUrl(debug.replace(/^v/i, "")),
         page: releaseUrl(debug.replace(/^v/i, "")),
       }
@@ -182,7 +182,7 @@ async function checkDev({ notify = true } = {}) {
   }
 
   current = latest;
-  // En dev no hay descarga real: el botÃ³n "instalar" cae al enlace.
+  // En dev no hay descarga real: el botón "instalar" cae al enlace.
   downloaded = false;
   if (notify && dismissedVersion !== latest.version) {
     broadcast("update:available", latest);
@@ -190,17 +190,17 @@ async function checkDev({ notify = true } = {}) {
   return snapshot();
 }
 
-// â”€â”€ ProducciÃ³n: electron-updater â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ���� Producción: electron-updater ��������������������������������������������������������������������������
 let updaterReady = false;
 
 function initUpdater() {
   if (updaterReady) return;
   updaterReady = true;
 
-  // La app no estÃ¡ firmada con certificado comercial: sin esto,
+  // La app no está firmada con certificado comercial: sin esto,
   // electron-updater rechaza el instalador bajado por falta de firma.
   autoUpdater.verifyUpdateCodeSignature = false;
-  // No instalar por nuestra cuenta: el usuario decide con el botÃ³n, y
+  // No instalar por nuestra cuenta: el usuario decide con el botón, y
   // si lo deja estar, se instala al salir de todos modos.
   autoUpdater.autoInstallOnAppQuit = true;
 
@@ -235,8 +235,8 @@ function initUpdater() {
   });
 
   autoUpdater.on("error", (err) => {
-    // Un fallo de red no debe romper nada: se reintenta en el prÃ³ximo
-    // chequeo automÃ¡tico. SÃ³lo se avisa al renderer si habÃ­a descarga.
+    // Un fallo de red no debe romper nada: se reintenta en el próximo
+    // chequeo automático. Sólo se avisa al renderer si había descarga.
     console.warn("[update] error de electron-updater:", err?.message ?? err);
     progress = null;
     broadcast("update:progress", null);
@@ -249,7 +249,7 @@ async function checkProd({ notify = true } = {}) {
   try {
     await autoUpdater.checkForUpdates();
   } catch (err) {
-    console.warn("[update] revisiÃ³n fallÃ³:", err?.message ?? err);
+    console.warn("[update] revisión falló:", err?.message ?? err);
   }
   if (notify && current && dismissedVersion !== current.version) {
     broadcast("update:available", current);
@@ -261,16 +261,16 @@ async function check(opts) {
   return app.isPackaged ? checkProd(opts) : checkDev(opts);
 }
 
-// â”€â”€ IPC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ���� IPC ����������������������������������������������������������������������������������������������������������������������������
 
-/** Arranca la descarga de la versiÃ³n disponible (sÃ³lo empaquetado). */
+/** Arranca la descarga de la versión disponible (sólo empaquetado). */
 async function download() {
   if (!app.isPackaged || !current) return snapshot();
   initUpdater();
   try {
     await autoUpdater.downloadUpdate();
   } catch (err) {
-    console.warn("[update] descarga fallÃ³:", err?.message ?? err);
+    console.warn("[update] descarga falló:", err?.message ?? err);
   }
   return snapshot();
 }
@@ -284,9 +284,9 @@ function install() {
 }
 
 /**
- * Registra el IPC y agenda la primera revisiÃ³n (a los 5 s) y luego cada
+ * Registra el IPC y agenda la primera revisión (a los 5 s) y luego cada
  * 4 h. `openLink` viene del main y se encarga de validar el dominio; se
- * usa para el enlace de "Novedades" (pÃ¡gina del release).
+ * usa para el enlace de "Novedades" (página del release).
  */
 function init({ openLink: validateAndOpen }) {
   openLink = validateAndOpen;
@@ -302,10 +302,10 @@ function init({ openLink: validateAndOpen }) {
   ipcMain.on("update:install", () => install());
 
   setTimeout(() => {
-    check().catch((err) => console.warn("[update] revisiÃ³n fallÃ³:", err));
+    check().catch((err) => console.warn("[update] revisión falló:", err));
   }, FIRST_CHECK_DELAY_MS);
   setInterval(() => {
-    check().catch((err) => console.warn("[update] revisiÃ³n fallÃ³:", err));
+    check().catch((err) => console.warn("[update] revisión falló:", err));
   }, CHECK_INTERVAL_MS);
 }
 

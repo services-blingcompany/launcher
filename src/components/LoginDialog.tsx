@@ -57,19 +57,19 @@ export default function LoginDialog({
         onCerrar();
         return;
       }
-      setError(resultado.error ?? "No pudimos iniciar sesiÃ³n.");
+      setError(resultado.error ?? "No pudimos iniciar sesión.");
       setNecesitaVerificar(!!resultado.necesitaVerificar);
     } catch {
-      setError("No pudimos conectar con Bling. RevisÃ¡ tu conexiÃ³n.");
+      setError("No pudimos conectar con Bling. Revisá tu conexión.");
     } finally {
       setEnviando(false);
     }
   }
 
   /**
-   * Crear cuenta, recuperar la contraseÃ±a o verificar el correo: son pÃ¡ginas
-   * del auth con Turnstile, asÃ­ que se abren en una ventana del launcher
-   * (misma sesiÃ³n, misma barra) en vez del navegador del sistema.
+   * Crear cuenta, recuperar la contraseña o verificar el correo: son páginas
+   * del auth con Turnstile, así que se abren en una ventana del launcher
+   * (misma sesión, misma barra) en vez del navegador del sistema.
    */
   async function entrarConGoogle() {
     if (enviando) return;
@@ -82,9 +82,9 @@ export default function LoginDialog({
         onCerrar();
         return;
       }
-      setError(resultado.error ?? "No pudimos iniciar sesiÃ³n con Google.");
+      setError(resultado.error ?? "No pudimos iniciar sesión con Google.");
     } catch {
-      setError("No pudimos conectar con Google. RevisÃ¡ tu conexiÃ³n.");
+      setError("No pudimos conectar con Google. Revisá tu conexión.");
     } finally {
       setEnviando(false);
     }
@@ -100,7 +100,7 @@ export default function LoginDialog({
       onClick={onCerrar}
       role="dialog"
       aria-modal="true"
-      aria-label="Iniciar sesiÃ³n"
+      aria-label="Iniciar sesión"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -114,11 +114,11 @@ export default function LoginDialog({
               <div className="flex items-center gap-2">
                 <Sparkle className="h-3.5 w-3.5 text-[#ffcc00]" />
                 <h2 className="font-[var(--font-montserrat)] text-xl font-extralight tracking-tight text-white">
-                  EntrÃ¡ a Bling
+                  Entrá a Bling
                 </h2>
               </div>
               <p className="mt-1 text-[11px] font-light text-white/50">
-                Una sesiÃ³n para todo el ecosistema.
+                Una sesión para todo el ecosistema.
               </p>
             </div>
             <button
@@ -131,8 +131,8 @@ export default function LoginDialog({
             </button>
           </div>
 
-          {/* Google no se reimplementa acÃ¡: el flujo con token vive en el
-              sitio, asÃ­ que se abre su ventana de login (misma sesiÃ³n) y al
+          {/* Google no se reimplementa acá: el flujo con token vive en el
+              sitio, así que se abre su ventana de login (misma sesión) y al
               volver el launcher ya te ve adentro. Con el logo oficial, que es
               lo que Google pide para sus botones. */}
           <button
@@ -171,7 +171,7 @@ export default function LoginDialog({
           <form onSubmit={enviar} className="mt-4 space-y-3.5">
             <label className="block">
               <span className="font-mono text-[9px] tracking-widest uppercase text-white/40">
-                Correo electrÃ³nico
+                Correo electrónico
               </span>
               <input
                 ref={emailRef}
@@ -187,14 +187,14 @@ export default function LoginDialog({
 
             <label className="block">
               <span className="font-mono text-[9px] tracking-widest uppercase text-white/40">
-                ContraseÃ±a
+                Contraseña
               </span>
               <span className="relative mt-1.5 block">
                 <input
                   type={verPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                  placeholder="⬢⬢⬢⬢⬢⬢⬢⬢"
                   autoComplete="current-password"
                   disabled={enviando}
                   className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 pr-9 text-xs text-white placeholder:text-white/30 outline-none transition-colors focus:border-[#ffcc00]/40 focus:bg-white/[0.07] disabled:opacity-60"
@@ -202,7 +202,7 @@ export default function LoginDialog({
                 <button
                   type="button"
                   onClick={() => setVerPassword((v) => !v)}
-                  aria-label={verPassword ? "Ocultar contraseÃ±a" : "Mostrar contraseÃ±a"}
+                  aria-label={verPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                   className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-white/40 transition-colors hover:text-white"
                 >
                   {verPassword ? <EyeOff size={13} /> : <Eye size={13} />}
@@ -238,7 +238,7 @@ export default function LoginDialog({
                     }
                     className="mt-1 text-[10px] font-medium text-[#ffcc00] transition-opacity hover:opacity-80"
                   >
-                    Verificar mi cuenta â†’
+                    Verificar mi cuenta � 
                   </button>
                 )}
               </div>
@@ -250,7 +250,7 @@ export default function LoginDialog({
               className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#ffcc00] px-3 py-2.5 text-xs font-medium text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {enviando && <Loader2 size={13} className="animate-spin" />}
-              {enviando ? "Entrandoâ€¦" : "Ingresar"}
+              {enviando ? "Entrando⬦" : "Ingresar"}
             </button>
 
           </form>
@@ -275,12 +275,12 @@ export default function LoginDialog({
                 abrirPaginaDeAuth(
                   "auth-recovery",
                   "https://bling.uy/auth/recovery/forgot",
-                  "Recuperar la contraseÃ±a",
+                  "Recuperar la contraseña",
                 )
               }
               className="text-[10px] font-light text-white/50 transition-colors hover:text-white"
             >
-              OlvidÃ© mi contraseÃ±a
+              Olvidé mi contraseña
             </button>
           </div>
         </div>
