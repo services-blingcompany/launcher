@@ -105,21 +105,35 @@ function iniciarSesionGoogle({ clientId, clientSecret }) {
         const estado = url.searchParams.get("state");
         const err = url.searchParams.get("error");
 
+        // Petición ajena al flujo (favicon, CSS, recargas sin code): se ignora
+        // sin tocar el estado. Sin esto, el navegador pide /favicon.ico de la
+        // página "Listo" y se interpretaba como un state inválido, cancelando
+        // el intercambio que ya iba bien.
+        if (!codigo && !err) {
+          res.writeHead(204);
+          res.end();
+          return;
+        }
+
         if (err) {
           res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
           res.end(PAGINA_ERROR("Cancelaste el acceso con Google."));
-          terminado = true;
-          cerrar();
-          reject(new Error(err));
+          if (!terminado) {
+            terminado = true;
+            cerrar();
+            reject(new Error(err));
+          }
           return;
         }
 
         if (estado !== state) {
           res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
           res.end(PAGINA_ERROR("La verificación de seguridad no coincidió."));
-          terminado = true;
-          cerrar();
-          reject(new Error("state inválido"));
+          if (!terminado) {
+            terminado = true;
+            cerrar();
+            reject(new Error("state inválido"));
+          }
           return;
         }
 
