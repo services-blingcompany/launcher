@@ -119,6 +119,24 @@ function argumentoTicket(puerto, nonce) {
   return `--bling-ticket=${puerto}:${nonce}`;
 }
 
+/** Argumento con el que otra app de Bling pide que el launcher la abra con ticket. */
+const PREFIJO_ABRIR_APP = "--abrir-app=";
+
+/**
+ * Key de la app nativa que se pidió abrir por línea de comandos
+ * (`--abrir-app=contable`), o null. La usa una app sin ticket vigente para
+ * volver a entrar: el launcher le entrega uno nuevo sin que la persona tenga
+ * que buscarla en el catálogo. Sólo keys válidas (llegan de afuera).
+ */
+function appDeArgumentos(argv) {
+  const arg = (argv || []).find(
+    (a) => typeof a === "string" && a.startsWith(PREFIJO_ABRIR_APP),
+  );
+  if (!arg) return null;
+  const key = arg.slice(PREFIJO_ABRIR_APP.length);
+  return esClaveValida(key) ? key : null;
+}
+
 module.exports = {
   plataformaDe,
   esClaveValida,
@@ -129,4 +147,5 @@ module.exports = {
   parsearManifest,
   ejecutablesPara,
   argumentoTicket,
+  appDeArgumentos,
 };

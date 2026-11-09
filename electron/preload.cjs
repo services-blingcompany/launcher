@@ -35,6 +35,14 @@ contextBridge.exposeInMainWorld("bling", {
   },
   /** Servicio pedido desde afuera (jump list, --abrir=) y todavía sin abrir. */
   takePendingService: () => ipcRenderer.invoke("bling:servicio-pendiente"),
+  /** App nativa pedida desde afuera (--abrir-app=) y todavía sin abrir. */
+  takePendingApp: () => ipcRenderer.invoke("bling:app-pendiente"),
+  /** Una app nativa ya instalada pide abrirse con ticket (launcher abierto). */
+  onOpenApp: (callback) => {
+    const listener = (_event, key) => callback(key);
+    ipcRenderer.on("bling:abrir-app", listener);
+    return () => ipcRenderer.removeListener("bling:abrir-app", listener);
+  },
   /** El proceso principal pide abrir un servicio vía bandeja. */
   onOpenService: (callback) => {
     const listener = (_event, id) => callback(id);

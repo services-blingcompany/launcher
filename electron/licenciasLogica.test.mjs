@@ -10,6 +10,7 @@ const {
   parsearManifest,
   ejecutablesPara,
   argumentoTicket,
+  appDeArgumentos,
 } = logica;
 
 describe("plataformaDe", () => {
@@ -124,5 +125,22 @@ describe("ejecutablesPara", () => {
 describe("argumentoTicket", () => {
   it("arma el par puerto:nonce que el contable parsea con el prefijo", () => {
     expect(argumentoTicket(45123, "abc123")).toBe("--bling-ticket=45123:abc123");
+  });
+});
+
+describe("appDeArgumentos", () => {
+  it("toma la key que pide otra app de Bling (--abrir-app=contable)", () => {
+    expect(appDeArgumentos(["Bling Launcher.exe", "--abrir-app=contable"])).toBe("contable");
+  });
+
+  it("sin el argumento no hay pedido", () => {
+    expect(appDeArgumentos(["Bling Launcher.exe", "--abrir=contable"])).toBe(null);
+    expect(appDeArgumentos([])).toBe(null);
+    expect(appDeArgumentos(undefined)).toBe(null);
+  });
+
+  it("rechaza keys que podrían salir de la carpeta de apps", () => {
+    expect(appDeArgumentos(["--abrir-app=../../Windows"])).toBe(null);
+    expect(appDeArgumentos(["--abrir-app="])).toBe(null);
   });
 });

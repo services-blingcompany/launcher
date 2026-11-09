@@ -9,6 +9,7 @@ const settings = require("./settings.cjs");
 const tray = require("./tray.cjs");
 const auth = require("./auth.cjs");
 const licencias = require("./licencias.cjs");
+const licenciasLogica = require("./licenciasLogica.cjs");
 const soporte = require("./soporte.cjs");
 const acceso = require("./acceso.cjs");
 const contextMenu = require("./contextMenu.cjs");
@@ -240,6 +241,12 @@ function aplicarAtajoGlobal(activo) {
 /** Id de servicio pedido desde afuera (`--abrir=news`) y todavía sin abrir. */
 let servicioPendiente = null;
 
+/**
+ * App nativa pedida desde afuera (`--abrir-app=contable`) y todavía sin
+ * abrir: el hub la abre con su ticket apenas monta (ver bling:app-pendiente).
+ */
+let appPendiente = null;
+
 function servicioDeArgumentos(argv) {
   const arg = (argv || []).find(
     (a) => typeof a === "string" && a.startsWith("--abrir="),
@@ -439,6 +446,13 @@ ipcMain.handle("bling:servicio-pendiente", () => {
   return id;
 });
 
+/** Igual que el servicio pendiente, para una app nativa (--abrir-app=). */
+ipcMain.handle("bling:app-pendiente", () => {
+  const key = appPendiente;
+  appPendiente = null;
+  return key;
+});
+
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   // Segunda instancia: sólo enfocar la ventana existente.
@@ -446,10 +460,13 @@ if (!gotTheLock) {
 } else {
   app.on("second-instance", (_evento, argv) => {
     const pedido = servicioDeArgumentos(argv);
+    // Una app nativa sin ticket (el Contable) pide volver a entrar.
+    const pedidoApp = licenciasLogica.appDeArgumentos(argv);
     // Si el hub se cerró pero quedaron ventanas de servicio abiertas,
     // launcherWindow es null: hay que recrearla, no ignorar el evento.
     if (!launcherWindow || launcherWindow.isDestroyed()) {
       if (pedido) servicioPendiente = pedido;
+      if (pedidoApp) appPendiente = pedidoApp;
       createLauncherWindow();
       return;
     }
@@ -457,6 +474,7 @@ if (!gotTheLock) {
     launcherWindow.focus();
     // La instancia nueva puede venir de una tarea de la jump list.
     if (pedido) launcherWindow.webContents.send("tray:open-service", pedido);
+    if (pedidoApp) launcherWindow.webContents.send("bling:abrir-app", pedidoApp);
   });
 
   Menu.setApplicationMenu(null);
@@ -492,6 +510,7 @@ if (!gotTheLock) {
     // Un servicio pedido por línea de comandos (o desde la jump list) se
     // abre apenas el hub avise que montó.
     servicioPendiente = servicioDeArgumentos(process.argv) || servicioPendiente;
+    appPendiente = licenciasLogica.appDeArgumentos(process.argv) || appPendiente;
 
     // Por defecto Electron rechaza TODOS los permisos en silencio: la red
     // social pediría notificaciones o cámara para los lives y nunca

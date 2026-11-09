@@ -239,6 +239,10 @@ interface BlingApi {
   /** Servicio pedido desde afuera (jump list, --abrir=) y todavía sin abrir. */
   takePendingService(): Promise<string | null>;
   onOpenService(callback: (id: string) => void): () => void;
+  /** App nativa pedida desde afuera (--abrir-app=contable) y todavía sin abrir. */
+  takePendingApp(): Promise<string | null>;
+  /** Una app nativa pide abrirse con ticket mientras el launcher ya está abierto. */
+  onOpenApp(callback: (key: string) => void): () => void;
 
   // ── Sesión ──
   /** Perfil de la sesión activa, o null si no hay nadie logueado. */

@@ -83,6 +83,35 @@ export default function App() {
     if (user) setLoginAbierto(false);
   }, [user]);
 
+  /**
+   * Una app nativa (el Contable) pidió volver a entrar con --abrir-app=: se
+   * abre con su ticket. Sin sesión, se pide el login y el pedido queda
+   * guardado hasta que la persona entre; cualquier otro motivo (sin
+   * licencia, no instalada) queda a la vista en su fila del catálogo.
+   */
+  const appPedida = useRef<string | null>(null);
+  const abrirAppPedida = useCallback(
+    async (key: string) => {
+      appPedida.current = key;
+      // authStatus renueva el token si venció: así un token viejo no se
+      // confunde con «sin sesión» y no salta el login de más.
+      const sesion = await window.bling.authStatus().catch(() => null);
+      const r = sesion ? await licencias.abrir(key) : { ok: false, codigo: "sin-sesion" };
+      if (r.ok || r.codigo !== "sin-sesion") appPedida.current = null;
+      else setLoginAbierto(true);
+    },
+    [licencias.abrir],
+  );
+  useEffect(() => {
+    if (user && appPedida.current) void abrirAppPedida(appPedida.current);
+  }, [user, abrirAppPedida]);
+  useEffect(() => {
+    void window.bling.takePendingApp().then((key) => {
+      if (key) void abrirAppPedida(key);
+    });
+    return window.bling.onOpenApp((key) => void abrirAppPedida(key));
+  }, [abrirAppPedida]);
+
   useEffect(() => {
     void window.bling.appVersion().then(setVersion);
     void window.bling.getRecents().then(setRecents);
