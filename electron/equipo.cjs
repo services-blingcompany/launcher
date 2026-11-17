@@ -59,7 +59,7 @@ function idDeRespaldo() {
   return id;
 }
 
-/** { huella, nombre, plataforma } de este equipo. */
+/** { huella, nombre, plataforma, remoto } de este equipo. */
 function obtener(plataforma) {
   if (!cache) {
     const id = idDelSistema() || idDeRespaldo();
@@ -68,7 +68,7 @@ function obtener(plataforma) {
       nombre: logica.nombreDe(os.hostname(), process.platform),
     };
   }
-  return { ...cache, plataforma };
+  return { ...cache, plataforma, remoto: logica.esRemoto(process.env, process.platform) };
 }
 
 module.exports = { obtener };

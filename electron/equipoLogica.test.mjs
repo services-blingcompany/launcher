@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import logica from "./equipoLogica.cjs";
 
-const { idDeWindows, idDeMac, idDeLinux, huellaDe, nombreDe } = logica;
+const { idDeWindows, idDeMac, idDeLinux, huellaDe, nombreDe, esRemoto } = logica;
 
 describe("id de la máquina", () => {
   it("Windows: saca el MachineGuid de la salida de reg", () => {
@@ -40,6 +40,15 @@ describe("huella", () => {
     expect(huellaDe("1a2b3c4d-1111-2222-3333-444455556666")).toBe(
       "a3b786a41c8e6ec3ea9d0d9a556caef236127b9de88ec7c309e8f7786f794fe5",
     );
+  });
+});
+
+describe("escritorio remoto", () => {
+  it("Windows por RDP sí; consola o otro sistema no", () => {
+    expect(esRemoto({ SESSIONNAME: "RDP-Tcp#3" }, "win32")).toBe(true);
+    expect(esRemoto({ SESSIONNAME: "Console" }, "win32")).toBe(false);
+    expect(esRemoto({}, "win32")).toBe(false);
+    expect(esRemoto({ SESSIONNAME: "RDP-Tcp#3" }, "darwin")).toBe(false);
   });
 });
 

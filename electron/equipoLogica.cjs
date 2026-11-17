@@ -43,4 +43,13 @@ function nombreDe(hostname, plataforma) {
   return host ? `${host} (${sistema})` : `Equipo ${sistema}`;
 }
 
-module.exports = { SAL, idDeWindows, idDeMac, idDeLinux, huellaDe, nombreDe };
+/**
+ * ¿Sesión de Escritorio Remoto? En Windows, SESSIONNAME vale "Console" en la
+ * PC y "RDP-Tcp#N" por Escritorio Remoto. Se informa al backend, no se bloquea.
+ */
+function esRemoto(env, plataforma) {
+  if (plataforma !== "win32") return false;
+  return /^RDP-/i.test(String((env && env.SESSIONNAME) || ""));
+}
+
+module.exports = { SAL, idDeWindows, idDeMac, idDeLinux, huellaDe, nombreDe, esRemoto };
