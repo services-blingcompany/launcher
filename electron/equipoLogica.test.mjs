@@ -34,6 +34,13 @@ describe("huella", () => {
     expect(huellaDe("1a2b3c4d-1111-2222-3333-444455556666")).toBe(h);
     expect(huellaDe("otro-equipo")).not.toBe(h);
   });
+
+  it("coincide con la que calcula el contable de escritorio (src-tauri/src/huella.rs)", () => {
+    // Si cambia de un lado solo, el backend rechaza todas las renovaciones.
+    expect(huellaDe("1a2b3c4d-1111-2222-3333-444455556666")).toBe(
+      "a3b786a41c8e6ec3ea9d0d9a556caef236127b9de88ec7c309e8f7786f794fe5",
+    );
+  });
 });
 
 describe("nombre del equipo", () => {
