@@ -1,6 +1,6 @@
 "use strict";
 
-const { ipcMain, session, BrowserWindow } = require("electron");
+const { app, ipcMain, session, BrowserWindow } = require("electron");
 const diagnostics = require("./diagnostics.cjs");
 const oauthSistema = require("./oauth-sistema.cjs");
 
@@ -96,6 +96,10 @@ function crearPuente() {
     focusable: false,
     webPreferences: {
       contextIsolation: true,
+
+      // DevTools sólo en desarrollo: en la app instalada no se puede inspeccionar.
+
+      devTools: !app.isPackaged,
       sandbox: true,
       backgroundThrottling: false,
     },

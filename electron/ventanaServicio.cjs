@@ -1,6 +1,6 @@
 "use strict";
 
-const { BaseWindow, WebContentsView, ipcMain } = require("electron");
+const { app, BaseWindow, WebContentsView, ipcMain } = require("electron");
 const path = require("node:path");
 const contextMenu = require("./contextMenu.cjs");
 const diagnostics = require("./diagnostics.cjs");
@@ -195,12 +195,16 @@ function abrir({ id, url, title }) {
     webPreferences: {
       preload: path.join(__dirname, "barra-servicio-preload.cjs"),
       contextIsolation: true,
+
+      // DevTools sólo en desarrollo: en la app instalada no se puede inspeccionar.
+
+      devTools: !app.isPackaged,
       nodeIntegration: false,
       sandbox: true,
     },
   });
   const contenido = new WebContentsView({
-    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, devTools: !app.isPackaged },
   });
   ventana.contentView.addChildView(barra);
   ventana.contentView.addChildView(contenido);
@@ -256,6 +260,10 @@ function abrir({ id, url, title }) {
           backgroundColor: "#ffffff",
           webPreferences: {
             contextIsolation: true,
+
+            // DevTools sólo en desarrollo: en la app instalada no se puede inspeccionar.
+
+            devTools: !app.isPackaged,
             nodeIntegration: false,
             sandbox: true,
           },

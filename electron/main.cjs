@@ -296,6 +296,10 @@ function createLauncherWindow() {
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
+
+      // DevTools sólo en desarrollo: en la app instalada no se puede inspeccionar.
+
+      devTools: !app.isPackaged,
       nodeIntegration: false,
       sandbox: true,
     },
