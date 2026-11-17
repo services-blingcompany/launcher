@@ -9,6 +9,7 @@ import SettingsPanel from "./components/SettingsPanel";
 import SupportPanel from "./components/SupportPanel";
 import UserMenu from "./components/UserMenu";
 import LoginDialog from "./components/LoginDialog";
+import LimiteEquiposDialog from "./components/LimiteEquiposDialog";
 import AccountPanel from "./components/AccountPanel";
 import { datosDeUsuario, useSession } from "./hooks/useSession";
 import { useLicencias } from "./hooks/useLicencias";
@@ -718,6 +719,14 @@ export default function App() {
       )}
 
       {/* ── Login nativo ── */}
+      {licencias.limiteEquipos && (
+        <LimiteEquiposDialog
+          limite={licencias.limiteEquipos.limite}
+          equipos={licencias.limiteEquipos.equipos}
+          onReemplazar={(id) => licencias.abrir(licencias.limiteEquipos!.key, id)}
+          onCerrar={licencias.cerrarLimiteEquipos}
+        />
+      )}
       {loginAbierto && (
         <LoginDialog onCerrar={() => setLoginAbierto(false)} onLogin={login} />
       )}

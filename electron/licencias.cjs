@@ -8,6 +8,7 @@ const http = require("node:http");
 const { spawn } = require("node:child_process");
 const auth = require("./auth.cjs");
 const logica = require("./licenciasLogica.cjs");
+const equipo = require("./equipo.cjs");
 
 /**
  * Licencias de apps: catálogo remoto, descarga de binarios y apertura de
@@ -78,13 +79,17 @@ function aviso(payload) {
  * { status, datos } o tira si el puente no está (sin sesión / sin reto).
  * GET por defecto; POST para pedir el ticket de una app.
  */
-async function getBackend(ruta, metodo = "GET") {
+async function getBackend(ruta, metodo = "GET", cuerpo = null) {
   const r = await auth.enPagina(`(async () => {
     const token = localStorage.getItem('access_token');
+    const cuerpo = ${JSON.stringify(cuerpo)};
+    const headers = token ? { Authorization: 'Bearer ' + token } : {};
+    if (cuerpo) headers['Content-Type'] = 'application/json';
     const res = await fetch(${JSON.stringify(ruta)}, {
       method: ${JSON.stringify(metodo)},
       credentials: 'include', cache: 'no-store',
-      headers: token ? { Authorization: 'Bearer ' + token } : {},
+      headers,
+      body: cuerpo ? JSON.stringify(cuerpo) : undefined,
     });
     return { status: res.status, datos: await res.json().catch(() => null) };
   })()`);
@@ -227,17 +232,34 @@ function ejecutable(key) {
  * Sólo con licencia vigente: 401 sin sesión, 403 sin licencia (mismos
  * códigos que el resto del módulo).
  */
-async function pedirTicket(key) {
+async function pedirTicket(key, reemplazar = null) {
   if (!logica.esClaveValida(key)) return { ok: false, codigo: "sin-version" };
+  // Cada apertura dice desde qué equipo: el backend limita cuántos usa cada
+  // persona según su plan y ata el ticket a éste.
+  const dispositivo = equipo.obtener(logica.plataformaDe(process.platform, process.arch));
   try {
     const r = await getBackend(
       `/api/v1/licenses/${encodeURIComponent(key)}/ticket`,
       "POST",
+      { dispositivo, reemplazar: Number.isInteger(reemplazar) ? reemplazar : null },
     );
+    if (r.status === 409 && r.datos && r.datos.codigo === "limite-equipos") {
+      return {
+        ok: false,
+        codigo: "limite-equipos",
+        limite: r.datos.limite,
+        equipos: Array.isArray(r.datos.equipos) ? r.datos.equipos : [],
+      };
+    }
     if (r.status !== 200 || !r.datos || !r.datos.ticket) {
       return { ok: false, codigo: logica.codigoDeEstado(r.status) };
     }
-    return { ok: true, ticket: r.datos.ticket, expiresAt: r.datos.expiresAt || null };
+    return {
+      ok: true,
+      ticket: r.datos.ticket,
+      expiresAt: r.datos.expiresAt || null,
+      huella: dispositivo.huella,
+    };
   } catch {
     return { ok: false, codigo: "red" };
   }
@@ -295,13 +317,14 @@ function crearCanalTicket(entrega) {
  * segunda instancia recibe los args por second-instance y el ticket llega
  * igual. Sin exe instalado → no-instalada (la UI ofrece descargar/instalar).
  */
-async function abrir(key) {
+async function abrir(key, reemplazar = null) {
   if (!logica.esClaveValida(key)) return { ok: false, codigo: "sin-version" };
   const exe = ejecutable(key);
   if (!exe) return { ok: false, codigo: "no-instalada" };
-  const t = await pedirTicket(key);
+  const t = await pedirTicket(key, reemplazar);
   if (!t.ok) return t;
-  const canal = await crearCanalTicket({ ticket: t.ticket, expiresAt: t.expiresAt });
+  // La app renueva el ticket con la huella: sólo vale en este equipo.
+  const canal = await crearCanalTicket({ ticket: t.ticket, expiresAt: t.expiresAt, huella: t.huella });
   try {
     const hijo = spawn(exe, [logica.argumentoTicket(canal.puerto, canal.nonce)], {
       stdio: "ignore",
@@ -356,7 +379,10 @@ function init() {
   ipcMain.handle("licencias:descargar", (_event, key) => descargar(String(key ?? "")));
   ipcMain.handle("licencias:instalado", (_event, key) => instalado(String(key ?? "")));
   ipcMain.handle("licencias:instalar", (_event, key) => instalar(String(key ?? "")));
-  ipcMain.handle("licencias:abrir", (_event, key) => abrir(String(key ?? "")));
+  // reemplazar: id del equipo a liberar para abrir en éste (límite de equipos).
+  ipcMain.handle("licencias:abrir", (_event, key, reemplazar) =>
+    abrir(String(key ?? ""), Number.isInteger(reemplazar) ? reemplazar : null),
+  );
   ipcMain.handle("licencias:ejecutable", (_event, key) => Boolean(ejecutable(String(key ?? ""))));
 }
 

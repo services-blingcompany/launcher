@@ -134,11 +134,25 @@ export type LicenciaProgreso = {
 /** App descargada en disco, lista para instalar. */
 export type LicenciaInstalada = { version: string; archivo: string };
 
+/** Equipo de la persona (límite de equipos por plan). */
+export type EquipoCuenta = {
+  id: number;
+  nombre: string;
+  tipo: string;
+  plataforma: string | null;
+  ultimoUso: string;
+  creadoEn: string;
+  esEste: boolean;
+};
+
 /** Resultado de abrir la app nativa con su ticket de licencia. */
 export type LicenciaAbrirResult = {
   ok: boolean;
-  /** no-instalada | sin-sesion | sin-licencia | sin-version | servidor | red */
+  /** no-instalada | sin-sesion | sin-licencia | sin-version | servidor | red | limite-equipos */
   codigo?: string;
+  /** Con limite-equipos: cuántos permite el plan y cuáles están en uso. */
+  limite?: number;
+  equipos?: EquipoCuenta[];
 };
 
 /** Credenciales del formulario nativo. */
@@ -270,7 +284,8 @@ interface BlingApi {
   /** Ejecuta el instalador ya descargado. */
   licenciasInstalar(key: string): Promise<boolean>;
   /** Abre la app nativa instalada con su ticket de licencia. */
-  licenciasAbrir(key: string): Promise<LicenciaAbrirResult>;
+  /** reemplazar: id del equipo a liberar para abrir en éste. */
+  licenciasAbrir(key: string, reemplazar?: number): Promise<LicenciaAbrirResult>;
   /** ¿Está el ejecutable nativo de la app instalado en la PC? */
   licenciasEjecutable(key: string): Promise<boolean>;
   /** Progreso de descarga de apps (push del proceso principal). */

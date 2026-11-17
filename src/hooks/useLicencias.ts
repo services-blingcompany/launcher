@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type {
   BlingUser,
+  EquipoCuenta,
   LicenciaApp,
   LicenciaInstalada,
   LicenciaProgreso,
@@ -20,7 +21,11 @@ const MENSAJES: Record<string, string> = {
   integridad: "El archivo no pasó la verificación y se descartó.",
   "en-curso": "Ya se está descargando.",
   "no-instalada": "La app todavía no está instalada en tu PC.",
+  "limite-equipos": "Tu plan no permite abrir la app en más equipos.",
 };
+
+/** La cuenta llegó al límite de equipos de su plan al abrir una app. */
+export type LimiteEquipos = { key: string; limite: number; equipos: EquipoCuenta[] };
 
 export function mensajeDeError(codigo: string): string {
   return MENSAJES[codigo] ?? "No se pudo descargar la app.";
@@ -166,14 +171,22 @@ export function useLicencias(user: BlingUser | null) {
    * Abre la app nativa instalada en la PC con su ticket de licencia (el
    * main pide el ticket, monta el canal local y la spawnea).
    */
-  const abrir = useCallback(async (key: string) => {
+  const [limiteEquipos, setLimiteEquipos] = useState<LimiteEquipos | null>(null);
+  const abrir = useCallback(async (key: string, reemplazar?: number) => {
     setErrores((prev) => ({ ...prev, [key]: "" }));
-    const r = await window.bling.licenciasAbrir(key);
+    const r = await window.bling.licenciasAbrir(key, reemplazar);
+    if (!r.ok && r.codigo === "limite-equipos") {
+      // No es un error de la fila: se ofrece cerrar otro equipo (diálogo).
+      setLimiteEquipos({ key, limite: r.limite ?? 1, equipos: r.equipos ?? [] });
+      return r;
+    }
+    setLimiteEquipos(null);
     if (!r.ok) {
       setErrores((prev) => ({ ...prev, [key]: mensajeDeError(r.codigo ?? "red") }));
     }
     return r;
   }, []);
+  const cerrarLimiteEquipos = useCallback(() => setLimiteEquipos(null), []);
 
   return {
     apps,
@@ -186,5 +199,7 @@ export function useLicencias(user: BlingUser | null) {
     descargar,
     instalar,
     abrir,
+    limiteEquipos,
+    cerrarLimiteEquipos,
   };
 }
