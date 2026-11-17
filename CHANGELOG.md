@@ -9,6 +9,12 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.20.0]
+
+- Las apps de escritorio (como Bling Contable) se abren desde el launcher con tu licencia, sin volver a iniciar sesión.
+- Tu cuenta se usa en los equipos que permite tu plan: si ya está en uso en otros, el launcher te muestra cuáles y te deja cerrar uno para usarla en esta PC.
+- Más protección: el launcher no arranca si alguien modifica sus archivos, y las herramientas de depuración quedan desactivadas en la versión instalada.
+
 ## [1.19.13]
 
 - Mejor detección de la verificación de Cloudflare para que el launcher conecte con Bling sin trabarse.
