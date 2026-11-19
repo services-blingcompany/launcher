@@ -197,9 +197,13 @@ function initUpdater() {
   if (updaterReady) return;
   updaterReady = true;
 
-  // La app no está firmada con certificado comercial: sin esto,
-  // electron-updater rechaza el instalador bajado por falta de firma.
-  autoUpdater.verifyUpdateCodeSignature = false;
+  // Verificación de firma de la actualización: se deja la de electron-updater.
+  // Compara el firmante del instalador bajado con el `publisherName` del
+  // app-update.yml. Mientras el launcher no se firme no hay publisherName y
+  // la verificación pasa sola (NsisUpdater.verifySignature devuelve null);
+  // el día que el release se firme, electron-builder escribe el publisherName
+  // y desde ahí una actualización sin la firma de Bling se rechaza.
+  // Antes se apagaba a mano (= false) y quedaba apagada también firmando.
   // No instalar por nuestra cuenta: el usuario decide con el botón, y
   // si lo deja estar, se instala al salir de todos modos.
   autoUpdater.autoInstallOnAppQuit = true;
