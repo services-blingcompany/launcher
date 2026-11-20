@@ -84,6 +84,8 @@ export default function ServiceRow({
   const yaGuardada = binarioListo && guardada === version;
   // Instalada gana sobre el estado del instalador: si el exe está, se abre.
   const nativaInstalada = ejecutable === true;
+  // Tiene versión de escritorio (instalada o con instalador disponible).
+  const tieneEscritorio = nativaInstalada || Boolean(binarioListo);
 
   function seguirCursor(e: MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -286,9 +288,28 @@ export default function ServiceRow({
               </button>
             ) : null}
 
-            {/* Acción secundaria: aparece al pasar el cursor o al recorrer
-                con el teclado. */}
-            {disponible && (
+            {/* Apps con versión de escritorio: la otra opción, siempre visible
+                y con texto, abre la versión web en el navegador del sistema
+                (donde la persona suele tener la sesión abierta). */}
+            {disponible && tieneEscritorio && (
+              <button
+                type="button"
+                aria-label={`Usar ${service.name} en el navegador`}
+                title="Abrir la versión web en tu navegador"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenExternal(service);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase text-white/45 transition-colors hover:border-white/25 hover:text-white"
+              >
+                <ExternalLink size={8} />
+                Usar en el navegador
+              </button>
+            )}
+
+            {/* Resto de servicios: la acción secundaria aparece al pasar el
+                cursor o al recorrer con el teclado. */}
+            {disponible && !tieneEscritorio && (
               <button
                 type="button"
                 aria-label={`Abrir ${service.name} en el navegador del sistema`}

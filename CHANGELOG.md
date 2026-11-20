@@ -13,6 +13,7 @@ tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
 - Nuevo «Entrar con el navegador»: si ya tenés la sesión de Bling abierta en tu navegador, el launcher entra con esa cuenta sin pedirte la contraseña (confirmás en la web).
 - Al tocar una app que tiene versión de escritorio (como Bling Contable), el launcher la abre, la instala o la descarga, en vez de abrir la versión web.
+- Esas apps muestran además «Usar en el navegador», siempre visible, para abrir la versión web en tu navegador.
 
 ## [1.20.0]
 
