@@ -45,6 +45,8 @@ const clientGoogleSecret = leerCredencial("BLING_GOOGLE_CLIENT_SECRET");
 
 /** Origen real del ecosistema: auth, API y servicios cuelgan de acá. */
 const SITE = "https://bling.uy";
+/** Donde la persona tiene la sesión en su navegador (cookies host-only de www). */
+const SITIO_NAVEGADOR = "https://www.bling.uy";
 
 /** Cookies de sesión que se limpian al cerrar sesión. */
 const SESSION_COOKIES = ["access_token", "refresh_token", "auth_session", "auth_role", "csrf_token"];
@@ -581,7 +583,9 @@ function init({ getHub }) {
   // navegador del sistema (sin contraseña). Ver sesion-navegador.cjs.
   ipcMain.handle("auth:navegador", async () => {
     try {
-      const { codigo, verifier } = await sesionNavegador.esperarCodigoDelNavegador({ sitio: SITE });
+      // www.bling.uy y no SITE (bling.uy): la sesión del navegador vive en las
+      // cookies de www, y bling.uy no redirige, así que ahí se vería sin sesión.
+      const { codigo, verifier } = await sesionNavegador.esperarCodigoDelNavegador({ sitio: SITIO_NAVEGADOR });
       const resultado = await canjearNavegador(codigo, verifier);
       if (resultado.ok) {
         avisar(getHub);

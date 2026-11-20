@@ -9,6 +9,10 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.21.1]
+
+- «Entrar con el navegador» abre www.bling.uy, donde ya tenés la sesión abierta, para que no te pida iniciar sesión de nuevo.
+
 ## [1.21.0]
 
 - Nuevo «Entrar con el navegador»: si ya tenés la sesión de Bling abierta en tu navegador, el launcher entra con esa cuenta sin pedirte la contraseña (confirmás en la web).
