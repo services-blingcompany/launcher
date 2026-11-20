@@ -91,9 +91,26 @@ export default function ServiceRow({
     e.currentTarget.style.setProperty("--my", `${e.clientY - rect.top}px`);
   }
 
+  /**
+   * Clic en la fila: si la app tiene versión de escritorio, la fila trabaja
+   * con ella (abrir la instalada, instalar la bajada o bajarla). La versión
+   * web en una ventana del launcher queda para los servicios sin instalador.
+   * Antes la fila abría siempre la web y la app de escritorio dependía de un
+   * botón chico que muchos no veían.
+   */
   function accionPrincipal() {
     if (sinLicencia) {
       onVerPlanes?.();
+      return;
+    }
+    if (nativaInstalada) {
+      onAbrir?.(service);
+      return;
+    }
+    if (binarioListo) {
+      if (bajando) return;
+      if (yaGuardada) onInstalar?.(service);
+      else onDescargar?.(service);
       return;
     }
     if (disponible) onOpen(service);

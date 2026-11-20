@@ -413,7 +413,10 @@ export default function App() {
         const sel = navegables.find((s) => s.id === seleccion);
         if (sel) {
           e.preventDefault();
-          abrir(sel);
+          // Misma acción que el clic en la fila (app de escritorio si la hay).
+          const fila = document.querySelector<HTMLElement>(`[data-sid="${CSS.escape(sel.id)}"]`);
+          if (fila) fila.click();
+          else abrir(sel);
         }
       }
     }
