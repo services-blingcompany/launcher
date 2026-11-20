@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { Eye, EyeOff, Loader2, X } from "lucide-react";
+import { Eye, EyeOff, Globe, Loader2, X } from "lucide-react";
 import Sparkle from "./Sparkle";
 import type { AuthLoginResult } from "../bling";
 
@@ -90,6 +90,26 @@ export default function LoginDialog({
     }
   }
 
+  /** Usa la sesión de Bling que ya está abierta en el navegador. */
+  async function entrarConNavegador() {
+    if (enviando) return;
+    setError(null);
+    setNecesitaVerificar(false);
+    setEnviando(true);
+    try {
+      const resultado = await window.bling.authNavegador();
+      if (resultado.ok) {
+        onCerrar();
+        return;
+      }
+      setError(resultado.error ?? "No se pudo conectar el launcher.");
+    } catch {
+      setError("No pudimos conectar con Bling. Revisá tu conexión.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   function abrirPaginaDeAuth(id: string, url: string, title: string) {
     void window.bling.openService({ id, url, title });
   }
@@ -160,6 +180,18 @@ export default function LoginDialog({
               />
             </svg>
             Continuar con Google
+          </button>
+
+          {/* Quien ya tiene la sesión de Bling abierta en su navegador entra
+              sin escribir la contraseña (aprueba en la web). */}
+          <button
+            type="button"
+            onClick={entrarConNavegador}
+            disabled={enviando}
+            className="mt-2 flex w-full items-center justify-center gap-2.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-xs font-medium text-white transition-colors hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Globe className="h-4 w-4 text-white/70" aria-hidden="true" />
+            Entrar con el navegador
           </button>
 
           <div className="mt-4 flex items-center gap-3" aria-hidden="true">

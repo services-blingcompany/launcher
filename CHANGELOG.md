@@ -9,6 +9,11 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.21.0]
+
+- Nuevo «Entrar con el navegador»: si ya tenés la sesión de Bling abierta en tu navegador, el launcher entra con esa cuenta sin pedirte la contraseña (confirmás en la web).
+- Al tocar una app que tiene versión de escritorio (como Bling Contable), el launcher la abre, la instala o la descarga, en vez de abrir la versión web.
+
 ## [1.20.0]
 
 - Las apps de escritorio (como Bling Contable) se abren desde el launcher con tu licencia, sin volver a iniciar sesión.

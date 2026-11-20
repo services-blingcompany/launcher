@@ -265,6 +265,8 @@ interface BlingApi {
   authLogin(credenciales: AuthCredentials): Promise<AuthLoginResult>;
   /** Login con Google en el navegador del sistema (usa la cuenta ya abierta). */
   authGoogleSistema(): Promise<AuthLoginResult>;
+  /** Entra con la sesión de Bling ya abierta en el navegador del sistema. */
+  authNavegador(): Promise<AuthLoginResult>;
   /** Cierra sesión en el backend y borra las cookies locales. */
   authLogout(): Promise<boolean>;
   /** Notificaciones sin leer del usuario logueado. */

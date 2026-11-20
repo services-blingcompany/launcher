@@ -3,6 +3,7 @@
 const { app, ipcMain, session, BrowserWindow } = require("electron");
 const diagnostics = require("./diagnostics.cjs");
 const oauthSistema = require("./oauth-sistema.cjs");
+const sesionNavegador = require("./sesion-navegador.cjs");
 
 /**
  * Cliente OAuth de Google para el login en el navegador del sistema. Es un
@@ -485,6 +486,40 @@ async function loginSocial(provider, token) {
   return { ok: false, error: r.detalle || "No se pudo iniciar sesion con la red social." };
 }
 
+/**
+ * Canjea el código de «Entrar con el navegador» por la sesión, desde el puente
+ * (www.bling.uy): así las cookies quedan en la sesión del launcher como en un
+ * login normal.
+ */
+async function canjearNavegador(codigo, verifier) {
+  const cuerpo = JSON.stringify({ codigo, verifier });
+  let r;
+  try {
+    r = await enPagina(`(async () => {
+      const res = await fetch('/api/v1/auth/launcher/canjear', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: ${JSON.stringify(cuerpo)},
+      });
+      const tipo = res.headers.get('content-type') || '';
+      if (!tipo.includes('json')) return { status: res.status, html: true };
+      const datos = await res.json().catch(() => ({}));
+      if (res.ok && datos.access_token) localStorage.setItem('access_token', datos.access_token);
+      return { status: res.status, html: false, detalle: typeof datos.detail === 'string' ? datos.detail : null };
+    })()`);
+  } catch {
+    return { ok: false, error: "No pudimos conectar con Bling. Revisá tu conexión." };
+  }
+  if (r.status >= 200 && r.status < 300) {
+    const user = await perfil();
+    ultimoAviso = user ? String(user.id) : "invitado";
+    return { ok: true, user };
+  }
+  if (r.html) return { ok: false, error: "Bling está tardando en responder. Probá de nuevo en un rato." };
+  return { ok: false, error: r.detalle || "No se pudo conectar el launcher." };
+}
+
 function init({ getHub }) {
   obtenerHub = typeof getHub === "function" ? getHub : () => null;
 
@@ -539,6 +574,28 @@ function init({ getHub }) {
         (err && err.message) || String(err),
       ]);
       return { ok: false, error: mensajeDe(err) };
+    }
+  });
+
+  // «Entrar con el navegador»: usa la sesión de Bling ya abierta en el
+  // navegador del sistema (sin contraseña). Ver sesion-navegador.cjs.
+  ipcMain.handle("auth:navegador", async () => {
+    try {
+      const { codigo, verifier } = await sesionNavegador.esperarCodigoDelNavegador({ sitio: SITE });
+      const resultado = await canjearNavegador(codigo, verifier);
+      if (resultado.ok) {
+        avisar(getHub);
+        const hub = getHub && getHub();
+        if (hub && !hub.isDestroyed()) hub.webContents.send("auth:changed", resultado.user ?? null);
+      }
+      return resultado;
+    } catch (err) {
+      const m = String((err && err.message) || err || "");
+      diagnostics.escribir("error", ["[auth:navegador]", m]);
+      if (/cancelado/.test(m)) return { ok: false, error: "Cancelaste la conexión en el navegador." };
+      if (/navegador/i.test(m)) return { ok: false, error: "No pudimos abrir tu navegador. Probá de nuevo." };
+      if (/tiempo agotado/.test(m)) return { ok: false, error: "Pasó demasiado tiempo. Probá de nuevo." };
+      return { ok: false, error: "No se pudo conectar el launcher de forma segura. Probá de nuevo." };
     }
   });
 

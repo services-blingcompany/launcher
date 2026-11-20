@@ -57,6 +57,8 @@ contextBridge.exposeInMainWorld("bling", {
   authLogin: (credenciales) => ipcRenderer.invoke("auth:login", credenciales),
   /** Login con Google en el navegador del sistema. */
   authGoogleSistema: () => ipcRenderer.invoke("auth:google-sistema"),
+  /** Entra con la sesión de Bling ya abierta en el navegador del sistema. */
+  authNavegador: () => ipcRenderer.invoke("auth:navegador"),
   /** Cierra sesión en el backend y borra las cookies del jar compartido. */
   authLogout: () => ipcRenderer.invoke("auth:logout"),
   /** Contador de notificaciones sin leer (0 sin sesión). */
