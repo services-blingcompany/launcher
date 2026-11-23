@@ -699,7 +699,7 @@ function Captura({ adjunto }: { adjunto: SoporteAdjunto }) {
     return (
       <button
         type="button"
-        onClick={() => void window.bling.openExternal(`https://bling.uy${adjunto.url}`)}
+        onClick={() => void window.bling.openExternal(`https://www.bling.uy${adjunto.url}`)}
         title={adjunto.filename}
         className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] px-1.5 text-center text-white/45 transition-colors hover:border-white/25 hover:text-white/70"
       >

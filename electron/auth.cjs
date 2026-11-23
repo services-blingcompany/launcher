@@ -43,10 +43,15 @@ const clientGoogleSecret = leerCredencial("BLING_GOOGLE_CLIENT_SECRET");
  * httpOnly + el token que la web también usa en localStorage de bling.uy.
  */
 
-/** Origen real del ecosistema: auth, API y servicios cuelgan de acá. */
-const SITE = "https://bling.uy";
+/**
+ * Origen del ecosistema: auth, API y servicios cuelgan de acá. Es www y no
+ * bling.uy: el backend deja las cookies host-only, y toda la web (dashboard,
+ * Contable, auth) busca la sesión en www.bling.uy. Con el puente en bling.uy
+ * las ventanas de servicio no veían la sesión del launcher.
+ */
+const SITE = "https://www.bling.uy";
 /** Donde la persona tiene la sesión en su navegador (cookies host-only de www). */
-const SITIO_NAVEGADOR = "https://www.bling.uy";
+const SITIO_NAVEGADOR = SITE;
 
 /** Cookies de sesión que se limpian al cerrar sesión. */
 const SESSION_COOKIES = ["access_token", "refresh_token", "auth_session", "auth_role", "csrf_token"];
@@ -522,6 +527,30 @@ async function canjearNavegador(codigo, verifier) {
   return { ok: false, error: r.detalle || "No se pudo conectar el launcher." };
 }
 
+/**
+ * Pase de un solo uso (60 s) para abrir el navegador del sistema con la
+ * sesión del launcher. null si no hay sesión o el backend no lo da.
+ */
+async function pedirPase() {
+  if (haySesion() !== true) return null;
+  try {
+    const r = await enPagina(`(async () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) return null;
+      const res = await fetch('/api/v1/auth/launcher/pase', {
+        method: 'POST', credentials: 'include', cache: 'no-store',
+        headers: { Authorization: 'Bearer ' + token },
+      });
+      if (!res.ok) return null;
+      const datos = await res.json().catch(() => null);
+      return datos && typeof datos.codigo === 'string' ? datos.codigo : null;
+    })()`);
+    return typeof r === "string" ? r : null;
+  } catch {
+    return null;
+  }
+}
+
 function init({ getHub }) {
   obtenerHub = typeof getHub === "function" ? getHub : () => null;
 
@@ -646,4 +675,4 @@ function revisar() {
   avisar(obtenerHub);
 }
 
-module.exports = { init, perfil, enPagina, cerrarPuente, haySesion, revisar, SITE };
+module.exports = { init, perfil, enPagina, cerrarPuente, haySesion, revisar, pedirPase, SITE };

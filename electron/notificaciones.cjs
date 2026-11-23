@@ -25,7 +25,7 @@ let abrirServicio = () => false;
 /** Misma página que PAGINAS.notificaciones del renderer. */
 const NOTIFICACIONES = {
   id: "notificaciones",
-  url: "https://bling.uy/bling/notifications",
+  url: "https://www.bling.uy/bling/notifications",
   title: "Notificaciones",
 };
 

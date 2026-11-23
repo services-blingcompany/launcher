@@ -12,17 +12,17 @@ export const PAGINAS: {
 } = {
   perfil: {
     id: "perfil",
-    url: "https://bling.uy/bling/profile",
+    url: "https://www.bling.uy/bling/profile",
     title: "Mi perfil",
   },
   ajustes: {
     id: "cuenta-ajustes",
-    url: "https://bling.uy/bling/settings",
+    url: "https://www.bling.uy/bling/settings",
     title: "Ajustes de cuenta",
   },
   notificaciones: {
     id: "notificaciones",
-    url: "https://bling.uy/bling/notifications",
+    url: "https://www.bling.uy/bling/notifications",
     title: "Notificaciones",
   },
 };

@@ -264,7 +264,7 @@ export default function LoginDialog({
                     onClick={() =>
                       abrirPaginaDeAuth(
                         "auth-verify",
-                        "https://bling.uy/auth/verify",
+                        "https://www.bling.uy/auth/verify",
                         "Verificar mi cuenta",
                       )
                     }
@@ -293,7 +293,7 @@ export default function LoginDialog({
               onClick={() =>
                 abrirPaginaDeAuth(
                   "auth-register",
-                  "https://bling.uy/auth/register",
+                  "https://www.bling.uy/auth/register",
                   "Crear una cuenta",
                 )
               }
@@ -306,7 +306,7 @@ export default function LoginDialog({
               onClick={() =>
                 abrirPaginaDeAuth(
                   "auth-recovery",
-                  "https://bling.uy/auth/recovery/forgot",
+                  "https://www.bling.uy/auth/recovery/forgot",
                   "Recuperar la contraseña",
                 )
               }

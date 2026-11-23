@@ -37,7 +37,7 @@ const DEFAULT_SETTINGS: Settings = {
  * A dónde van los usuarios sin licencia de una app: el catálogo público
  * de planes (/planes en bling.uy). Un solo lugar para cambiarlo.
  */
-const URL_PLANES = "https://bling.uy/planes";
+const URL_PLANES = "https://www.bling.uy/planes";
 
 /**
  * Pantalla del launcher (layout horizontal): rail con campana + reloj a
@@ -505,7 +505,7 @@ export default function App() {
 
               <button
                 type="button"
-                onClick={() => void window.bling.openExternal("https://bling.uy")}
+                onClick={() => void window.bling.openExternal("https://www.bling.uy")}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-mono text-[9px] tracking-widest uppercase text-white/60 transition-colors hover:border-white/25 hover:text-white"
               >
                 <Globe size={11} />

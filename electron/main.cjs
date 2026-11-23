@@ -8,6 +8,7 @@ const recents = require("./recents.cjs");
 const settings = require("./settings.cjs");
 const tray = require("./tray.cjs");
 const auth = require("./auth.cjs");
+const paseNavegador = require("./paseNavegador.cjs");
 const licencias = require("./licencias.cjs");
 const licenciasLogica = require("./licenciasLogica.cjs");
 const soporte = require("./soporte.cjs");
@@ -55,7 +56,7 @@ let catalogoServicios = [];
  * lista. Un XSS en cualquier servicio nunca podrá ejecutar código local
  * ni abrir dominios ajenos a Bling.
  */
-const ALLOWED_HOSTS = new Set(["bling.uy", "www.bling.uy", "contable.bling.uy"]);
+const ALLOWED_HOSTS = new Set(["bling.uy", "www.bling.uy", "contable.bling.uy", "dashboard.bling.uy"]);
 
 function isAllowedUrl(value) {
   try {
@@ -373,7 +374,24 @@ ipcMain.handle("bling:open-service", (_event, { id, url, title }) => {
   if (ok && catalogoServicios.some((s) => s.id === id)) recents.add(id);
   return ok;
 });
-ipcMain.handle("bling:open-external", (_event, url) => openExternalAllowed(url));
+/**
+ * Abre una URL de Bling en el navegador del sistema. Con sesión en el
+ * launcher, pasa primero por el pase de un solo uso (ver paseNavegador.cjs)
+ * para que el navegador no vuelva a pedir la contraseña. Si el pase no sale,
+ * se abre la URL tal cual: nunca queda sin abrir.
+ */
+async function abrirEnNavegadorConSesion(url) {
+  if (!isAllowedUrl(url)) return;
+  const destino = paseNavegador.destinoDelPase(url);
+  if (destino !== null) {
+    const codigo = await auth.pedirPase();
+    const conPase = codigo && paseNavegador.urlEntrar(auth.SITE, codigo, destino);
+    if (conPase) return shell.openExternal(conPase);
+  }
+  return shell.openExternal(url);
+}
+
+ipcMain.handle("bling:open-external", (_event, url) => abrirEnNavegadorConSesion(url));
 ipcMain.handle("bling:app-version", () => app.getVersion());
 ipcMain.handle("bling:atajo-global", () => atajoGlobalActivo);
 ipcMain.on("bling:minimize", (event) => {
