@@ -9,7 +9,7 @@ import {
   LogOut,
   Settings,
   User as UserIcon,
-  Wallet,
+  AtSign,
 } from "lucide-react";
 import { datosDeUsuario } from "../hooks/useSession";
 import { PAGINAS, abrirCuenta } from "../lib/cuenta";
@@ -19,7 +19,7 @@ import type { BlingUser } from "../bling";
  * Botón de usuario de la barra superior.
  *
  * Sin sesión: llamada a "Iniciar sesión". Con sesión: avatar + nombre y un
- * menú con las páginas de cuenta (perfil, ajustes, notificaciones, BlingPay),
+ * menú con las páginas de cuenta (perfil, ajustes, notificaciones, alias),
  * todas abiertas en ventanas embebidas que comparten la sesión de Bling.
  */
 export default function UserMenu({
@@ -181,11 +181,10 @@ export default function UserMenu({
                 abrirCuenta(PAGINAS.notificaciones);
               }}
             />
-            {/* Sin endpoint de saldo todavía: acá se muestra el alias de
-                BlingPay, que es lo único que expone el perfil hoy. */}
+            {/* Alias de la cuenta de Bling, para copiarlo. */}
             <Item
-              icon={<Wallet size={13} />}
-              label="BlingPay"
+              icon={<AtSign size={13} />}
+              label="Alias"
               extra={
                 alias ? (
                   <span className="inline-flex items-center gap-1 font-mono text-[9px] text-white/45">
@@ -200,7 +199,7 @@ export default function UserMenu({
                   <span className="font-mono text-[9px] text-white/25">sin alias</span>
                 )
               }
-              title={alias ? "Copiar alias de BlingPay" : undefined}
+              title={alias ? "Copiar tu alias de Bling" : undefined}
               onClick={() => void copiarAlias()}
             />
           </div>

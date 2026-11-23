@@ -8,7 +8,7 @@ import {
   LogIn,
   Settings,
   User as UserIcon,
-  Wallet,
+  AtSign,
 } from "lucide-react";
 import { datosDeUsuario } from "../hooks/useSession";
 import { PAGINAS, abrirCuenta } from "../lib/cuenta";
@@ -158,16 +158,16 @@ function CuentaLogueada({
         {user.is_verified ? "" : " · sin verificar"}
       </p>
 
-      {/* BlingPay expone sólo el alias, no el saldo (todavía no hay endpoint). */}
+      {/* Alias de la cuenta de Bling (BlingPay todavía no existe). */}
       <button
         type="button"
         onClick={() => void copiarAlias()}
-        title={alias ? "Copiar alias de BlingPay" : undefined}
+        title={alias ? "Copiar tu alias de Bling" : undefined}
         className="mt-3 flex w-full items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 transition-colors hover:border-white/20"
       >
-        <Wallet size={12} className="shrink-0 text-[#ffcc00]/70" />
+        <AtSign size={12} className="shrink-0 text-[#ffcc00]/70" />
         <span className="flex-1 text-left font-mono text-[9px] tracking-widest uppercase text-white/45">
-          BlingPay
+          Alias
         </span>
         {alias ? (
           <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-white/70">

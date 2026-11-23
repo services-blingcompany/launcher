@@ -9,6 +9,16 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.22.0]
+
+- La sesión del launcher ahora vive en www.bling.uy, donde la buscan la web,
+  el dashboard y Contable: abrir Contable desde el launcher ya no pide volver
+  a ingresar. Al actualizar hay que iniciar sesión una vez más.
+- «Abrir en el navegador» entra con la sesión del launcher (pase de un solo
+  uso con confirmación), sin pedir la contraseña.
+- Si la cuenta todavía no tiene alias, el launcher abre la página para elegirlo.
+- El panel de cuenta muestra «Alias» en vez de «BlingPay», que todavía no existe.
+
 ## [1.21.1]
 
 - «Entrar con el navegador» abre www.bling.uy, donde ya tenés la sesión abierta, para que no te pida iniciar sesión de nuevo.

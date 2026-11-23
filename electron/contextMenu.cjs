@@ -6,7 +6,7 @@ const { Menu, clipboard } = require("electron");
  * Menú contextual nativo para las ventanas del launcher.
  *
  * Electron no trae menú de clic derecho: sin esto no se puede pegar la
- * contraseña en el login, copiar el alias de BlingPay, ni copiar texto
+ * contraseña en el login, copiar el alias, ni copiar texto
  * dentro de Bling Social. Se arma según lo que haya debajo del cursor:
  * enlace, imagen, texto seleccionado o campo editable. Si no hay nada
  * que ofrecer, no aparece.
