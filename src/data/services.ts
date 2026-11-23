@@ -6,6 +6,12 @@ export type ServicioLicencia = {
   requiredTier: string;
   /** Última versión por plataforma ({"win-x64": "1.2.0"}); vacío = sin binarios. */
   versions: Record<string, string>;
+  /** Fin del acceso (plan o permiso), ISO; null/ausente = sin fecha conocida. */
+  accesoHasta?: string | null;
+  /** El acceso es la prueba gratis del plan. */
+  enPrueba?: boolean;
+  /** Sin acceso: días de prueba gratis que ofrece el plan (0 = no hay). */
+  pruebaDias?: number;
 };
 
 export type Service = {

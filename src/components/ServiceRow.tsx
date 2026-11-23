@@ -5,14 +5,15 @@ import {
   Download,
   ExternalLink,
   Lock,
+  Monitor,
   Newspaper,
-  Play,
   Rocket,
   ShoppingBag,
   TrendingUp,
   Users,
 } from "lucide-react";
 import type { Service } from "../data/services";
+import { vigenciaDe } from "../lib/vigencia";
 
 const ICONS = {
   newspaper: Newspaper,
@@ -28,10 +29,10 @@ const ICONS = {
  * tagline al medio, acción a la derecha. La luz especular sigue al
  * cursor con --mx/--my. Si está "soon" queda bloqueada.
  *
- * Los servicios con licencia (licenseKey) muestran su estado: "En tu plan",
- * "Plan X" con acceso a los planes, el botón Abrir cuando la app nativa ya
- * está instalada en la PC, o los botones de Descargar/Instalar del binario,
- * con su progreso y sus errores.
+ * Los servicios con licencia (licenseKey) muestran su estado con lo que le
+ * queda a la persona (días del plan o de la prueba, o los días gratis que
+ * ofrece el plan) y botones con texto: «Descargar / Instalar / Abrir app de
+ * PC» para la versión de escritorio y «Abrir en el navegador» para la web.
  *
  * `selected` la marca cuando el usuario la recorre con ↑↓. La acción
  * secundaria (abrir en el navegador del sistema) es un botón aparte:
@@ -86,6 +87,8 @@ export default function ServiceRow({
   const nativaInstalada = ejecutable === true;
   // Tiene versión de escritorio (instalada o con instalador disponible).
   const tieneEscritorio = nativaInstalada || Boolean(binarioListo);
+  // Cuánto le queda (plan, prueba) o cuántos días de prueba ofrece.
+  const vigencia = conLicencia && service.licencia ? vigenciaDe(service.licencia) : null;
 
   function seguirCursor(e: MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -171,12 +174,14 @@ export default function ServiceRow({
           {conLicencia && service.licencia && (
             <span
               className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[8px] tracking-widest uppercase ${
-                service.licencia.hasAccess
-                  ? ""
-                  : "border-white/15 bg-white/5 text-white/50"
+                !service.licencia.hasAccess
+                  ? "border-white/15 bg-white/5 text-white/50"
+                  : vigencia?.urgente
+                    ? "border-amber-400/40 bg-amber-400/10 text-amber-300"
+                    : ""
               }`}
               style={
-                service.licencia.hasAccess
+                service.licencia.hasAccess && !vigencia?.urgente
                   ? {
                       color: `rgb(${service.accentRgb})`,
                       background: `rgba(${service.accentRgb}, 0.08)`,
@@ -186,9 +191,7 @@ export default function ServiceRow({
               }
             >
               {!service.licencia.hasAccess && <Lock size={8} />}
-              {service.licencia.hasAccess
-                ? "En tu plan"
-                : `Plan ${service.licencia.requiredTier}`}
+              {vigencia?.texto}
             </span>
           )}
           {service.badge && disponible && !conLicencia && (
@@ -226,7 +229,7 @@ export default function ServiceRow({
             className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase text-white/60 transition-colors hover:border-white/30 hover:text-white"
           >
             <Lock size={8} />
-            Ver planes
+            {(service.licencia?.pruebaDias ?? 0) > 0 ? "Probar gratis" : "Ver planes"}
           </button>
         ) : (
           <>
@@ -246,12 +249,12 @@ export default function ServiceRow({
                   borderColor: `rgba(${service.accentRgb}, 0.25)`,
                 }}
               >
-                <Play size={8} />
-                Abrir
+                <Monitor size={8} />
+                Abrir app de PC
               </button>
             ) : binarioListo && bajando ? (
               <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase text-white/60">
-                {descarga?.percent ?? 0} %
+                Descargando {descarga?.percent ?? 0} %
               </span>
             ) : binarioListo && yaGuardada ? (
               <button
@@ -269,8 +272,8 @@ export default function ServiceRow({
                   borderColor: `rgba(${service.accentRgb}, 0.25)`,
                 }}
               >
-                <Play size={8} />
-                Instalar
+                <Monitor size={8} />
+                Instalar app de PC
               </button>
             ) : binarioListo ? (
               <button
@@ -284,7 +287,7 @@ export default function ServiceRow({
                 className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase text-white/60 transition-colors hover:border-white/30 hover:text-white"
               >
                 <Download size={8} />
-                Descargar
+                Descargar app de PC
               </button>
             ) : null}
 
@@ -303,7 +306,7 @@ export default function ServiceRow({
                 className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase text-white/45 transition-colors hover:border-white/25 hover:text-white"
               >
                 <ExternalLink size={8} />
-                Usar en el navegador
+                Abrir en el navegador
               </button>
             )}
 
@@ -318,9 +321,10 @@ export default function ServiceRow({
                   e.stopPropagation();
                   onOpenExternal(service);
                 }}
-                className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/40 opacity-0 transition-all duration-300 hover:border-white/25 hover:text-white focus-visible:opacity-100 focus-visible:outline-none group-hover:opacity-100"
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase text-white/45 opacity-0 transition-all duration-300 hover:border-white/25 hover:text-white focus-visible:opacity-100 focus-visible:outline-none group-hover:opacity-100"
               >
-                <ExternalLink size={12} />
+                <ExternalLink size={8} />
+                Abrir en el navegador
               </button>
             )}
 

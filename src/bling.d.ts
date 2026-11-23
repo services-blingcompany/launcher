@@ -102,6 +102,10 @@ export type LicenciaApp = {
   hasAccess: boolean;
   /** Última versión activa por plataforma ({"win-x64": "1.2.0"}). */
   versions: Record<string, string>;
+  /** Fin del acceso (ISO) o null si no vence o no se conoce. */
+  accesoHasta?: string | null;
+  enPrueba?: boolean;
+  pruebaDias?: number;
 };
 
 /** Respuesta del catálogo de licencias desde el proceso principal. */

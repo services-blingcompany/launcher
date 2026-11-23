@@ -18,6 +18,10 @@ tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
   uso con confirmación), sin pedir la contraseña.
 - Si la cuenta todavía no tiene alias, el launcher abre la página para elegirlo.
 - El panel de cuenta muestra «Alias» en vez de «BlingPay», que todavía no existe.
+- Botones con texto claro: «Descargar / Instalar / Abrir app de PC» para la
+  versión de escritorio y «Abrir en el navegador» para la web.
+- Cada servicio muestra cuánto le queda al plan o a la prueba, o los días de
+  prueba gratis que ofrece el plan.
 
 ## [1.21.1]
 
