@@ -48,4 +48,13 @@ function urlEntrar(sitio, codigo, destino) {
   return `${sitio}/auth/launcher/entrar?${q.toString()}`;
 }
 
-module.exports = { destinoDelPase, urlEntrar };
+/** Página para elegir el alias (el backend la exige a toda cuenta sin alias). */
+const DESTINO_ALIAS = "/auth/verify/alias";
+
+/** True si la respuesta del backend es el 403 de «elegí tu alias». */
+function esAliasRequerido(status, datos) {
+  const detalle = datos && datos.detail;
+  return status === 403 && !!detalle && typeof detalle === "object" && detalle.codigo === "alias-requerido";
+}
+
+module.exports = { destinoDelPase, urlEntrar, esAliasRequerido, DESTINO_ALIAS };

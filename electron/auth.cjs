@@ -1,6 +1,6 @@
 "use strict";
 
-const { app, ipcMain, session, BrowserWindow } = require("electron");
+const { app, ipcMain, session, BrowserWindow, shell } = require("electron");
 const diagnostics = require("./diagnostics.cjs");
 const oauthSistema = require("./oauth-sistema.cjs");
 const sesionNavegador = require("./sesion-navegador.cjs");
@@ -551,6 +551,25 @@ async function pedirPase() {
   }
 }
 
+/** Última vez que se abrió la página del alias (para no abrirla en cada pedido). */
+let ultimoAvisoAlias = 0;
+const PAUSA_AVISO_ALIAS = 10 * 60 * 1000;
+
+/**
+ * La cuenta no tiene alias y el backend no deja hacer nada más: se abre el
+ * navegador, ya con la sesión (pase), en la página para elegirlo.
+ */
+async function abrirElegirAlias() {
+  if (Date.now() - ultimoAvisoAlias < PAUSA_AVISO_ALIAS) return;
+  ultimoAvisoAlias = Date.now();
+  const paseNavegador = require("./paseNavegador.cjs");
+  const codigo = await pedirPase();
+  const url =
+    (codigo && paseNavegador.urlEntrar(SITE, codigo, paseNavegador.DESTINO_ALIAS)) ||
+    `${SITE}${paseNavegador.DESTINO_ALIAS}`;
+  await shell.openExternal(url).catch(() => {});
+}
+
 function init({ getHub }) {
   obtenerHub = typeof getHub === "function" ? getHub : () => null;
 
@@ -675,4 +694,4 @@ function revisar() {
   avisar(obtenerHub);
 }
 
-module.exports = { init, perfil, enPagina, cerrarPuente, haySesion, revisar, pedirPase, SITE };
+module.exports = { init, perfil, enPagina, cerrarPuente, haySesion, revisar, pedirPase, abrirElegirAlias, SITE };

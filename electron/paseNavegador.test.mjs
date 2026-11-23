@@ -45,3 +45,15 @@ describe("urlEntrar", () => {
     expect(urlEntrar("https://www.bling.uy", undefined, "/")).toBeNull();
   });
 });
+
+describe("esAliasRequerido", () => {
+  const { esAliasRequerido } = pase;
+  it("reconoce el 403 de alias", () => {
+    expect(esAliasRequerido(403, { detail: { codigo: "alias-requerido" } })).toBe(true);
+  });
+  it("no confunde otros casos", () => {
+    expect(esAliasRequerido(403, { detail: "sin licencia" })).toBe(false);
+    expect(esAliasRequerido(401, { detail: { codigo: "alias-requerido" } })).toBe(false);
+    expect(esAliasRequerido(403, null)).toBe(false);
+  });
+});

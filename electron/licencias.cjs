@@ -9,6 +9,7 @@ const { spawn } = require("node:child_process");
 const auth = require("./auth.cjs");
 const logica = require("./licenciasLogica.cjs");
 const equipo = require("./equipo.cjs");
+const { esAliasRequerido } = require("./paseNavegador.cjs");
 
 /**
  * Licencias de apps: catálogo remoto, descarga de binarios y apertura de
@@ -93,7 +94,10 @@ async function getBackend(ruta, metodo = "GET", cuerpo = null) {
     });
     return { status: res.status, datos: await res.json().catch(() => null) };
   })()`);
-  return r || { status: 0, datos: null };
+  const resultado = r || { status: 0, datos: null };
+  // Cuenta sin alias: el backend no deja seguir hasta elegirlo.
+  if (esAliasRequerido(resultado.status, resultado.datos)) void auth.abrirElegirAlias();
+  return resultado;
 }
 
 /** Catálogo de apps con los flags de licencia del usuario de la sesión. */
