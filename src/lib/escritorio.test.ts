@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Service, ServicioLicencia } from "../data/services";
-import { estadoEscritorio, textoEstado } from "./escritorio";
+import { esMasNueva, estadoEscritorio, textoEstado } from "./escritorio";
 
 const lic = (extra: Partial<ServicioLicencia> = {}): ServicioLicencia => ({
   hasAccess: true,
@@ -57,11 +57,49 @@ describe("estadoEscritorio", () => {
   });
 });
 
+describe("actualizaciones de la app de PC", () => {
+  const s = svc({ licencia: lic({ versions: { "win-x64": "1.2.1" } }) });
+
+  it("instalada y al día", () => {
+    expect(estadoEscritorio(s, { ejecutable: true, instalada: "1.2.1", version: "1.2.1" })).toBe(
+      "instalada",
+    );
+  });
+
+  it("instalada con una versión vieja: desactualizada", () => {
+    expect(estadoEscritorio(s, { ejecutable: true, instalada: "1.2.0", version: "1.2.1" })).toBe(
+      "desactualizada",
+    );
+  });
+
+  it("la nueva bajando y después lista para instalar", () => {
+    const base = { ejecutable: true, instalada: "1.2.0", version: "1.2.1" };
+    expect(estadoEscritorio(s, { ...base, bajando: true })).toBe("descargando");
+    expect(estadoEscritorio(s, { ...base, guardada: "1.2.1" })).toBe("actualizacion-lista");
+  });
+
+  it("sin saber la versión instalada no ofrece actualizar", () => {
+    expect(estadoEscritorio(s, { ejecutable: true, instalada: null, version: "1.2.1" })).toBe(
+      "instalada",
+    );
+  });
+
+  it("compara versiones por número, no como texto", () => {
+    expect(esMasNueva("1.10.0", "1.9.9")).toBe(true);
+    expect(esMasNueva("1.2.0", "1.2.0")).toBe(false);
+    expect(esMasNueva("1.2.0", "1.3.0")).toBe(false);
+    expect(esMasNueva("basura", "1.0.0")).toBe(false);
+  });
+});
+
 describe("textoEstado", () => {
-  it("dice claro si la app está o no en la PC", () => {
-    expect(textoEstado("instalada")).toMatch(/Instalada/);
+  it("dice claro si la app está o no en la PC, y qué versión", () => {
+    expect(textoEstado("instalada", { instalada: "1.2.1" })).toBe("Instalada en esta PC · v1.2.1");
+    expect(textoEstado("desactualizada", { instalada: "1.2.0", version: "1.2.1" })).toMatch(
+      /v1\.2\.0.*v1\.2\.1/,
+    );
     expect(textoEstado("para-descargar")).toMatch(/descargala/);
-    expect(textoEstado("descargando", 42)).toMatch(/42 %/);
+    expect(textoEstado("descargando", { percent: 42 })).toMatch(/42 %/);
     expect(textoEstado("web")).toBeNull();
   });
 });

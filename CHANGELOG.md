@@ -9,6 +9,17 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.24.0]
+
+- El launcher reconoce Bling Contable instalado en tu PC (antes no lo veía
+  aunque estuviera instalado) y muestra su versión.
+- Si hay una versión nueva de la app de PC, aparece «Actualizar app de PC»:
+  la descarga y después «Instalar actualización».
+- Estilo más sobrio: botones en gris, el color de cada servicio queda sólo en
+  su icono.
+- El aviso de actualización del launcher muestra las novedades en texto (antes
+  decía «<ul>»).
+
 ## [1.23.0]
 
 - Las notificaciones de Windows vuelven a llegar: después de una hora con el

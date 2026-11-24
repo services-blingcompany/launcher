@@ -85,7 +85,15 @@ function firstLine(notes) {
   // electron-updater puede devolver string o [{version, note}].
   let text = notes;
   if (Array.isArray(text)) text = text.map((n) => n?.note ?? "").join("\n");
+  // GitHub entrega las notas del release en HTML (<ul><li>…): sin quitar
+  // las etiquetas, el aviso mostraba «<ul>» como novedad.
   return String(text ?? "")
+    .replace(/<[^>]*>/g, "\n")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&")
     .split("\n")
     .map((s) => s.trim())
     .find(Boolean)

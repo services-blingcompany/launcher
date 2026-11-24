@@ -23,6 +23,7 @@ export default function FeaturedCard({
   bajando = null,
   guardada = null,
   ejecutable = null,
+  instalada = null,
   version = null,
   error = null,
   ...acciones
@@ -33,12 +34,14 @@ export default function FeaturedCard({
   bajando?: boolean | null;
   guardada?: string | null;
   ejecutable?: boolean | null;
+  /** Versión instalada de la app nativa (null si no se sabe). */
+  instalada?: string | null;
   version?: string | null;
   error?: string | null;
 } & AccionesServicio) {
   const Icon = ICONOS_SERVICIO[service.icon];
   const disponible = service.status === "available";
-  const estado = estadoEscritorio(service, { version, guardada, ejecutable, bajando });
+  const estado = estadoEscritorio(service, { version, guardada, ejecutable, instalada, bajando });
   const percent = descarga?.percent ?? 0;
   const vigencia =
     service.licenseKey && service.licencia ? vigenciaDe(service.licencia) : null;
@@ -93,7 +96,7 @@ export default function FeaturedCard({
         <span
           aria-hidden
           className="absolute inset-y-4 left-0 w-[2px] rounded-full"
-          style={{ background: `rgb(${service.accentRgb})` }}
+          style={{ background: "rgba(255, 255, 255, 0.6)" }}
         />
       )}
 
@@ -112,17 +115,10 @@ export default function FeaturedCard({
             {vigencia?.texto && (
               <span
                 className={`rounded-full border px-2.5 py-0.5 font-mono text-[9px] tracking-widest uppercase ${
-                  vigencia.urgente ? "border-amber-400/40 bg-amber-400/10 text-amber-300" : ""
-                }`}
-                style={
                   vigencia.urgente
-                    ? undefined
-                    : {
-                        color: `rgb(${service.accentRgb})`,
-                        background: `rgba(${service.accentRgb}, 0.08)`,
-                        borderColor: `rgba(${service.accentRgb}, 0.25)`,
-                      }
-                }
+                    ? "border-amber-400/40 bg-amber-400/10 text-amber-300"
+                    : "border-white/15 bg-white/[0.04] text-white/60"
+                }`}
               >
                 {vigencia.texto}
               </span>
@@ -136,8 +132,7 @@ export default function FeaturedCard({
           </span>
           <LineaEstado
             estado={estado}
-            texto={textoEstado(estado, percent)}
-            rgb={service.accentRgb}
+            texto={textoEstado(estado, { percent, version, instalada })}
           />
           {error && (
             <span className="mt-0.5 block truncate text-[11px] font-light text-rose-400">

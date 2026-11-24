@@ -465,6 +465,7 @@ export default function App() {
       ? licencias.guardadas[s.licenseKey]?.version ?? null
       : null,
     ejecutable: s.licenseKey ? !!licencias.ejecutables[s.licenseKey] : false,
+    instalada: s.licenseKey ? licencias.versionesInstaladas[s.licenseKey] ?? null : null,
     descarga: s.licenseKey && licencias.descargas[s.licenseKey]
       ? { percent: licencias.descargas[s.licenseKey].percent }
       : null,

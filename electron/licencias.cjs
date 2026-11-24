@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const http = require("node:http");
-const { spawn } = require("node:child_process");
+const { execFile, spawn } = require("node:child_process");
 const auth = require("./auth.cjs");
 const logica = require("./licenciasLogica.cjs");
 const equipo = require("./equipo.cjs");
@@ -214,12 +214,43 @@ async function bajarArchivo(url, destino, onProgreso) {
   }
 }
 
-/** Raíces donde NSIS puede haber instalado (por usuario y por máquina). */
+/**
+ * Raíces donde NSIS puede haber instalado (por usuario y por máquina).
+ * electron-builder instala por usuario en %LOCALAPPDATA%\\Programs; Tauri
+ * (Contable desde 1.1) en %LOCALAPPDATA% directo. Sin esa raíz, Contable
+ * instalado nunca aparecía como instalado.
+ */
 function raicesInstalacion() {
+  const local = process.env.LOCALAPPDATA || "";
   return [
-    path.join(process.env.LOCALAPPDATA || "", "Programs"),
+    local ? path.join(local, "Programs") : "",
+    local,
     process.env.ProgramFiles || "",
   ].filter(Boolean);
+}
+
+/** DisplayVersion de una clave del registro, o null (no existe, error, no Windows). */
+function leerRegistro(raiz, clave) {
+  return new Promise((resolve) => {
+    execFile(
+      "reg",
+      ["query", `${raiz}\\${clave}`, "/v", "DisplayVersion"],
+      { windowsHide: true, timeout: 5000 },
+      (err, salida) => resolve(err ? null : logica.leerDisplayVersion(salida)),
+    );
+  });
+}
+
+/**
+ * Versión de la app nativa instalada (la que escribe su instalador en el
+ * registro), o null si no está instalada o no se sabe. Con esto el launcher
+ * ofrece «Actualizar» cuando el catálogo tiene una más nueva.
+ */
+async function versionInstalada(key) {
+  if (process.platform !== "win32" || !ejecutable(key)) return null;
+  const clave = logica.claveDesinstalacion(key);
+  if (!clave) return null;
+  return (await leerRegistro("HKCU", clave)) || (await leerRegistro("HKLM", clave));
 }
 
 /** Primera candidata del exe instalado que existe en disco, o null. */
@@ -388,6 +419,9 @@ function init() {
     abrir(String(key ?? ""), Number.isInteger(reemplazar) ? reemplazar : null),
   );
   ipcMain.handle("licencias:ejecutable", (_event, key) => Boolean(ejecutable(String(key ?? ""))));
+  ipcMain.handle("licencias:version-instalada", (_event, key) =>
+    versionInstalada(String(key ?? "")),
+  );
 }
 
 module.exports = { init, catalogo, descargar, instalado, instalar, abrir, ejecutable, pedirTicket };

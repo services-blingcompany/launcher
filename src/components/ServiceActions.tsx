@@ -1,4 +1,4 @@
-import type { CSSProperties, MouseEvent, ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import {
   Briefcase,
   Calculator,
@@ -9,6 +9,7 @@ import {
   Lock,
   Monitor,
   PackageCheck,
+  RefreshCw,
   Rocket,
   ShoppingBag,
   TrendingUp,
@@ -37,7 +38,7 @@ export type AccionesServicio = {
 
 /**
  * Lo que hace el clic (o Enter) sobre la fila o la tarjeta: la app de PC si
- * existe (abrirla, instalarla o bajarla), si no la web en el navegador.
+ * existe (abrirla, actualizarla, instalarla o bajarla), si no la web.
  */
 export function accionPrincipal(
   service: Service,
@@ -53,9 +54,11 @@ export function accionPrincipal(
       acciones.onAbrir?.(service);
       return;
     case "descargada":
+    case "actualizacion-lista":
       acciones.onInstalar?.(service);
       return;
     case "para-descargar":
+    case "desactualizada":
       acciones.onDescargar?.(service);
       return;
     case "descargando":
@@ -65,31 +68,34 @@ export function accionPrincipal(
   }
 }
 
+/**
+ * Botón de acción. Sobrio a propósito: el color de cada servicio queda en su
+ * icono y los botones van en la escala de grises del launcher. El único con
+ * color es el principal de la tarjeta destacada, en el amarillo de Bling
+ * (el mismo de «Instalar ahora» en el aviso de actualización).
+ */
 function Boton({
   children,
   label,
   onClick,
-  relleno,
-  rgb,
-  grande,
+  principal,
+  destacado,
   deshabilitado,
 }: {
   children: ReactNode;
   label: string;
   onClick?: () => void;
-  /** Botón principal (relleno con el acento) o secundario (contorno). */
-  relleno: boolean;
-  rgb: string;
-  grande: boolean;
+  /** Acción principal (relleno suave) o secundaria (sólo contorno). */
+  principal: boolean;
+  /** En la tarjeta destacada: más grande y, si es principal, amarilla. */
+  destacado: boolean;
   deshabilitado?: boolean;
 }) {
-  const estilo: CSSProperties | undefined = relleno
-    ? {
-        color: `rgb(${rgb})`,
-        background: `rgba(${rgb}, 0.12)`,
-        borderColor: `rgba(${rgb}, 0.4)`,
-      }
-    : undefined;
+  const tono = principal
+    ? destacado
+      ? "border-[#ffcc00]/35 bg-[#ffcc00]/10 text-[#ffcc00] hover:border-[#ffcc00]/60 hover:bg-[#ffcc00]/20"
+      : "border-white/20 bg-white/[0.07] text-white/90 hover:border-white/35 hover:bg-white/[0.12] hover:text-white"
+    : "border-white/10 bg-transparent text-white/55 hover:border-white/25 hover:text-white";
   return (
     <button
       type="button"
@@ -101,14 +107,9 @@ function Boton({
         e.stopPropagation();
         onClick?.();
       }}
-      style={estilo}
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border font-mono tracking-wider uppercase transition-colors disabled:cursor-default ${
-        grande ? "px-3.5 py-2 text-[10.5px]" : "px-3 py-1.5 text-[10px]"
-      } ${
-        relleno
-          ? "hover:brightness-125"
-          : "border-white/15 bg-white/[0.03] text-white/70 hover:border-white/35 hover:text-white"
-      }`}
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border font-mono tracking-wider uppercase transition-colors disabled:cursor-default disabled:opacity-80 ${
+        destacado ? "px-3.5 py-2 text-[10.5px]" : "px-3 py-1.5 text-[10px]"
+      } ${tono}`}
     >
       {children}
     </button>
@@ -117,7 +118,7 @@ function Boton({
 
 /**
  * Las dos opciones de un servicio, siempre con icono y texto:
- *   [🖥 app de PC]  — abrir / instalar / descargar (sólo si hay app)
+ *   [🖥 app de PC]  — abrir / actualizar / instalar / descargar (si hay app)
  *   [🌐 navegador]  — la web en el navegador del sistema
  * Un servicio sólo web muestra únicamente el del navegador, como principal.
  */
@@ -134,12 +135,11 @@ export function BotonesServicio({
   grande?: boolean;
   acciones: AccionesServicio;
 }) {
-  const rgb = service.accentRgb;
   const tam = grande ? 14 : 13;
 
   if (service.status !== "available") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[10px] tracking-wider uppercase text-white/45">
+      <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 font-mono text-[10px] tracking-wider uppercase text-white/40">
         <Lock size={12} />
         Próximamente
       </span>
@@ -152,9 +152,8 @@ export function BotonesServicio({
       <Boton
         label={prueba ? "Probar gratis" : "Ver planes"}
         onClick={acciones.onVerPlanes}
-        relleno
-        rgb={rgb}
-        grande={grande}
+        principal
+        destacado={grande}
       >
         <Lock size={tam} />
         {prueba ? "Probar gratis" : "Ver planes"}
@@ -166,9 +165,8 @@ export function BotonesServicio({
     <Boton
       label={`Abrir ${service.name} en el navegador`}
       onClick={() => acciones.onWeb(service)}
-      relleno={estado === "web"}
-      rgb={rgb}
-      grande={grande}
+      principal={estado === "web"}
+      destacado={grande}
     >
       <Globe size={tam} />
       Abrir en el navegador
@@ -177,46 +175,66 @@ export function BotonesServicio({
 
   if (estado === "web") return web;
 
-  const pc =
-    estado === "instalada" ? (
-      <Boton
-        label={`Abrir la app de ${service.name} instalada en tu PC`}
-        onClick={() => acciones.onAbrir?.(service)}
-        relleno
-        rgb={rgb}
-        grande={grande}
-      >
-        <Monitor size={tam} />
-        Abrir app de PC
-      </Boton>
-    ) : estado === "descargada" ? (
-      <Boton
-        label={`Instalar la app de ${service.name} en tu PC`}
-        onClick={() => acciones.onInstalar?.(service)}
-        relleno
-        rgb={rgb}
-        grande={grande}
-      >
-        <PackageCheck size={tam} />
-        Instalar app de PC
-      </Boton>
-    ) : estado === "descargando" ? (
-      <Boton label="Descargando la app de PC" relleno rgb={rgb} grande={grande} deshabilitado>
-        <LoaderCircle size={tam} className="animate-spin" />
-        Descargando {percent} %
-      </Boton>
-    ) : (
-      <Boton
-        label={`Descargar la app de ${service.name} para tu PC`}
-        onClick={() => acciones.onDescargar?.(service)}
-        relleno
-        rgb={rgb}
-        grande={grande}
-      >
-        <Download size={tam} />
-        Descargar app de PC
-      </Boton>
-    );
+  const pc = (() => {
+    switch (estado) {
+      case "instalada":
+        return (
+          <Boton
+            label={`Abrir la app de ${service.name} instalada en tu PC`}
+            onClick={() => acciones.onAbrir?.(service)}
+            principal
+            destacado={grande}
+          >
+            <Monitor size={tam} />
+            Abrir app de PC
+          </Boton>
+        );
+      case "desactualizada":
+        return (
+          <Boton
+            label={`Descargar la versión nueva de ${service.name}`}
+            onClick={() => acciones.onDescargar?.(service)}
+            principal
+            destacado={grande}
+          >
+            <RefreshCw size={tam} />
+            Actualizar app de PC
+          </Boton>
+        );
+      case "descargada":
+      case "actualizacion-lista":
+        return (
+          <Boton
+            label={`Instalar ${service.name} en tu PC`}
+            onClick={() => acciones.onInstalar?.(service)}
+            principal
+            destacado={grande}
+          >
+            <PackageCheck size={tam} />
+            {estado === "descargada" ? "Instalar app de PC" : "Instalar actualización"}
+          </Boton>
+        );
+      case "descargando":
+        return (
+          <Boton label="Descargando la app de PC" principal destacado={grande} deshabilitado>
+            <LoaderCircle size={tam} className="animate-spin" />
+            Descargando {percent} %
+          </Boton>
+        );
+      default:
+        return (
+          <Boton
+            label={`Descargar la app de ${service.name} para tu PC`}
+            onClick={() => acciones.onDescargar?.(service)}
+            principal
+            destacado={grande}
+          >
+            <Download size={tam} />
+            Descargar app de PC
+          </Boton>
+        );
+    }
+  })();
 
   return (
     <span className="flex items-center gap-1.5">
@@ -226,26 +244,24 @@ export function BotonesServicio({
   );
 }
 
-/** Línea de estado de la app de escritorio, con un punto de color. */
+/** Línea de estado de la app de escritorio, con un punto que marca el estado. */
 export function LineaEstado({
   estado,
   texto,
-  rgb,
 }: {
   estado: EstadoEscritorio;
   texto: string | null;
-  rgb: string;
 }) {
   if (!texto) return null;
-  const color =
+  const punto =
     estado === "instalada"
-      ? "rgb(52, 211, 153)"
-      : estado === "para-descargar"
-        ? "rgba(255, 255, 255, 0.35)"
-        : `rgb(${rgb})`;
+      ? "bg-emerald-400/80"
+      : estado === "desactualizada" || estado === "actualizacion-lista"
+        ? "bg-amber-300/80"
+        : "bg-white/30";
   return (
-    <span className="mt-1 flex items-center gap-1.5 text-[11px] font-light text-white/60">
-      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: color }} />
+    <span className="mt-1 flex items-center gap-1.5 text-[11px] font-light text-white/55">
+      <span aria-hidden className={`h-1.5 w-1.5 shrink-0 rounded-full ${punto}`} />
       <span className="truncate">{texto}</span>
     </span>
   );

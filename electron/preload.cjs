@@ -91,6 +91,8 @@ contextBridge.exposeInMainWorld("bling", {
   licenciasAbrir: (key, reemplazar) => ipcRenderer.invoke("licencias:abrir", key, reemplazar),
   /** ¿Está el ejecutable nativo de la app en la PC? */
   licenciasEjecutable: (key) => ipcRenderer.invoke("licencias:ejecutable", key),
+  /** Versión de la app nativa instalada (registro de Windows), o null. */
+  licenciasVersionInstalada: (key) => ipcRenderer.invoke("licencias:version-instalada", key),
   /** Progreso de descarga de apps (push del proceso principal). */
   onLicenciaProgreso: (callback) => {
     const listener = (_event, payload) => callback(payload);

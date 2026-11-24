@@ -94,8 +94,28 @@ const APPS_NATIVAS = {
   contable: {
     carpetas: ["Bling Contable", "bling-contable"],
     exe: "Bling Contable.exe",
+    // Clave de desinstalación que escribe el instalador (Tauri NSIS usa el
+    // productName): de ahí sale la versión instalada (DisplayVersion).
+    registro: "Bling Contable",
   },
 };
+
+/** Clave del registro (sin la raíz HKCU/HKLM) con los datos de la app instalada. */
+function claveDesinstalacion(key) {
+  const def = APPS_NATIVAS[key];
+  if (!def || !def.registro) return null;
+  return `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${def.registro}`;
+}
+
+/**
+ * Versión instalada a partir de la salida de
+ * `reg query <clave> /v DisplayVersion` (null si no está o no parece X.Y.Z).
+ */
+function leerDisplayVersion(salida) {
+  const m = /DisplayVersion\s+REG_SZ\s+(\S+)/i.exec(String(salida ?? ""));
+  if (!m) return null;
+  return /^\d+\.\d+\.\d+/.test(m[1]) ? m[1] : null;
+}
 
 /** Rutas posibles del ejecutable instalado de una app, en orden de prueba. */
 function ejecutablesPara(key, raices) {
@@ -146,6 +166,8 @@ module.exports = {
   integridadOk,
   parsearManifest,
   ejecutablesPara,
+  claveDesinstalacion,
+  leerDisplayVersion,
   argumentoTicket,
   appDeArgumentos,
 };

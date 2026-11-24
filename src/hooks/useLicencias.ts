@@ -47,6 +47,8 @@ export function useLicencias(user: BlingUser | null) {
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [guardadas, setGuardadas] = useState<Record<string, LicenciaInstalada>>({});
   const [ejecutables, setEjecutables] = useState<Record<string, boolean>>({});
+  /** Versión instalada de cada app nativa (para ofrecer «Actualizar»). */
+  const [versionesInstaladas, setVersionesInstaladas] = useState<Record<string, string>>({});
 
   const userId = user?.id ?? null;
 
@@ -112,6 +114,34 @@ export function useLicencias(user: BlingUser | null) {
       vivo = false;
     };
   }, [apps]);
+
+  // ── Versión instalada de las apps nativas ──
+  // Se relee al aparecer el exe y cada vez que el launcher vuelve a primer
+  // plano: tras correr el instalador de una actualización, el exe ya estaba
+  // y lo único que cambia es la versión.
+  const releerVersiones = useCallback((claves: string[]) => {
+    for (const key of claves) {
+      void window.bling.licenciasVersionInstalada(key).then((v) => {
+        setVersionesInstaladas((prev) => {
+          if (!v) {
+            if (!(key in prev)) return prev;
+            const { [key]: _sacada, ...resto } = prev;
+            return resto;
+          }
+          return prev[key] === v ? prev : { ...prev, [key]: v };
+        });
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const claves = Object.keys(ejecutables).filter((k) => ejecutables[k]);
+    if (!claves.length) return;
+    releerVersiones(claves);
+    const alVolver = () => releerVersiones(claves);
+    window.addEventListener("focus", alVolver);
+    return () => window.removeEventListener("focus", alVolver);
+  }, [ejecutables, releerVersiones]);
 
   // ── El main avisa cuando el exe aparece (tras instalar) ──
   useEffect(() => {
@@ -196,6 +226,7 @@ export function useLicencias(user: BlingUser | null) {
     errores,
     guardadas,
     ejecutables,
+    versionesInstaladas,
     descargar,
     instalar,
     abrir,

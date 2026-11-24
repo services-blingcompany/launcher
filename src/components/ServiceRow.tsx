@@ -27,6 +27,7 @@ export default function ServiceRow({
   bajando = null,
   guardada = null,
   ejecutable = null,
+  instalada = null,
   version = null,
   error = null,
   ...acciones
@@ -40,13 +41,15 @@ export default function ServiceRow({
   guardada?: string | null;
   /** ¿La app nativa está instalada en la PC (exe presente)? */
   ejecutable?: boolean | null;
+  /** Versión instalada de la app nativa (null si no se sabe). */
+  instalada?: string | null;
   /** Versión del binario disponible para la plataforma actual (null si no hay). */
   version?: string | null;
   error?: string | null;
 } & AccionesServicio) {
   const Icon = ICONOS_SERVICIO[service.icon];
   const disponible = service.status === "available";
-  const estado = estadoEscritorio(service, { version, guardada, ejecutable, bajando });
+  const estado = estadoEscritorio(service, { version, guardada, ejecutable, instalada, bajando });
   const percent = descarga?.percent ?? 0;
   const vigencia =
     service.licenseKey && service.licencia ? vigenciaDe(service.licencia) : null;
@@ -89,7 +92,7 @@ export default function ServiceRow({
         <span
           aria-hidden
           className="absolute inset-y-3 left-0 w-[2px] rounded-full"
-          style={{ background: `rgb(${service.accentRgb})` }}
+          style={{ background: "rgba(255, 255, 255, 0.6)" }}
         />
       )}
 
@@ -112,17 +115,8 @@ export default function ServiceRow({
                   ? "border-white/15 bg-white/5 text-white/50"
                   : vigencia.urgente
                     ? "border-amber-400/40 bg-amber-400/10 text-amber-300"
-                    : ""
+                    : "border-white/15 bg-white/[0.04] text-white/60"
               }`}
-              style={
-                service.licencia.hasAccess && !vigencia.urgente
-                  ? {
-                      color: `rgb(${service.accentRgb})`,
-                      background: `rgba(${service.accentRgb}, 0.08)`,
-                      borderColor: `rgba(${service.accentRgb}, 0.25)`,
-                    }
-                  : undefined
-              }
             >
               {!service.licencia.hasAccess && <Lock size={8} />}
               {vigencia.texto}
@@ -130,12 +124,7 @@ export default function ServiceRow({
           )}
           {service.badge && disponible && !service.licenseKey && (
             <span
-              className="shrink-0 rounded-full border px-2 py-0.5 font-mono text-[8px] tracking-widest uppercase"
-              style={{
-                color: `rgb(${service.accentRgb})`,
-                background: `rgba(${service.accentRgb}, 0.08)`,
-                borderColor: `rgba(${service.accentRgb}, 0.25)`,
-              }}
+              className="shrink-0 rounded-full border border-white/15 bg-white/[0.04] px-2 py-0.5 font-mono text-[8px] tracking-widest uppercase text-white/60"
             >
               {service.badge}
             </span>
@@ -146,8 +135,7 @@ export default function ServiceRow({
         </span>
         <LineaEstado
           estado={estado}
-          texto={textoEstado(estado, percent)}
-          rgb={service.accentRgb}
+          texto={textoEstado(estado, { percent, version, instalada })}
         />
         {error && (
           <span className="mt-0.5 block truncate text-[10px] font-light text-rose-400">

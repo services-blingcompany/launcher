@@ -296,6 +296,8 @@ interface BlingApi {
   licenciasAbrir(key: string, reemplazar?: number): Promise<LicenciaAbrirResult>;
   /** ¿Está el ejecutable nativo de la app instalado en la PC? */
   licenciasEjecutable(key: string): Promise<boolean>;
+  /** Versión de la app nativa instalada (la del instalador), o null. */
+  licenciasVersionInstalada(key: string): Promise<string | null>;
   /** Progreso de descarga de apps (push del proceso principal). */
   onLicenciaProgreso(
     callback: (progreso: LicenciaProgreso | null) => void,

@@ -144,3 +144,28 @@ describe("appDeArgumentos", () => {
     expect(appDeArgumentos(["--abrir-app="])).toBe(null);
   });
 });
+
+describe("versión instalada (registro de Windows)", () => {
+  it("arma la clave de desinstalación del productName", () => {
+    expect(logica.claveDesinstalacion("contable")).toBe(
+      "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Bling Contable",
+    );
+    expect(logica.claveDesinstalacion("no-existe")).toBeNull();
+  });
+
+  it("lee DisplayVersion de la salida de reg query", () => {
+    const salida = [
+      "",
+      "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Bling Contable",
+      "    DisplayVersion    REG_SZ    1.2.1",
+      "",
+    ].join("\r\n");
+    expect(logica.leerDisplayVersion(salida)).toBe("1.2.1");
+  });
+
+  it("sin el valor, o con basura, devuelve null", () => {
+    expect(logica.leerDisplayVersion("ERROR: no se encontró la clave")).toBeNull();
+    expect(logica.leerDisplayVersion("    DisplayVersion    REG_SZ    beta")).toBeNull();
+    expect(logica.leerDisplayVersion(undefined)).toBeNull();
+  });
+});
