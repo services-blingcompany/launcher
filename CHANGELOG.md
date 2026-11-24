@@ -9,6 +9,15 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.27.0]
+
+- Soporte: cuando el equipo de Bling te pide la información del sistema,
+  aparece una tarjeta con el botón «Enviar» (versión del launcher, sistema,
+  idioma y zona horaria; sin datos personales).
+- Un ticket resuelto se puede reabrir; uno cerrado ya no muestra el botón
+  (antes daba error). Los estados son los mismos que en el Dashboard.
+- Las respuestas del equipo llegan firmadas con el alias de quien te atiende.
+
 ## [1.26.0]
 
 - Si tu plan no permite usar las apps por Escritorio Remoto, el launcher te
