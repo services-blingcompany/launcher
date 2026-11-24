@@ -135,6 +135,8 @@ contextBridge.exposeInMainWorld("bling", {
   soporteImagen: (url) => ipcRenderer.invoke("soporte:imagen", url),
   /** Set esencial de datos del equipo (para el bloque opcional). */
   soporteDatosEquipo: () => ipcRenderer.invoke("soporte:datos-equipo"),
+  /** Manda la información del sistema que pidió el equipo de Bling. */
+  soporteDiagnostico: (ticketId) => ipcRenderer.invoke("soporte:diagnostico", ticketId),
 
   // ── Diagnóstico ──
   /** Reporte de entorno y últimas líneas del registro, sin datos de la cuenta. */

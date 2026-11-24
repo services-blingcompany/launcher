@@ -154,6 +154,45 @@ async function reabrir(chatId) {
 }
 
 /**
+ * Manda la información del sistema que pidió el staff (POST
+ * /api/v1/tickets/{id}/diagnostico). Sólo datos del equipo y de la app.
+ */
+async function diagnostico(ticketId) {
+  const id = Number(ticketId);
+  if (!Number.isInteger(id) || id <= 0) return fallo(404, null);
+  try {
+    const r = await pedir(`/api/v1/tickets/${id}/diagnostico`, "POST", { datos: datosDiagnostico() });
+    if (r.status !== 200 && r.status !== 201) return fallo(r.status, r.datos);
+    return { ok: true };
+  } catch {
+    return fallo(0, null);
+  }
+}
+
+/** Datos del equipo como pares clave/valor (los muestra internal al costado del ticket). */
+function datosDiagnostico() {
+  let sistema = `${os.type()} ${os.release()}`;
+  if (process.platform === "win32") sistema = `Windows ${process.getSystemVersion()}`;
+  else if (process.platform === "darwin") sistema = `macOS ${process.getSystemVersion()}`;
+  const datos = {
+    "Aplicación": `Bling Launcher ${app.getVersion()}`,
+    Sistema: `${sistema} (${os.arch()})`,
+    Memoria: `${Math.round(os.totalmem() / 1024 ** 3)} GB`,
+  };
+  try {
+    datos.Idioma = app.getLocale();
+  } catch {
+    // Sin idioma, sale lo demás.
+  }
+  try {
+    datos["Zona horaria"] = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    // Idem.
+  }
+  return datos;
+}
+
+/**
  * Sube UNA captura al backend (que la convierte a AVIF). Los bytes vienen
  * del renderer ya comprimidos en base64: el JSON por evaluateJavaScript
  * queda chico y el archivo sólo viaja una vez.
@@ -261,6 +300,7 @@ function init() {
   ipcMain.handle("soporte:subir", (_event, payload) => subirCaptura(payload || {}));
   ipcMain.handle("soporte:imagen", (_event, url) => imagen(url));
   ipcMain.handle("soporte:datos-equipo", () => datosEquipo());
+  ipcMain.handle("soporte:diagnostico", (_event, ticketId) => diagnostico(ticketId));
 }
 
 module.exports = { init, datosEquipo };

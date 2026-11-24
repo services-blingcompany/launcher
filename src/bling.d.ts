@@ -349,7 +349,7 @@ interface BlingApi {
   }): Promise<SoporteResponderResult>;
   /** Cierra el ticket (el estado se deriva del chat). */
   soporteCerrar(chatId: number): Promise<SoporteAccionResult>;
-  /** Reabre un ticket cerrado. */
+  /** Reabre un ticket resuelto (uno cerrado es definitivo). */
   soporteReabrir(chatId: number): Promise<SoporteAccionResult>;
   /** Sube UNA captura (bytes comprimidos en base64) y devuelve su adjunto. */
   soporteSubir(archivo: {
@@ -361,6 +361,8 @@ interface BlingApi {
   soporteImagen(url: string): Promise<SoporteImagenResult>;
   /** Set esencial de datos del equipo, ya armado por el proceso principal. */
   soporteDatosEquipo(): Promise<string>;
+  /** Manda la información del sistema que pidió el equipo de Bling. */
+  soporteDiagnostico(ticketId: number): Promise<SoporteAccionResult>;
 
   // ── Diagnóstico ──
   /** Reporte de entorno y últimas líneas del registro, sin datos de la cuenta. */

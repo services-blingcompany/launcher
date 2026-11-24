@@ -297,7 +297,27 @@ export function useSoporte() {
     [fallo, cargarLista],
   );
 
-  /** Reabre un ticket cerrado. */
+  /** Manda la información del sistema que pidió el equipo de Bling. */
+  const enviarDiagnostico = useCallback(
+    async (ticketId: number, chatId: number) => {
+      setEnviando(true);
+      setError(null);
+      try {
+        const r = await window.bling.soporteDiagnostico(ticketId);
+        if (!r.ok) {
+          fallo(r.codigo, r.detalle);
+          return false;
+        }
+        await cargarMensajes(chatId);
+        return true;
+      } finally {
+        setEnviando(false);
+      }
+    },
+    [fallo, cargarMensajes],
+  );
+
+  /** Reabre un ticket resuelto (uno cerrado es definitivo). */
   const reabrir = useCallback(
     async (chatId: number) => {
       setError(null);
@@ -326,6 +346,7 @@ export function useSoporte() {
     responder,
     cerrar,
     reabrir,
+    enviarDiagnostico,
     limpiarError: () => setError(null),
   };
 }

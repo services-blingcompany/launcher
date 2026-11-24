@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Cpu,
   ImagePlus,
   LifeBuoy,
   Loader2,
@@ -10,6 +11,7 @@ import {
   Ticket,
   X,
 } from "lucide-react";
+import { acciones, adjuntosVisibles, estado, pedidoPendiente, traePedido } from "@blingcompany/bling-ui/soporte";
 import { MAX_CAPTURAS, useSoporte } from "../hooks/useSoporte";
 import type { SoporteAdjunto } from "../bling";
 
@@ -37,19 +39,13 @@ const PUNTOS: Record<string, string> = {
   closed: "bg-white/25",
 };
 
-const ETIQUETAS: Record<string, string> = {
-  open: "Abierto",
-  in_progress: "En curso",
-  resolved: "Resuelto",
-  closed: "Cerrado",
-};
-
-function puntoDe(estado: string): string {
-  return PUNTOS[estado] ?? "bg-white/25";
+function puntoDe(valor: string): string {
+  return PUNTOS[valor] ?? "bg-white/25";
 }
 
-function etiquetaDe(estado: string): string {
-  return ETIQUETAS[estado] ?? estado;
+/** Textos y acciones de cada estado: los mismos que el dashboard (bling-ui/soporte). */
+function etiquetaDe(valor: string): string {
+  return estado(valor).texto;
 }
 
 function horaDe(iso: string): string {
@@ -86,6 +82,7 @@ export default function SupportPanel({
     responder,
     cerrar,
     reabrir,
+    enviarDiagnostico,
     limpiarError,
   } = useSoporte();
 
@@ -437,7 +434,7 @@ export default function SupportPanel({
                 {etiquetaDe(ticket.status)}
               </span>
               {ticket.chat_id &&
-                (ticket.status === "closed" ? (
+                (acciones(ticket.status).reabrir ? (
                   <button
                     type="button"
                     onClick={() => void reabrir(ticket.chat_id!)}
@@ -446,7 +443,7 @@ export default function SupportPanel({
                     <RotateCcw size={10} />
                     Reabrir
                   </button>
-                ) : (
+                ) : acciones(ticket.status).cerrar && (
                   <button
                     type="button"
                     onClick={() => void cerrar(ticket.chat_id!)}
@@ -481,6 +478,11 @@ export default function SupportPanel({
                             {m.sender_name || "Equipo Bling"}
                           </p>
                         )}
+                        {traePedido(m) && (
+                          <p className="mb-1 inline-flex items-center gap-1 font-mono text-[9px] tracking-widest uppercase text-[#ffcc00]">
+                            <Cpu size={10} /> Pedido de información del sistema
+                          </p>
+                        )}
                         {m.is_deleted ? (
                           <p className="text-xs font-light italic text-white/35">
                             Mensaje eliminado
@@ -490,9 +492,9 @@ export default function SupportPanel({
                             {m.content}
                           </p>
                         )}
-                        {m.attachments && m.attachments.length > 0 && (
+                        {adjuntosVisibles(m).length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
-                            {m.attachments.map((a) => (
+                            {adjuntosVisibles(m).map((a) => (
                               <Captura key={a.url} adjunto={a} />
                             ))}
                           </div>
@@ -508,6 +510,31 @@ export default function SupportPanel({
               <div ref={finRef} />
             </div>
 
+            {ticket.chat_id && pedidoPendiente(mensajes, userId) && (
+              <div className="mx-6 mb-3 flex items-center gap-3 rounded-xl border border-[#ffcc00]/30 bg-[#ffcc00]/[0.06] px-4 py-3">
+                <Cpu size={16} className="shrink-0 text-[#ffcc00]" />
+                <p className="flex-1 text-xs font-light leading-relaxed text-white/75">
+                  El equipo de Bling te pidió la información del sistema: versión del launcher,
+                  sistema operativo, idioma y zona horaria. No incluye datos personales.
+                </p>
+                <button
+                  type="button"
+                  disabled={enviando}
+                  onClick={() => void enviarDiagnostico(ticket.id, ticket.chat_id!)}
+                  className="shrink-0 rounded-lg bg-[#ffcc00] px-3 py-1.5 font-mono text-[9px] tracking-widest uppercase text-black transition-opacity hover:opacity-90 disabled:opacity-40"
+                >
+                  Enviar
+                </button>
+              </div>
+            )}
+
+            {!acciones(ticket.status).responder ? (
+              <p className="border-t border-white/5 px-6 py-4 text-xs font-light text-white/40">
+                {acciones(ticket.status).reabrir
+                  ? "Este ticket está resuelto. Si necesitás seguir, reabrilo."
+                  : "Este ticket está cerrado. Si necesitás algo más, abrí uno nuevo."}
+              </p>
+            ) : (
             <form onSubmit={enviarRespuesta} className="border-t border-white/5 px-6 py-4">
               <CapturasPendientes
                 pendientes={pendientes}
@@ -562,6 +589,7 @@ export default function SupportPanel({
                 }}
               />
             </form>
+            )}
           </>
         ) : (
           /* ── Sin ticket seleccionado ── */
