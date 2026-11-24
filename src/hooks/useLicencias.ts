@@ -22,6 +22,8 @@ const MENSAJES: Record<string, string> = {
   "en-curso": "Ya se está descargando.",
   "no-instalada": "La app todavía no está instalada en tu PC.",
   "limite-equipos": "Tu plan no permite abrir la app en más equipos.",
+  "escritorio-remoto":
+    "Con tu plan, las apps no se abren por Escritorio Remoto. Abrila sentado en la PC.",
 };
 
 /** La cuenta llegó al límite de equipos de su plan al abrir una app. */

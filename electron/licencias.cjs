@@ -286,6 +286,11 @@ async function pedirTicket(key, reemplazar = null) {
         equipos: Array.isArray(r.datos.equipos) ? r.datos.equipos : [],
       };
     }
+    // El plan no permite usar las apps por Escritorio Remoto (el backend
+    // corta antes de registrar el equipo).
+    if (r.status === 409 && r.datos && r.datos.codigo === "escritorio-remoto") {
+      return { ok: false, codigo: "escritorio-remoto" };
+    }
     if (r.status !== 200 || !r.datos || !r.datos.ticket) {
       return { ok: false, codigo: logica.codigoDeEstado(r.status) };
     }
