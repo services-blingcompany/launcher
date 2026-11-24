@@ -9,6 +9,14 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.26.0]
+
+- Si tu plan no permite usar las apps por Escritorio Remoto, el launcher te
+  lo dice con un mensaje claro en vez de un error genérico. Las apps de
+  escritorio se usan sentado en la PC (el plan Empresa sí lo permite).
+- La copia de prueba que arma `npm run local` ya no busca ni instala
+  actualizaciones: no pisa más al launcher instalado.
+
 ## [1.25.0]
 
 - Las notificaciones se ven en un panel dentro del launcher (campana, menú de
