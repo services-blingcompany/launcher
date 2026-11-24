@@ -1,42 +1,24 @@
 import type { MouseEvent } from "react";
-import {
-  ArrowUpRight,
-  Calculator,
-  Download,
-  ExternalLink,
-  Lock,
-  Monitor,
-  Newspaper,
-  Rocket,
-  ShoppingBag,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { Lock } from "lucide-react";
 import type { Service } from "../data/services";
+import { estadoEscritorio, textoEstado } from "../lib/escritorio";
 import { vigenciaDe } from "../lib/vigencia";
-
-const ICONS = {
-  newspaper: Newspaper,
-  users: Users,
-  "trending-up": TrendingUp,
-  "shopping-bag": ShoppingBag,
-  rocket: Rocket,
-  calculator: Calculator,
-} as const;
+import {
+  type AccionesServicio,
+  BotonesServicio,
+  ICONOS_SERVICIO,
+  LineaEstado,
+  accionPrincipal,
+} from "./ServiceActions";
 
 /**
- * Fila de servicio (layout horizontal): icono a la izquierda, nombre y
- * tagline al medio, acción a la derecha. La luz especular sigue al
- * cursor con --mx/--my. Si está "soon" queda bloqueada.
+ * Fila de servicio: icono, nombre con la vigencia del plan, tagline y, si el
+ * servicio tiene app de escritorio, una línea que dice si está en esta PC.
+ * A la derecha, las dos opciones con icono y texto: app de PC y navegador
+ * (ver ServiceActions). El clic en la fila hace lo mismo que el botón
+ * principal. Si está "soon" queda bloqueada.
  *
- * Los servicios con licencia (licenseKey) muestran su estado con lo que le
- * queda a la persona (días del plan o de la prueba, o los días gratis que
- * ofrece el plan) y botones con texto: «Descargar / Instalar / Abrir app de
- * PC» para la versión de escritorio y «Abrir en el navegador» para la web.
- *
- * `selected` la marca cuando el usuario la recorre con ↑↓. La acción
- * secundaria (abrir en el navegador del sistema) es un botón aparte:
- * HTML no permite anidar botones.
+ * `selected` la marca cuando el usuario la recorre con ↑↓.
  */
 export default function ServiceRow({
   service,
@@ -47,12 +29,7 @@ export default function ServiceRow({
   ejecutable = null,
   version = null,
   error = null,
-  onOpen,
-  onOpenExternal,
-  onDescargar,
-  onInstalar,
-  onAbrir,
-  onVerPlanes,
+  ...acciones
 }: {
   service: Service;
   selected?: boolean;
@@ -66,29 +43,13 @@ export default function ServiceRow({
   /** Versión del binario disponible para la plataforma actual (null si no hay). */
   version?: string | null;
   error?: string | null;
-  onOpen: (service: Service) => void;
-  onOpenExternal: (service: Service) => void;
-  onDescargar?: (service: Service) => void;
-  onInstalar?: (service: Service) => void;
-  onAbrir?: (service: Service) => void;
-  onVerPlanes?: () => void;
-}) {
-  const Icon = ICONS[service.icon];
+} & AccionesServicio) {
+  const Icon = ICONOS_SERVICIO[service.icon];
   const disponible = service.status === "available";
-
-  // Servicio con licencia: hasta que el catálogo remoto responda, `licencia`
-  // es undefined y la fila se comporta como cualquier otra (el gate de la
-  // web resuelve adentro). Con la respuesta, se muestra el estado real.
-  const conLicencia = Boolean(service.licenseKey);
-  const sinLicencia = conLicencia && service.licencia !== undefined && !service.licencia.hasAccess;
-  const binarioListo = conLicencia && service.licencia?.hasAccess && version;
-  const yaGuardada = binarioListo && guardada === version;
-  // Instalada gana sobre el estado del instalador: si el exe está, se abre.
-  const nativaInstalada = ejecutable === true;
-  // Tiene versión de escritorio (instalada o con instalador disponible).
-  const tieneEscritorio = nativaInstalada || Boolean(binarioListo);
-  // Cuánto le queda (plan, prueba) o cuántos días de prueba ofrece.
-  const vigencia = conLicencia && service.licencia ? vigenciaDe(service.licencia) : null;
+  const estado = estadoEscritorio(service, { version, guardada, ejecutable, bajando });
+  const percent = descarga?.percent ?? 0;
+  const vigencia =
+    service.licenseKey && service.licencia ? vigenciaDe(service.licencia) : null;
 
   function seguirCursor(e: MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -96,40 +57,13 @@ export default function ServiceRow({
     e.currentTarget.style.setProperty("--my", `${e.clientY - rect.top}px`);
   }
 
-  /**
-   * Clic en la fila: si la app tiene versión de escritorio, la fila trabaja
-   * con ella (abrir la instalada, instalar la bajada o bajarla). La versión
-   * web en una ventana del launcher queda para los servicios sin instalador.
-   * Antes la fila abría siempre la web y la app de escritorio dependía de un
-   * botón chico que muchos no veían.
-   */
-  function accionPrincipal() {
-    if (sinLicencia) {
-      onVerPlanes?.();
-      return;
-    }
-    if (nativaInstalada) {
-      onAbrir?.(service);
-      return;
-    }
-    if (binarioListo) {
-      if (bajando) return;
-      if (yaGuardada) onInstalar?.(service);
-      else onDescargar?.(service);
-      return;
-    }
-    if (disponible) onOpen(service);
-  }
-
   return (
     <div
       data-sid={service.id}
       onMouseMove={seguirCursor}
-      onClick={accionPrincipal}
+      onClick={() => accionPrincipal(service, estado, acciones)}
       className={`group relative flex w-full items-center gap-4 overflow-hidden rounded-xl border bg-zinc-950/80 pr-3 pl-4 text-left transition-all duration-300 outline-none ${
-        selected && disponible
-          ? "border-white/25 bg-zinc-900/70"
-          : "border-white/10"
+        selected && disponible ? "border-white/25 bg-zinc-900/70" : "border-white/10"
       } ${disponible ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
     >
       {/* Halo del acento, detrás del icono */}
@@ -170,18 +104,18 @@ export default function ServiceRow({
           <span className="truncate font-[var(--font-montserrat)] text-[15px] font-light text-white">
             {service.name}
           </span>
-          {/* Insignia de licencia: se prioriza sobre la estática del servicio. */}
-          {conLicencia && service.licencia && (
+          {/* Insignia de licencia: lo que le queda al plan o a la prueba. */}
+          {service.licencia && vigencia?.texto && (
             <span
               className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[8px] tracking-widest uppercase ${
                 !service.licencia.hasAccess
                   ? "border-white/15 bg-white/5 text-white/50"
-                  : vigencia?.urgente
+                  : vigencia.urgente
                     ? "border-amber-400/40 bg-amber-400/10 text-amber-300"
                     : ""
               }`}
               style={
-                service.licencia.hasAccess && !vigencia?.urgente
+                service.licencia.hasAccess && !vigencia.urgente
                   ? {
                       color: `rgb(${service.accentRgb})`,
                       background: `rgba(${service.accentRgb}, 0.08)`,
@@ -191,10 +125,10 @@ export default function ServiceRow({
               }
             >
               {!service.licencia.hasAccess && <Lock size={8} />}
-              {vigencia?.texto}
+              {vigencia.texto}
             </span>
           )}
-          {service.badge && disponible && !conLicencia && (
+          {service.badge && disponible && !service.licenseKey && (
             <span
               className="shrink-0 rounded-full border px-2 py-0.5 font-mono text-[8px] tracking-widest uppercase"
               style={{
@@ -210,6 +144,11 @@ export default function ServiceRow({
         <span className="mt-0.5 block truncate text-[11px] font-light text-white/55">
           {service.tagline}
         </span>
+        <LineaEstado
+          estado={estado}
+          texto={textoEstado(estado, percent)}
+          rgb={service.accentRgb}
+        />
         {error && (
           <span className="mt-0.5 block truncate text-[10px] font-light text-rose-400">
             {error}
@@ -217,132 +156,13 @@ export default function ServiceRow({
         )}
       </span>
 
-      <span className="relative flex shrink-0 items-center gap-1">
-        {/* Licencias: descargar / progreso / instalar, o el acceso a planes. */}
-        {sinLicencia ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onVerPlanes?.();
-            }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase text-white/60 transition-colors hover:border-white/30 hover:text-white"
-          >
-            <Lock size={8} />
-            {(service.licencia?.pruebaDias ?? 0) > 0 ? "Probar gratis" : "Ver planes"}
-          </button>
-        ) : (
-          <>
-            {nativaInstalada ? (
-              <button
-                type="button"
-                aria-label={`Abrir ${service.name} (app instalada en tu PC)`}
-                title="Abrir la app instalada"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAbrir?.(service);
-                }}
-                className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase transition-colors"
-                style={{
-                  color: `rgb(${service.accentRgb})`,
-                  background: `rgba(${service.accentRgb}, 0.08)`,
-                  borderColor: `rgba(${service.accentRgb}, 0.25)`,
-                }}
-              >
-                <Monitor size={8} />
-                Abrir app de PC
-              </button>
-            ) : binarioListo && bajando ? (
-              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase text-white/60">
-                Descargando {descarga?.percent ?? 0} %
-              </span>
-            ) : binarioListo && yaGuardada ? (
-              <button
-                type="button"
-                aria-label={`Ejecutar el instalador de ${service.name}`}
-                title="Ejecutar el instalador"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onInstalar?.(service);
-                }}
-                className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase transition-colors"
-                style={{
-                  color: `rgb(${service.accentRgb})`,
-                  background: `rgba(${service.accentRgb}, 0.08)`,
-                  borderColor: `rgba(${service.accentRgb}, 0.25)`,
-                }}
-              >
-                <Monitor size={8} />
-                Instalar app de PC
-              </button>
-            ) : binarioListo ? (
-              <button
-                type="button"
-                aria-label={`Descargar ${service.name} a tu PC`}
-                title="Descargar a tu PC"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDescargar?.(service);
-                }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase text-white/60 transition-colors hover:border-white/30 hover:text-white"
-              >
-                <Download size={8} />
-                Descargar app de PC
-              </button>
-            ) : null}
-
-            {/* Apps con versión de escritorio: la otra opción, siempre visible
-                y con texto, abre la versión web en el navegador del sistema
-                (donde la persona suele tener la sesión abierta). */}
-            {disponible && tieneEscritorio && (
-              <button
-                type="button"
-                aria-label={`Usar ${service.name} en el navegador`}
-                title="Abrir la versión web en tu navegador"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenExternal(service);
-                }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase text-white/45 transition-colors hover:border-white/25 hover:text-white"
-              >
-                <ExternalLink size={8} />
-                Abrir en el navegador
-              </button>
-            )}
-
-            {/* Resto de servicios: la acción secundaria aparece al pasar el
-                cursor o al recorrer con el teclado. */}
-            {disponible && !tieneEscritorio && (
-              <button
-                type="button"
-                aria-label={`Abrir ${service.name} en el navegador del sistema`}
-                title="Abrir en el navegador del sistema"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenExternal(service);
-                }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-2.5 py-1 font-mono text-[8px] tracking-widest uppercase text-white/45 opacity-0 transition-all duration-300 hover:border-white/25 hover:text-white focus-visible:opacity-100 focus-visible:outline-none group-hover:opacity-100"
-              >
-                <ExternalLink size={8} />
-                Abrir en el navegador
-              </button>
-            )}
-
-            {disponible ? (
-              <ArrowUpRight
-                size={15}
-                className={`transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 ${
-                  selected ? "text-white" : "text-white/25 group-hover:text-white"
-                }`}
-              />
-            ) : (
-              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 font-mono text-[8px] tracking-widest uppercase text-white/45">
-                <Lock size={8} />
-                Próximamente
-              </span>
-            )}
-          </>
-        )}
+      <span className="relative shrink-0">
+        <BotonesServicio
+          service={service}
+          estado={estado}
+          percent={percent}
+          acciones={acciones}
+        />
       </span>
     </div>
   );

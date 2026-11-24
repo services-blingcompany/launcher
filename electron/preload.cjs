@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld("bling", {
   addRecent: (id) => ipcRenderer.invoke("bling:recents-add", id),
   /** Vacía la lista de recientes. Devuelve la lista (vacía). */
   clearRecents: () => ipcRenderer.invoke("bling:recents-clear"),
+  /** Veces que se abrió cada servicio ({ contable: 12 }). */
+  getUsos: () => ipcRenderer.invoke("bling:usos"),
 
   // ── Ajustes ──
   getSettings: () => ipcRenderer.invoke("bling:settings-get"),

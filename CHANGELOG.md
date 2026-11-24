@@ -9,6 +9,21 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.23.0]
+
+- Las notificaciones de Windows vuelven a llegar: después de una hora con el
+  launcher abierto la sesión se renovaba en todos lados menos en el contador
+  de notificaciones, que se quedaba en 0 y no avisaba más.
+- Cada servicio tiene dos opciones claras, con icono y texto: «Abrir app de PC»
+  (o «Descargar» / «Instalar» si todavía no está) y «Abrir en el navegador».
+  Ya no hay una tercera forma de abrir la web dentro del launcher.
+- Las apps de escritorio dicen si están en esta PC: «Instalada en esta PC»,
+  «Descargada · falta instalarla» o «No está en esta PC · descargala».
+- El catálogo muestra sólo lo que existe: Contable, Jobs, Dashboard y
+  Fundadores. Bling Noticias y Bling Social salen hasta que estén listos.
+- Contable va destacado arriba, salvo que tengas instalada otra app de
+  escritorio que uses más: esa pasa a ser la destacada.
+
 ## [1.22.0]
 
 - La sesión del launcher ahora vive en www.bling.uy, donde la buscan la web,

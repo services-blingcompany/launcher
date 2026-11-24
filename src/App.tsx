@@ -14,6 +14,7 @@ import AccountPanel from "./components/AccountPanel";
 import { datosDeUsuario, useSession } from "./hooks/useSession";
 import { useLicencias } from "./hooks/useLicencias";
 import { SERVICES } from "./data/services";
+import { elegirDestacado } from "./lib/destacado";
 import { normalizar } from "./lib/normalizar";
 import { nivelDeTeclaZoom } from "./lib/zoom";
 import type { Service } from "./data/services";
@@ -53,6 +54,7 @@ export default function App() {
 
   // ── Servicios usados por última vez ──
   const [recents, setRecents] = useState<string[]>([]);
+  const [usos, setUsos] = useState<Record<string, number>>({});
 
   // ── Actualizaciones ──
   const [version, setVersion] = useState("");
@@ -116,6 +118,7 @@ export default function App() {
   useEffect(() => {
     void window.bling.appVersion().then(setVersion);
     void window.bling.getRecents().then(setRecents);
+    void window.bling.getUsos().then(setUsos);
     void window.bling.getSettings().then(setSettings);
 
     // La bandeja necesita el catálogo para su submenú de servicios.
@@ -216,6 +219,7 @@ export default function App() {
 
   const borrarRecientes = useCallback(() => {
     void window.bling.clearRecents().then(setRecents);
+    setUsos({});
   }, []);
 
   const [alDia, setAlDia] = useState(false);
@@ -239,30 +243,35 @@ export default function App() {
     window.bling.installUpdate();
   }
 
-  /** Abre un servicio y lo registra como reciente. */
-  const abrir = useCallback((service: Service) => {
-    if (service.status !== "available" || !service.url) return;
-    // Sin licencia vigente no se abre: el camino son los planes.
-    if (service.licenseKey && service.licencia && !service.licencia.hasAccess) {
-      void window.bling.openExternal(URL_PLANES);
-      return;
-    }
+  /** Registra un uso del servicio (recientes + contador para el destacado). */
+  const registrarUso = useCallback((id: string) => {
     void window.bling
-      .openService({
-        id: service.id,
-        url: service.url,
-        title: service.name,
-      })
-      .then(() => window.bling.addRecent(service.id))
+      .addRecent(id)
       .then(setRecents)
+      .then(() => window.bling.getUsos())
+      .then(setUsos)
       .catch(() => {});
   }, []);
 
-  /** Abre el servicio en el navegador del sistema (no embebido). */
-  const abrirEnNavegador = useCallback((service: Service) => {
-    if (!service.url) return;
-    void window.bling.openExternal(service.url);
-  }, []);
+  /**
+   * Versión web de un servicio: siempre en el navegador del sistema, con el
+   * pase de sesión del launcher (ver paseNavegador.cjs). Antes el clic abría
+   * la web en una ventana del launcher, que parecía «el navegador» sin serlo:
+   * ahora hay sólo dos caminos, la app de PC o el navegador.
+   */
+  const abrir = useCallback(
+    (service: Service) => {
+      if (service.status !== "available" || !service.url) return;
+      // Sin licencia vigente no se abre: el camino son los planes.
+      if (service.licenseKey && service.licencia && !service.licencia.hasAccess) {
+        void window.bling.openExternal(URL_PLANES);
+        return;
+      }
+      void window.bling.openExternal(service.url);
+      registrarUso(service.id);
+    },
+    [registrarUso],
+  );
 
   /** Descarga el binario de una app con licencia a la carpeta del launcher. */
   const descargarApp = useCallback(
@@ -283,9 +292,11 @@ export default function App() {
   /** Abre la app nativa instalada en la PC, con su ticket de licencia. */
   const abrirApp = useCallback(
     (service: Service) => {
-      if (service.licenseKey) void licencias.abrir(service.licenseKey);
+      if (!service.licenseKey) return;
+      void licencias.abrir(service.licenseKey);
+      registrarUso(service.id);
     },
-    [licencias.abrir],
+    [licencias.abrir, registrarUso],
   );
 
   /** Página de planes en el navegador del sistema. */
@@ -309,10 +320,15 @@ export default function App() {
     [licencias.apps],
   );
 
-  const destacado = useMemo(
-    () => servicios.find((s) => s.featured) ?? servicios[0],
-    [servicios],
-  );
+  // Contable por defecto, o la app de escritorio instalada que más se usa.
+  const destacado = useMemo(() => {
+    const instaladas = new Set(
+      servicios
+        .filter((s) => s.licenseKey && licencias.ejecutables[s.licenseKey])
+        .map((s) => s.id),
+    );
+    return elegirDestacado(servicios, instaladas, usos);
+  }, [servicios, licencias.ejecutables, usos]);
 
   const { recientesVisibles, disponibles, proximos, navegables } =
     useMemo(() => {
@@ -592,7 +608,8 @@ export default function App() {
                     <FeaturedCard
                       service={destacado}
                       selected={destacado.id === seleccion}
-                      onOpen={abrir}
+                      {...propsLicencia(destacado)}
+                      onWeb={abrir}
                     />
                   </div>
                 )}
@@ -608,8 +625,7 @@ export default function App() {
                           service={s}
                           selected={s.id === seleccion}
                           {...propsLicencia(s)}
-                          onOpen={abrir}
-                          onOpenExternal={abrirEnNavegador}
+                          onWeb={abrir}
                         />
                       ))}
                     </div>
@@ -627,8 +643,7 @@ export default function App() {
                           service={s}
                           selected={s.id === seleccion}
                           {...propsLicencia(s)}
-                          onOpen={abrir}
-                          onOpenExternal={abrirEnNavegador}
+                          onWeb={abrir}
                         />
                       ))}
                     </div>
@@ -645,8 +660,7 @@ export default function App() {
                           key={s.id}
                           service={s}
                           selected={false}
-                          onOpen={abrir}
-                          onOpenExternal={abrirEnNavegador}
+                          onWeb={abrir}
                         />
                       ))}
                     </div>

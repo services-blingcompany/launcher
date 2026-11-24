@@ -17,6 +17,39 @@ function statePath() {
   return path.join(app.getPath("userData"), "recents.json");
 }
 
+/**
+ * Cuántas veces se abrió cada servicio (userData/usos.json, sólo id → número).
+ * Con esto el launcher destaca la app de escritorio que la persona más usa.
+ */
+function usosPath() {
+  return path.join(app.getPath("userData"), "usos.json");
+}
+
+function loadUsos() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(usosPath(), "utf8"));
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const limpio = {};
+    for (const [id, n] of Object.entries(raw)) {
+      if (Number.isFinite(n) && n > 0) limpio[id] = Math.floor(n);
+    }
+    return limpio;
+  } catch {
+    return {};
+  }
+}
+
+function sumarUso(id) {
+  const usos = loadUsos();
+  usos[id] = (usos[id] || 0) + 1;
+  try {
+    fs.mkdirSync(app.getPath("userData"), { recursive: true });
+    fs.writeFileSync(usosPath(), JSON.stringify(usos, null, 2));
+  } catch (err) {
+    console.warn("[recents] no se pudieron guardar los usos:", err.message);
+  }
+}
+
 function load() {
   try {
     const raw = JSON.parse(fs.readFileSync(statePath(), "utf8"));
@@ -39,6 +72,7 @@ function save(ids) {
 function add(id) {
   const clean = String(id ?? "").trim();
   if (!clean) return load();
+  sumarUso(clean);
   const next = [clean, ...load().filter((x) => x !== clean)].slice(0, MAX_ITEMS);
   save(next);
   return next;
@@ -50,8 +84,14 @@ function init() {
   // Vaciar la lista desde Ajustes → Datos.
   ipcMain.handle("bling:recents-clear", () => {
     save([]);
+    try {
+      fs.rmSync(usosPath(), { force: true });
+    } catch {
+      // no había usos guardados
+    }
     return [];
   });
+  ipcMain.handle("bling:usos", () => loadUsos());
 }
 
 module.exports = { init, add };

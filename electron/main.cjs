@@ -56,7 +56,13 @@ let catalogoServicios = [];
  * lista. Un XSS en cualquier servicio nunca podrá ejecutar código local
  * ni abrir dominios ajenos a Bling.
  */
-const ALLOWED_HOSTS = new Set(["bling.uy", "www.bling.uy", "contable.bling.uy", "dashboard.bling.uy"]);
+const ALLOWED_HOSTS = new Set([
+  "bling.uy",
+  "www.bling.uy",
+  "contable.bling.uy",
+  "dashboard.bling.uy",
+  "jobs.bling.uy",
+]);
 
 function isAllowedUrl(value) {
   try {

@@ -376,20 +376,49 @@ async function logout() {
   return true;
 }
 
-/** Contador de notificaciones sin leer (0 si no hay sesión o no se puede). */
+/**
+ * Contador de notificaciones sin leer (0 si no hay sesión o no se puede).
+ *
+ * El access token dura JWT_EXPIRE_MINUTES (60) y esto se consulta cada
+ * minuto: ante un 401 se renueva una vez con la cookie refresh_token, igual
+ * que perfil(). Sin eso, a la hora de abrir el launcher el contador quedaba
+ * en 0 para siempre y no volvía a avisar nada.
+ */
 async function notificaciones() {
   try {
     const r = await enPagina(`(async () => {
-      const token = localStorage.getItem('access_token');
+      let token = localStorage.getItem('access_token');
       if (!token) return { count: 0, autenticado: false };
 
-      const cabeceras = { Authorization: 'Bearer ' + token };
-      const opciones = { credentials: 'include', cache: 'no-store', headers: cabeceras };
+      const pedir = (ruta) => fetch(ruta, {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { Authorization: 'Bearer ' + token },
+      });
+
+      // Token vencido: un solo intento de refresh y se repite el pedido.
+      let renovado = false;
+      const conRenovacion = async (ruta) => {
+        let res = await pedir(ruta);
+        if (res.status !== 401 || renovado) return res;
+        renovado = true;
+        try {
+          const ref = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+          if (!ref.ok) return res;
+          const datos = await ref.json().catch(() => ({}));
+          if (!datos.access_token) return res;
+          token = datos.access_token;
+          localStorage.setItem('access_token', token);
+          return pedir(ruta);
+        } catch {
+          return res;
+        }
+      };
 
       // Primero el contador del backend; si no está, se cuentan las no leídas
       // de la lista (que es como lo hace la propia web).
       try {
-        const res = await fetch('/api/v1/notifications/count', opciones);
+        const res = await conRenovacion('/api/v1/notifications/count');
         if (res.status === 401) return { count: 0, autenticado: false };
         if (res.ok) {
           const datos = await res.json().catch(() => null);
@@ -399,13 +428,17 @@ async function notificaciones() {
       } catch {}
 
       try {
-        const res = await fetch('/api/v1/notifications', opciones);
+        const res = await conRenovacion('/api/v1/notifications?unread_only=true');
         if (res.status === 401) return { count: 0, autenticado: false };
         if (res.ok) {
           const datos = await res.json().catch(() => null);
           const lista = Array.isArray(datos) ? datos : (datos && datos.notifications) || [];
           if (Array.isArray(lista)) {
-            return { count: lista.filter((n) => n && !n.read).length, autenticado: true };
+            // El backend manda is_read (antes se miraba n.read, que no existe).
+            return {
+              count: lista.filter((n) => n && !(n.is_read ?? n.read)).length,
+              autenticado: true,
+            };
           }
         }
       } catch {}

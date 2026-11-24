@@ -20,13 +20,22 @@ export type Service = {
   tagline: string;
   /** URL de producción. Vacío = todavía no sale (tarjeta "Próximamente"). */
   url?: string;
-  icon: "newspaper" | "users" | "trending-up" | "shopping-bag" | "rocket" | "calculator";
+  icon:
+    | "calculator"
+    | "briefcase"
+    | "layout-dashboard"
+    | "trending-up"
+    | "shopping-bag"
+    | "rocket";
   /** rgb del acento, para la luz que sigue al cursor. */
   accentRgb: string;
   /** Hex del texto/icono del acento. */
   accent: string;
   badge?: string;
-  /** Tarjeta grande arriba de todo (sólo una). */
+  /**
+   * Destacado por defecto (sólo uno). Si la persona tiene instalada otra app
+   * de escritorio y la usa más, el launcher destaca esa (ver lib/destacado).
+   */
   featured?: boolean;
   /**
    * Producto del backend de licencias que habilita este servicio. Si tiene,
@@ -46,36 +55,45 @@ export type Service = {
  */
 export const SERVICES: Service[] = [
   {
-    id: "noticias",
-    name: "Bling Noticias",
-    tagline: "Lo que pasa en Uruguay y el mundo, al minuto.",
-    url: "https://www.bling.uy",
-    icon: "newspaper",
-    accentRgb: "255, 204, 0",
-    accent: "text-[#ffcc00]",
-    badge: "En vivo",
-    featured: true,
-    status: "available",
-  },
-  {
-    id: "social",
-    name: "Bling Social",
-    tagline: "La red social uruguaya: seguí, publicá y conectá.",
-    url: "https://www.bling.uy/bling",
-    icon: "users",
-    accentRgb: "16, 185, 129",
-    accent: "text-emerald-400",
-    status: "available",
-  },
-  {
     id: "contable",
     name: "Contable",
-    tagline: "Facturación y gestión contable: en la web o instalado en tu PC.",
+    tagline: "Conciliación y gestión contable: en la web o instalado en tu PC.",
     url: "https://contable.bling.uy",
     icon: "calculator",
     accentRgb: "34, 211, 238",
     accent: "text-cyan-400",
     licenseKey: "contable",
+    featured: true,
+    status: "available",
+  },
+  {
+    id: "jobs",
+    name: "Jobs",
+    tagline: "Empleo sin vueltas: empresas identificadas y sueldo a la vista.",
+    url: "https://jobs.bling.uy",
+    icon: "briefcase",
+    accentRgb: "16, 185, 129",
+    accent: "text-emerald-400",
+    status: "available",
+  },
+  {
+    id: "dashboard",
+    name: "Dashboard",
+    tagline: "Tu cuenta, tus planes y tus servicios en un solo panel.",
+    url: "https://dashboard.bling.uy",
+    icon: "layout-dashboard",
+    accentRgb: "255, 204, 0",
+    accent: "text-[#ffcc00]",
+    status: "available",
+  },
+  {
+    id: "fundadores",
+    name: "Fundadores",
+    tagline: "El programa de fundadores: postulá tu proyecto.",
+    url: "https://www.bling.uy/fundadores",
+    icon: "rocket",
+    accentRgb: "244, 63, 94",
+    accent: "text-rose-400",
     status: "available",
   },
   {
@@ -95,15 +113,5 @@ export const SERVICES: Service[] = [
     accentRgb: "168, 85, 247",
     accent: "text-purple-400",
     status: "soon",
-  },
-  {
-    id: "fundadores",
-    name: "Fundadores",
-    tagline: "El programa de fundadores: postulá tu proyecto.",
-    url: "https://www.bling.uy/fundadores",
-    icon: "rocket",
-    accentRgb: "244, 63, 94",
-    accent: "text-rose-400",
-    status: "available",
   },
 ];

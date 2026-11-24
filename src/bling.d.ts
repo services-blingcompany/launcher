@@ -239,6 +239,8 @@ interface BlingApi {
   getRecents(): Promise<string[]>;
   addRecent(id: string): Promise<string[]>;
   clearRecents(): Promise<string[]>;
+  /** Veces que se abrió cada servicio, por id. */
+  getUsos(): Promise<Record<string, number>>;
 
   /** Ajustes actuales. */
   getSettings(): Promise<Settings>;
