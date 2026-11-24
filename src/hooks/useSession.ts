@@ -37,6 +37,9 @@ export function useSession() {
   const [user, setUser] = useState<BlingUser | null>(() => leerCacheSesion());
   const [cargando, setCargando] = useState(false);
   const [sinLeer, setSinLeer] = useState(0);
+  /** Sube para forzar una relectura del contador (p. ej. al marcar leídas). */
+  const [pulso, setPulso] = useState(0);
+  const refrescarSinLeer = useCallback(() => setPulso((n) => n + 1), []);
 
   // Estado inicial + avisos que empuja el main.
   useEffect(() => {
@@ -85,11 +88,12 @@ export function useSession() {
 
     refrescar();
     const t = setInterval(refrescar, 60 * 1000);
+    void pulso;
     return () => {
       vivo = false;
       clearInterval(t);
     };
-  }, [user]);
+  }, [user, pulso]);
 
   const login = useCallback(
     async (email: string, password: string, rememberMe: boolean) => {
@@ -115,7 +119,7 @@ export function useSession() {
     window.bling.reportNotifications(0);
   }, []);
 
-  return { user, cargando, sinLeer, login, logout };
+  return { user, cargando, sinLeer, refrescarSinLeer, login, logout };
 }
 
 /** Datos de presentación del perfil, sin importar si es persona o empresa. */

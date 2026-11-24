@@ -377,6 +377,80 @@ async function logout() {
 }
 
 /**
+ * Pedido a la API de Bling desde la página puente, con la sesión del
+ * launcher y un refresh si el access venció. `ruta` y `metodo` los arma
+ * este módulo (nunca vienen del renderer tal cual). Devuelve
+ * { status, datos } o { status: 0 } sin sesión.
+ */
+function pedirApi(ruta, metodo = "GET") {
+  return enPagina(`(async () => {
+    let token = localStorage.getItem('access_token');
+    if (!token) return { status: 0 };
+    const pedir = () => fetch(${JSON.stringify(ruta)}, {
+      method: ${JSON.stringify(metodo)},
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { Authorization: 'Bearer ' + token },
+    });
+    let res = await pedir();
+    if (res.status === 401) {
+      try {
+        const ref = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+        const datos = ref.ok ? await ref.json().catch(() => ({})) : {};
+        if (datos.access_token) {
+          token = datos.access_token;
+          localStorage.setItem('access_token', token);
+          res = await pedir();
+        }
+      } catch {}
+    }
+    const datos = await res.json().catch(() => null);
+    return { status: res.status, datos };
+  })()`);
+}
+
+/** Sólo lo que el panel muestra, con tipos limpios. */
+function limpiarNotificacion(n) {
+  if (!n || typeof n !== "object") return null;
+  const id = Number(n.id);
+  if (!Number.isInteger(id)) return null;
+  return {
+    id,
+    tipo: String(n.type ?? "system"),
+    titulo: String(n.title ?? "").slice(0, 255),
+    cuerpo: n.body ? String(n.body).slice(0, 1000) : null,
+    leida: Boolean(n.is_read ?? n.read),
+    fecha: String(n.created_at ?? ""),
+  };
+}
+
+/** Últimas notificaciones para el panel del launcher. */
+async function listaNotificaciones() {
+  try {
+    const r = await pedirApi("/api/v1/notifications?limit=30");
+    if (!r || r.status === 0 || r.status === 401) return { ok: false, codigo: "sin-sesion" };
+    if (r.status !== 200) return { ok: false, codigo: "servidor" };
+    const lista = Array.isArray(r.datos) ? r.datos : (r.datos && r.datos.notifications) || [];
+    return { ok: true, notificaciones: lista.map(limpiarNotificacion).filter(Boolean) };
+  } catch {
+    return { ok: false, codigo: "red" };
+  }
+}
+
+/** Marca una notificación (por id) o todas (id null) como leídas. */
+async function marcarNotificaciones(id) {
+  const n = id === null || id === undefined ? null : Number(id);
+  if (n !== null && !Number.isInteger(n)) return false;
+  try {
+    const ruta = n === null ? "/api/v1/notifications/read-all" : `/api/v1/notifications/${n}/read`;
+    const r = await pedirApi(ruta, "POST");
+    return Boolean(r && r.status >= 200 && r.status < 300);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Contador de notificaciones sin leer (0 si no hay sesión o no se puede).
  *
  * El access token dura JWT_EXPIRE_MINUTES (60) y esto se consulta cada
@@ -691,6 +765,8 @@ function init({ getHub }) {
   });
 
   ipcMain.handle("auth:notifications", () => notificaciones());
+  ipcMain.handle("auth:notifications-list", () => listaNotificaciones());
+  ipcMain.handle("auth:notifications-read", (_event, id) => marcarNotificaciones(id));
 
   // Chequeo de fondo cada 5 minutos: si el token venció con la app abierta,
   // la UI se entera sola y vuelve a mostrar "Iniciar sesión".

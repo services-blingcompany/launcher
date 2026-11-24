@@ -17,6 +17,8 @@ import { SERVICES } from "./data/services";
 import { elegirDestacado } from "./lib/destacado";
 import { normalizar } from "./lib/normalizar";
 import { nivelDeTeclaZoom } from "./lib/zoom";
+import { EVENTO_NOTIFICACIONES } from "./lib/cuenta";
+import NotificationsPanel from "./components/NotificationsPanel";
 import type { Service } from "./data/services";
 import type {
   Settings,
@@ -74,7 +76,20 @@ export default function App() {
   const [soporteAbierto, setSoporteAbierto] = useState(false);
 
   // ── Sesión de Bling (login nativo + jar compartido con los servicios) ──
-  const { user, cargando, sinLeer, login, logout } = useSession();
+  const { user, cargando, sinLeer, refrescarSinLeer, login, logout } = useSession();
+
+  // Panel de notificaciones: lo abren la campana, el menú de cuenta y el clic
+  // en el aviso de Windows (que llega del main por IPC).
+  const [verNotificaciones, setVerNotificaciones] = useState(false);
+  useEffect(() => {
+    const abrirPanel = () => setVerNotificaciones(true);
+    window.addEventListener(EVENTO_NOTIFICACIONES, abrirPanel);
+    const off = window.bling.onAbrirNotificaciones(abrirPanel);
+    return () => {
+      window.removeEventListener(EVENTO_NOTIFICACIONES, abrirPanel);
+      off();
+    };
+  }, []);
   const [loginAbierto, setLoginAbierto] = useState(false);
 
   // ── Licencias de apps (catálogo remoto + descargas de escritorio) ──
@@ -480,6 +495,13 @@ export default function App() {
   return (
     <div className="flex h-full flex-col bg-[#09090b] text-white antialiased">
       <TitleBar />
+
+      {verNotificaciones && user && (
+        <NotificationsPanel
+          onCerrar={() => setVerNotificaciones(false)}
+          onCambio={refrescarSinLeer}
+        />
+      )}
 
       <div className="flex min-h-0 flex-1">
         <Rail />

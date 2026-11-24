@@ -11,7 +11,7 @@ import {
   AtSign,
 } from "lucide-react";
 import { datosDeUsuario } from "../hooks/useSession";
-import { PAGINAS, abrirCuenta } from "../lib/cuenta";
+import { PAGINAS, abrirCuenta, abrirNotificaciones } from "../lib/cuenta";
 import type { BlingUser, UpdateInfo } from "../bling";
 
 /**
@@ -202,7 +202,7 @@ function CuentaLogueada({
               <span className="font-mono text-[9px] text-[#ffcc00]">{sinLeer}</span>
             ) : null
           }
-          onClick={() => abrirCuenta(PAGINAS.notificaciones)}
+          onClick={() => abrirNotificaciones()}
         />
       </div>
     </>

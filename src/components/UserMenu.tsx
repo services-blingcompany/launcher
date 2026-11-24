@@ -12,7 +12,7 @@ import {
   AtSign,
 } from "lucide-react";
 import { datosDeUsuario } from "../hooks/useSession";
-import { PAGINAS, abrirCuenta } from "../lib/cuenta";
+import { PAGINAS, abrirCuenta, abrirNotificaciones } from "../lib/cuenta";
 import type { BlingUser } from "../bling";
 
 /**
@@ -94,7 +94,7 @@ export default function UserMenu({
       {/* Campanita: sólo con sesión, con el contador de no leídas */}
       <button
         type="button"
-        onClick={() => abrirCuenta(PAGINAS.notificaciones)}
+        onClick={() => abrirNotificaciones()}
         aria-label={sinLeer > 0 ? `Notificaciones (${sinLeer} sin leer)` : "Notificaciones"}
         title="Notificaciones"
         className="relative inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 transition-colors hover:border-white/25 hover:text-white"
@@ -178,7 +178,7 @@ export default function UserMenu({
               }
               onClick={() => {
                 setAbierto(false);
-                abrirCuenta(PAGINAS.notificaciones);
+                abrirNotificaciones();
               }}
             />
             {/* Alias de la cuenta de Bling, para copiarlo. */}

@@ -90,9 +90,9 @@ describe("allowlist del proceso principal", () => {
     }
   });
 
-  it("las páginas de cuenta viven en el sitio y con https", () => {
+  it("las páginas de cuenta viven en el dashboard, con https", () => {
     for (const pagina of Object.values(PAGINAS)) {
-      expect(pagina.url).toMatch(/^https:\/\/(www\.)?bling\.uy(\/|$)/);
+      expect(pagina.url).toMatch(/^https:\/\/dashboard\.bling\.uy\//);
     }
   });
 

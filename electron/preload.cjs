@@ -65,6 +65,16 @@ contextBridge.exposeInMainWorld("bling", {
   authLogout: () => ipcRenderer.invoke("auth:logout"),
   /** Contador de notificaciones sin leer (0 sin sesión). */
   authNotifications: () => ipcRenderer.invoke("auth:notifications"),
+  /** Últimas notificaciones, para el panel del launcher. */
+  authNotificationsList: () => ipcRenderer.invoke("auth:notifications-list"),
+  /** Marca una notificación (id) o todas (null) como leídas. */
+  authNotificationsRead: (id) => ipcRenderer.invoke("auth:notifications-read", id ?? null),
+  /** El main pide abrir el panel de notificaciones (clic en el aviso de Windows). */
+  onAbrirNotificaciones: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on("bling:abrir-notificaciones", listener);
+    return () => ipcRenderer.removeListener("bling:abrir-notificaciones", listener);
+  },
   /**
    * Le cuenta al main las notificaciones sin leer: con eso decide si hay
    * que mostrar un aviso nativo y marcar el icono de la barra de tareas.

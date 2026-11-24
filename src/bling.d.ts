@@ -89,6 +89,21 @@ export type AuthLoginResult = {
   necesitaVerificar?: boolean;
 };
 
+/** Una notificación, como la muestra el panel del launcher. */
+export type NotificacionBling = {
+  id: number;
+  tipo: string;
+  titulo: string;
+  cuerpo: string | null;
+  leida: boolean;
+  /** ISO del backend. */
+  fecha: string;
+};
+
+export type NotificacionesLista =
+  | { ok: true; notificaciones: NotificacionBling[] }
+  | { ok: false; codigo: string };
+
 /** Contador de notificaciones sin leer. */
 export type NotificationsCount = { count: number; autenticado: boolean };
 
@@ -277,6 +292,12 @@ interface BlingApi {
   authLogout(): Promise<boolean>;
   /** Notificaciones sin leer del usuario logueado. */
   authNotifications(): Promise<NotificationsCount>;
+  /** Últimas notificaciones del usuario, para el panel. */
+  authNotificationsList(): Promise<NotificacionesLista>;
+  /** Marca una (id) o todas (null) como leídas. */
+  authNotificationsRead(id: number | null): Promise<boolean>;
+  /** El main pide abrir el panel (clic en el aviso nativo). */
+  onAbrirNotificaciones(callback: () => void): () => void;
   /** Informa al main el contador: avisos nativos y globito de la barra. */
   reportNotifications(conteo: number): void;
   /** Aviso push del main cuando la sesión cambia. */

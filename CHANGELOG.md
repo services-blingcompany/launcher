@@ -9,6 +9,15 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.25.0]
+
+- Las notificaciones se ven en un panel dentro del launcher (campana, menú de
+  cuenta o clic en el aviso de Windows): podés marcarlas como leídas una por
+  una o todas juntas. Antes se abría una ventana aparte con una página que
+  daba error 404.
+- «Mi perfil» y «Ajustes de cuenta» abren el Dashboard en tu navegador, con tu
+  sesión del launcher (antes daban 404).
+
 ## [1.24.0]
 
 - El launcher reconoce Bling Contable instalado en tu PC (antes no lo veía

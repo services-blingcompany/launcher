@@ -22,12 +22,6 @@ let ultimo = -1;
 let getHub = () => null;
 let abrirServicio = () => false;
 
-/** Misma página que PAGINAS.notificaciones del renderer. */
-const NOTIFICACIONES = {
-  id: "notificaciones",
-  url: "https://www.bling.uy/bling/notifications",
-  title: "Notificaciones",
-};
 
 /** Marca (o desmarca) el icono del hub en la barra de tareas. */
 function globito(activo) {
@@ -53,8 +47,15 @@ function avisar(conteo) {
         ? "Tenés una notificación nueva"
         : `Tenés ${conteo} notificaciones nuevas`,
   });
+  // El clic trae el launcher al frente con el panel de notificaciones
+  // abierto (antes abría www.bling.uy/bling/notifications, que da 404).
   aviso.on("click", () => {
-    abrirServicio(NOTIFICACIONES.id, NOTIFICACIONES.url, NOTIFICACIONES.title);
+    const hub = getHub();
+    if (!hub || hub.isDestroyed()) return;
+    if (hub.isMinimized()) hub.restore();
+    hub.show();
+    hub.focus();
+    hub.webContents.send("bling:abrir-notificaciones");
   });
   aviso.show();
   diagnostics.escribir("info", [`aviso de escritorio: ${conteo} sin leer`]);
