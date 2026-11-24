@@ -4,6 +4,7 @@ const { app, net, ipcMain, BrowserWindow } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const { autoUpdater } = require("electron-updater");
+const { esCopiaDePrueba } = require("./copiaDePrueba.cjs");
 
 /**
  * Actualizaciones: detección, descarga e instalación.
@@ -269,7 +270,11 @@ async function checkProd({ notify = true } = {}) {
   return snapshot();
 }
 
+/** Copia de prueba (npm run local): no busca ni instala versiones nuevas. */
+const copiaDePrueba = app.isPackaged && esCopiaDePrueba(process.execPath);
+
 async function check(opts) {
+  if (copiaDePrueba) return snapshot();
   return app.isPackaged ? checkProd(opts) : checkDev(opts);
 }
 
@@ -277,7 +282,7 @@ async function check(opts) {
 
 /** Arranca la descarga de la versión disponible (sólo empaquetado). */
 async function download() {
-  if (!app.isPackaged || !current) return snapshot();
+  if (!app.isPackaged || copiaDePrueba || !current) return snapshot();
   initUpdater();
   try {
     await autoUpdater.downloadUpdate();
@@ -289,7 +294,7 @@ async function download() {
 
 /** Cierra la app y lanza el instalador ya descargado. */
 function install() {
-  if (!app.isPackaged || !downloaded) return false;
+  if (!app.isPackaged || copiaDePrueba || !downloaded) return false;
   // isSilent=false: muestra el asistente de NSIS.
   autoUpdater.quitAndInstall(false, true);
   return true;
