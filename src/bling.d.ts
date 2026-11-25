@@ -218,6 +218,8 @@ export type SoporteMensaje = {
   created_at: string;
   sender_name?: string | null;
   sender_avatar?: string | null;
+  is_edited?: boolean;
+  edited_at?: string | null;
 };
 
 /** Fallo común de cualquier acción de soporte (el detalle suele venir del backend). */
@@ -347,6 +349,8 @@ interface BlingApi {
     contenido: string;
     capturas?: SoporteAdjunto[];
   }): Promise<SoporteResponderResult>;
+  /** Edita un mensaje propio (queda marcado «editado» con la hora). */
+  soporteEditar(payload: { mensajeId: number; contenido: string }): Promise<SoporteAccionResult>;
   /** Cierra el ticket (el estado se deriva del chat). */
   soporteCerrar(chatId: number): Promise<SoporteAccionResult>;
   /** Reabre un ticket resuelto (uno cerrado es definitivo). */

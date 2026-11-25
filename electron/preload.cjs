@@ -125,6 +125,8 @@ contextBridge.exposeInMainWorld("bling", {
   soporteNuevo: (payload) => ipcRenderer.invoke("soporte:nuevo", payload),
   /** Responde en la conversación de un ticket. */
   soporteResponder: (payload) => ipcRenderer.invoke("soporte:responder", payload),
+  /** Edita un mensaje propio (queda marcado «editado» con la hora). */
+  soporteEditar: (payload) => ipcRenderer.invoke("soporte:editar", payload),
   /** Cierra el ticket (el estado se deriva del chat). */
   soporteCerrar: (chatId) => ipcRenderer.invoke("soporte:cerrar", chatId),
   /** Reabre un ticket cerrado. */

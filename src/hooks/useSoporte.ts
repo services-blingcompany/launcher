@@ -297,6 +297,26 @@ export function useSoporte() {
     [fallo, cargarLista],
   );
 
+  /** Edita un mensaje propio y recarga la conversación. */
+  const editar = useCallback(
+    async (mensajeId: number, contenido: string, chatId: number) => {
+      setEnviando(true);
+      setError(null);
+      try {
+        const r = await window.bling.soporteEditar({ mensajeId, contenido });
+        if (!r.ok) {
+          fallo(r.codigo, r.detalle);
+          return false;
+        }
+        await cargarMensajes(chatId);
+        return true;
+      } finally {
+        setEnviando(false);
+      }
+    },
+    [fallo, cargarMensajes],
+  );
+
   /** Manda la información del sistema que pidió el equipo de Bling. */
   const enviarDiagnostico = useCallback(
     async (ticketId: number, chatId: number) => {
@@ -347,6 +367,7 @@ export function useSoporte() {
     cerrar,
     reabrir,
     enviarDiagnostico,
+    editar,
     limpiarError: () => setError(null),
   };
 }

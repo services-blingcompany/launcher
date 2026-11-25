@@ -127,6 +127,23 @@ async function responder(payload) {
   }
 }
 
+/**
+ * Edita un mensaje propio (PATCH /api/v1/messages/messages/{id}). Queda
+ * marcado «editado» con la hora; con el ticket cerrado el backend lo impide.
+ */
+async function editar(payload) {
+  const id = Number(payload && payload.mensajeId);
+  const contenido = String((payload && payload.contenido) || "").trim();
+  if (!Number.isInteger(id) || id <= 0 || !contenido) return fallo(400, null);
+  try {
+    const r = await pedir(`/api/v1/messages/messages/${id}`, "PATCH", { content: contenido.slice(0, 5000) });
+    if (r.status !== 200) return fallo(r.status, r.datos);
+    return { ok: true, mensaje: r.datos };
+  } catch {
+    return fallo(0, null);
+  }
+}
+
 /** Cierra el ticket (el estado se deriva del chat). */
 async function cerrar(chatId) {
   const id = Number(chatId);
@@ -296,6 +313,7 @@ function init() {
   ipcMain.handle("soporte:nuevo", (_event, payload) => nuevo(payload || {}));
   ipcMain.handle("soporte:responder", (_event, payload) => responder(payload || {}));
   ipcMain.handle("soporte:cerrar", (_event, chatId) => cerrar(chatId));
+  ipcMain.handle("soporte:editar", (_event, payload) => editar(payload || {}));
   ipcMain.handle("soporte:reabrir", (_event, chatId) => reabrir(chatId));
   ipcMain.handle("soporte:subir", (_event, payload) => subirCaptura(payload || {}));
   ipcMain.handle("soporte:imagen", (_event, url) => imagen(url));

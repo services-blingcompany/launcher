@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Check,
+  Copy,
   Cpu,
+  Pencil,
   ImagePlus,
   LifeBuoy,
   Loader2,
@@ -11,7 +14,7 @@ import {
   Ticket,
   X,
 } from "lucide-react";
-import { acciones, adjuntosVisibles, estado, pedidoPendiente, traePedido } from "@blingcompany/bling-ui/soporte";
+import { acciones, adjuntosVisibles, estado, pedidoPendiente, puedeEditar, textoEditado, traePedido } from "@blingcompany/bling-ui/soporte";
 import { MAX_CAPTURAS, useSoporte } from "../hooks/useSoporte";
 import type { SoporteAdjunto } from "../bling";
 
@@ -83,8 +86,12 @@ export default function SupportPanel({
     cerrar,
     reabrir,
     enviarDiagnostico,
+    editar,
     limpiarError,
   } = useSoporte();
+  /** Mensaje propio en edición (texto en curso). */
+  const [editando, setEditando] = useState<{ id: number; texto: string } | null>(null);
+  const [copiado, setCopiado] = useState<number | null>(null);
 
   /** true = se está armando un ticket nuevo (en vez de ver uno). */
   const [componiendo, setComponiendo] = useState(false);
@@ -464,8 +471,11 @@ export default function SupportPanel({
               <div className="space-y-3">
                 {mensajes.map((m) => {
                   const mio = userId !== null && m.sender_id === userId;
+                  const editable = puedeEditar(m, userId, ticket.status);
+                  const enEdicion = editando?.id === m.id;
+                  const marca = textoEditado(m);
                   return (
-                    <div key={m.id} className={`flex ${mio ? "justify-end" : "justify-start"}`}>
+                    <div key={m.id} className={`group flex flex-col ${mio ? "items-end" : "items-start"}`}>
                       <div
                         className={`max-w-[76%] rounded-xl border px-3.5 py-2.5 ${
                           mio
@@ -487,6 +497,40 @@ export default function SupportPanel({
                           <p className="text-xs font-light italic text-white/35">
                             Mensaje eliminado
                           </p>
+                        ) : enEdicion ? (
+                          <div className="w-[min(28rem,60vw)] space-y-2">
+                            <textarea
+                              value={editando.texto}
+                              onChange={(e) => setEditando({ id: m.id, texto: e.target.value })}
+                              onKeyDown={(e) => {
+                                if (e.key === "Escape") setEditando(null);
+                                if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && editando.texto.trim()) {
+                                  void editar(m.id, editando.texto.trim(), ticket.chat_id!).then((ok) => ok && setEditando(null));
+                                }
+                              }}
+                              rows={3}
+                              maxLength={5000}
+                              autoFocus
+                              aria-label="Editar mensaje"
+                              className="w-full resize-none rounded-lg border border-white/10 bg-black/30 px-2.5 py-2 text-xs leading-relaxed text-white outline-none focus:border-[#ffcc00]/40"
+                            />
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[10px] text-white/35">Va a quedar marcado como editado</span>
+                              <span className="flex gap-1.5">
+                                <button type="button" onClick={() => setEditando(null)} className="rounded-md border border-white/10 px-2.5 py-1 text-[11px] text-white/60 hover:text-white">
+                                  Cancelar
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={enviando || !editando.texto.trim() || editando.texto.trim() === m.content}
+                                  onClick={() => void editar(m.id, editando.texto.trim(), ticket.chat_id!).then((ok) => ok && setEditando(null))}
+                                  className="rounded-md bg-[#ffcc00] px-2.5 py-1 text-[11px] font-medium text-black hover:opacity-90 disabled:opacity-40"
+                                >
+                                  Guardar
+                                </button>
+                              </span>
+                            </div>
+                          </div>
                         ) : (
                           <p className="whitespace-pre-wrap break-words text-xs leading-relaxed text-white/85">
                             {m.content}
@@ -501,8 +545,37 @@ export default function SupportPanel({
                         )}
                         <p className="mt-1 text-right font-mono text-[9px] text-white/30">
                           {horaDe(m.created_at)}
+                          {marca && (
+                            <span title={m.edited_at ? `Editado el ${new Date(m.edited_at).toLocaleString("es-UY")}` : undefined}> · {marca}</span>
+                          )}
                         </p>
                       </div>
+                      {!enEdicion && !m.is_deleted && m.content && (
+                        <div className="mt-1 flex gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void navigator.clipboard.writeText(m.content).then(() => {
+                                setCopiado(m.id);
+                                setTimeout(() => setCopiado((c) => (c === m.id ? null : c)), 1500);
+                              });
+                            }}
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-white/45 hover:bg-white/5 hover:text-white"
+                          >
+                            {copiado === m.id ? <Check size={12} /> : <Copy size={12} />}
+                            {copiado === m.id ? "Copiado" : "Copiar"}
+                          </button>
+                          {editable && (
+                            <button
+                              type="button"
+                              onClick={() => setEditando({ id: m.id, texto: m.content })}
+                              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-white/45 hover:bg-white/5 hover:text-white"
+                            >
+                              <Pencil size={12} /> Editar
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
