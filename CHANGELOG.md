@@ -9,6 +9,12 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.28.0]
+
+- Soporte: podés editar tus mensajes mientras el ticket está abierto. Queda
+  marcado «editado» con la hora, para vos y para el equipo de Bling.
+- Cada mensaje tiene «Copiar» para llevar el texto a otro lado.
+
 ## [1.27.0]
 
 - Soporte: cuando el equipo de Bling te pide la información del sistema,

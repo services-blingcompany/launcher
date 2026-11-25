@@ -1,7 +1,7 @@
 {
   "name": "bling-launcher",
   "productName": "Bling Launcher",
-  "version": "1.27.0",
+  "version": "1.28.0",
   "private": true,
   "description": "Launcher de escritorio del ecosistema Bling: todos los servicios en una sola app.",
   "repository": {
@@ -22,7 +22,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@blingcompany/bling-ui": "https://codeload.github.com/services-blingcompany/bling-ui/tar.gz/refs/tags/v0.5.0",
+    "@blingcompany/bling-ui": "https://codeload.github.com/services-blingcompany/bling-ui/tar.gz/refs/tags/v0.5.1",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@fontsource/montserrat": "^5.3.0",
     "electron-updater": "^6.8.9",
