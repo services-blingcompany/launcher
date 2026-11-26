@@ -9,6 +9,12 @@ release sale documentada sin tocar nada a mano.
 Formato de cada secciÃ³n: el encabezado debe empezar con `## [X.Y.Z]`,
 tal cual. Lo que hay debajo (hasta el prÃ³ximo `## `) va al release.
 
+## [1.29.0]
+
+- Apps de PC: «Otras versiones» en la fila de una app instalada. Si la
+  versión nueva te da problemas, instalá una anterior; queda elegida y el
+  launcher no te ofrece actualizarla hasta que toques «Volver a la última».
+
 ## [1.28.0]
 
 - Soporte: podés editar tus mensajes mientras el ticket está abierto. Queda
