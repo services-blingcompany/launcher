@@ -10,6 +10,7 @@ import SupportPanel from "./components/SupportPanel";
 import UserMenu from "./components/UserMenu";
 import LoginDialog from "./components/LoginDialog";
 import LimiteEquiposDialog from "./components/LimiteEquiposDialog";
+import VersionesDialog from "./components/VersionesDialog";
 import AccountPanel from "./components/AccountPanel";
 import { datosDeUsuario, useSession } from "./hooks/useSession";
 import { useLicencias } from "./hooks/useLicencias";
@@ -91,6 +92,8 @@ export default function App() {
     };
   }, []);
   const [loginAbierto, setLoginAbierto] = useState(false);
+  /** App de PC cuyas otras versiones se están mirando (volver atrás). */
+  const [versionesDe, setVersionesDe] = useState<Service | null>(null);
 
   // ── Licencias de apps (catálogo remoto + descargas de escritorio) ──
   const licencias = useLicencias(user);
@@ -481,6 +484,7 @@ export default function App() {
       : null,
     ejecutable: s.licenseKey ? !!licencias.ejecutables[s.licenseKey] : false,
     instalada: s.licenseKey ? licencias.versionesInstaladas[s.licenseKey] ?? null : null,
+    fijada: s.licenseKey ? licencias.fijadas[s.licenseKey] ?? null : null,
     descarga: s.licenseKey && licencias.descargas[s.licenseKey]
       ? { percent: licencias.descargas[s.licenseKey].percent }
       : null,
@@ -490,6 +494,7 @@ export default function App() {
     onInstalar: instalarApp,
     onAbrir: abrirApp,
     onVerPlanes: verPlanes,
+    onVersiones: (svc: Service) => setVersionesDe(svc),
   });
 
   return (
@@ -756,6 +761,17 @@ export default function App() {
             onInstall={instalarActualizacion}
           />
         </div>
+      )}
+
+      {versionesDe?.licenseKey && (
+        <VersionesDialog
+          appKey={versionesDe.licenseKey}
+          nombre={versionesDe.name}
+          instalada={licencias.versionesInstaladas[versionesDe.licenseKey] ?? null}
+          fijada={licencias.fijadas[versionesDe.licenseKey] ?? null}
+          onInstalar={(version, ultima) => licencias.instalarVersion(versionesDe.licenseKey!, version, ultima)}
+          onCerrar={() => setVersionesDe(null)}
+        />
       )}
 
       {/* ── Login nativo ── */}

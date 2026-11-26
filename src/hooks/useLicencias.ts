@@ -51,6 +51,8 @@ export function useLicencias(user: BlingUser | null) {
   const [ejecutables, setEjecutables] = useState<Record<string, boolean>>({});
   /** Versión instalada de cada app nativa (para ofrecer «Actualizar»). */
   const [versionesInstaladas, setVersionesInstaladas] = useState<Record<string, string>>({});
+  /** Versión elegida a mano de cada app (para volver atrás): no se ofrece actualizar. */
+  const [fijadas, setFijadas] = useState<Record<string, string>>({});
 
   const userId = user?.id ?? null;
 
@@ -98,6 +100,27 @@ export function useLicencias(user: BlingUser | null) {
         });
       });
     }
+  }, [apps]);
+
+  // ── Versiones elegidas a mano (volver atrás) ──
+  useEffect(() => {
+    let vivo = true;
+    for (const key of Object.values(apps).filter((a) => a.hasAccess).map((a) => a.key)) {
+      void window.bling.licenciasFijada(key).then((v) => {
+        if (!vivo) return;
+        setFijadas((prev) => {
+          if (!v) {
+            if (!(key in prev)) return prev;
+            const { [key]: _sacada, ...resto } = prev;
+            return resto;
+          }
+          return prev[key] === v ? prev : { ...prev, [key]: v };
+        });
+      });
+    }
+    return () => {
+      vivo = false;
+    };
   }, [apps]);
 
   // ── Apps con ejecutable nativo ya instalado en la PC ──
@@ -179,10 +202,10 @@ export function useLicencias(user: BlingUser | null) {
   }, []);
 
   /** Pide la descarga del binario de una app (URL firmada + sha256). */
-  const descargar = useCallback(async (key: string) => {
+  const descargar = useCallback(async (key: string, version?: string) => {
     setBajando((prev) => ({ ...prev, [key]: true }));
     setErrores((prev) => ({ ...prev, [key]: "" }));
-    const r = await window.bling.licenciasDescargar(key);
+    const r = await window.bling.licenciasDescargar(key, version);
     setBajando((prev) => ({ ...prev, [key]: false }));
     if (!r.ok) {
       setErrores((prev) => ({ ...prev, [key]: mensajeDeError(r.codigo ?? "red") }));
@@ -198,6 +221,26 @@ export function useLicencias(user: BlingUser | null) {
   const instalar = useCallback(async (key: string) => {
     await window.bling.licenciasInstalar(key);
   }, []);
+
+  /**
+   * Baja e instala una versión elegida (por ejemplo, una anterior si la nueva
+   * falla). Una anterior queda fijada; volver a la última la suelta.
+   */
+  const instalarVersion = useCallback(
+    async (key: string, version: string, ultima: boolean) => {
+      const r = await descargar(key, version);
+      if (!r.ok) return r;
+      await window.bling.licenciasFijar(key, ultima ? null : version);
+      setFijadas((prev) => {
+        if (!ultima) return { ...prev, [key]: version };
+        const { [key]: _sacada, ...resto } = prev;
+        return resto;
+      });
+      await window.bling.licenciasInstalar(key);
+      return r;
+    },
+    [descargar],
+  );
 
   /**
    * Abre la app nativa instalada en la PC con su ticket de licencia (el
@@ -229,8 +272,10 @@ export function useLicencias(user: BlingUser | null) {
     guardadas,
     ejecutables,
     versionesInstaladas,
+    fijadas,
     descargar,
     instalar,
+    instalarVersion,
     abrir,
     limiteEquipos,
     cerrarLimiteEquipos,

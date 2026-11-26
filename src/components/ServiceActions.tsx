@@ -34,6 +34,8 @@ export type AccionesServicio = {
   onInstalar?: (service: Service) => void;
   onDescargar?: (service: Service) => void;
   onVerPlanes?: () => void;
+  /** Otras versiones de la app de PC (volver a una anterior). */
+  onVersiones?: (service: Service) => void;
 };
 
 /**

@@ -133,6 +133,20 @@ export type LicenciasCatalogoResult = {
 };
 
 /** Resultado de pedir la descarga de una app. */
+export type LicenciaVersion = {
+  version: string;
+  /** ISO de cuándo se publicó. */
+  publicada: string | null;
+  notas: string | null;
+  ultima: boolean;
+};
+
+export type LicenciaVersionesResult = {
+  ok: boolean;
+  versiones?: LicenciaVersion[];
+  codigo?: string;
+};
+
 export type LicenciaDescargaResult = {
   ok: boolean;
   key?: string;
@@ -308,8 +322,14 @@ interface BlingApi {
   // ── Licencias de apps ──
   /** Catálogo remoto con los flags de licencia del usuario de la sesión. */
   licenciasCatalogo(): Promise<LicenciasCatalogoResult>;
-  /** Baja el binario de una app (URL firmada + verificación sha256). */
-  licenciasDescargar(key: string): Promise<LicenciaDescargaResult>;
+  /** Baja el binario de una app (URL firmada + verificación sha256); con `version`, una anterior. */
+  licenciasDescargar(key: string, version?: string): Promise<LicenciaDescargaResult>;
+  /** Versiones publicadas que se pueden instalar (la última primero). */
+  licenciasVersiones(key: string): Promise<LicenciaVersionesResult>;
+  /** Versión elegida a mano (no se ofrece actualizar), o null. */
+  licenciasFijada(key: string): Promise<string | null>;
+  /** Fija una versión elegida a mano, o la suelta con null. */
+  licenciasFijar(key: string, version: string | null): Promise<boolean>;
   /** Versión descargada en disco de una app, o null. */
   licenciasInstalado(key: string): Promise<LicenciaInstalada | null>;
   /** Ejecuta el instalador ya descargado. */

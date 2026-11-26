@@ -103,3 +103,20 @@ describe("textoEstado", () => {
     expect(textoEstado("web")).toBeNull();
   });
 });
+
+describe("versión elegida a mano (volver atrás)", () => {
+  const base = { version: "1.2.19", ejecutable: true };
+
+  it("con una anterior fijada no se ofrece actualizar", () => {
+    expect(estadoEscritorio(svc({ licencia: lic() }), { ...base, instalada: "1.2.18", fijada: "1.2.18" })).toBe("instalada");
+    expect(textoEstado("instalada", { instalada: "1.2.18", fijada: "1.2.18" })).toMatch(/no se actualiza sola/);
+  });
+
+  it("si lo instalado no es lo fijado, vuelve a ofrecer la nueva", () => {
+    expect(estadoEscritorio(svc({ licencia: lic() }), { ...base, instalada: "1.2.17", fijada: "1.2.18" })).toBe("desactualizada");
+  });
+
+  it("sin fijar, una vieja sigue desactualizada", () => {
+    expect(estadoEscritorio(svc({ licencia: lic() }), { ...base, instalada: "1.2.18" })).toBe("desactualizada");
+  });
+});

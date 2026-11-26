@@ -118,15 +118,18 @@ async function catalogo() {
  * archivo del bucket calculando el sha256 sobre la marcha y sólo lo guarda
  * si la integridad cierra. Progreso por push en "licencias:progreso".
  */
-async function descargar(key) {
+async function descargar(key, version = null) {
   if (!logica.esClaveValida(key)) return { ok: false, codigo: "sin-version" };
+  if (version !== null && !esVersionValida(version)) return { ok: false, codigo: "sin-version" };
   if (enCurso.has(key)) return { ok: false, codigo: "en-curso" };
   enCurso.add(key);
 
   try {
     const plataforma = logica.plataformaDe(process.platform, process.arch);
+    // Con `version`, una anterior publicada (para volver atrás si la nueva falla).
+    const conVersion = version ? `&version=${encodeURIComponent(version)}` : "";
     const info = await getBackend(
-      `/api/v1/licenses/${encodeURIComponent(key)}/download?platform=${encodeURIComponent(plataforma)}`,
+      `/api/v1/licenses/${encodeURIComponent(key)}/download?platform=${encodeURIComponent(plataforma)}${conVersion}`,
     );
     if (info.status !== 200) return { ok: false, codigo: logica.codigoDeEstado(info.status) };
 
@@ -403,6 +406,74 @@ function vigilarEjecutable(key) {
   }, 1500);
 }
 
+/** "1.2.19" (con sufijo opcional): lo único que se acepta como versión. */
+function esVersionValida(v) {
+  return typeof v === "string" && /^\d{1,4}\.\d{1,4}\.\d{1,6}([-+.][0-9A-Za-z.-]{1,20})?$/.test(v);
+}
+
+/**
+ * Versiones publicadas que la persona puede instalar (la última primero),
+ * para volver a una anterior si la nueva le da problemas.
+ */
+async function versiones(key) {
+  if (!logica.esClaveValida(key)) return { ok: false, codigo: "sin-version" };
+  try {
+    const plataforma = logica.plataformaDe(process.platform, process.arch);
+    const r = await getBackend(
+      `/api/v1/licenses/${encodeURIComponent(key)}/versions?platform=${encodeURIComponent(plataforma)}`,
+    );
+    if (r.status !== 200) return { ok: false, codigo: logica.codigoDeEstado(r.status) };
+    const lista = Array.isArray(r.datos && r.datos.versiones) ? r.datos.versiones : [];
+    return {
+      ok: true,
+      versiones: lista
+        .filter((v) => v && esVersionValida(v.version))
+        .map((v) => ({
+          version: v.version,
+          publicada: typeof v.publicada === "string" ? v.publicada : null,
+          notas: typeof v.notas === "string" ? v.notas : null,
+          ultima: v.ultima === true,
+        })),
+    };
+  } catch {
+    return { ok: false, codigo: "sin-conexion" };
+  }
+}
+
+/**
+ * Versión elegida a mano (fijada): mientras esté, el launcher no ofrece
+ * actualizar esa app. Se guarda junto a sus descargas.
+ */
+function rutaFijada(key) {
+  return path.join(dirApp(key), "fijada.json");
+}
+
+function fijada(key) {
+  if (!logica.esClaveValida(key)) return null;
+  try {
+    const v = JSON.parse(fs.readFileSync(rutaFijada(key), "utf8")).version;
+    return esVersionValida(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+function fijar(key, version) {
+  if (!logica.esClaveValida(key)) return false;
+  try {
+    if (version === null) {
+      fs.rmSync(rutaFijada(key), { force: true });
+      return true;
+    }
+    if (!esVersionValida(version)) return false;
+    fs.mkdirSync(dirApp(key), { recursive: true });
+    fs.writeFileSync(rutaFijada(key), JSON.stringify({ version, desde: new Date().toISOString() }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Ejecuta el instalador ya descargado (NSIS decide cuándo termina). */
 async function instalar(key) {
   const guardado = instalado(key);
@@ -416,7 +487,14 @@ async function instalar(key) {
 /** Registra el IPC del módulo (el renderer sólo llega hasta acá). */
 function init() {
   ipcMain.handle("licencias:catalogo", () => catalogo());
-  ipcMain.handle("licencias:descargar", (_event, key) => descargar(String(key ?? "")));
+  ipcMain.handle("licencias:descargar", (_event, key, version) =>
+    descargar(String(key ?? ""), typeof version === "string" ? version : null),
+  );
+  ipcMain.handle("licencias:versiones", (_event, key) => versiones(String(key ?? "")));
+  ipcMain.handle("licencias:fijada", (_event, key) => fijada(String(key ?? "")));
+  ipcMain.handle("licencias:fijar", (_event, key, version) =>
+    fijar(String(key ?? ""), typeof version === "string" ? version : null),
+  );
   ipcMain.handle("licencias:instalado", (_event, key) => instalado(String(key ?? "")));
   ipcMain.handle("licencias:instalar", (_event, key) => instalar(String(key ?? "")));
   // reemplazar: id del equipo a liberar para abrir en éste (límite de equipos).
@@ -429,4 +507,7 @@ function init() {
   );
 }
 
-module.exports = { init, catalogo, descargar, instalado, instalar, abrir, ejecutable, pedirTicket };
+module.exports = {
+  init, catalogo, descargar, instalado, instalar, abrir, ejecutable, pedirTicket,
+  versiones, fijada, fijar, esVersionValida,
+};

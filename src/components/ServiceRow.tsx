@@ -28,6 +28,7 @@ export default function ServiceRow({
   guardada = null,
   ejecutable = null,
   instalada = null,
+  fijada = null,
   version = null,
   error = null,
   ...acciones
@@ -43,13 +44,15 @@ export default function ServiceRow({
   ejecutable?: boolean | null;
   /** Versión instalada de la app nativa (null si no se sabe). */
   instalada?: string | null;
+  /** Versión elegida a mano (no se ofrece actualizar). */
+  fijada?: string | null;
   /** Versión del binario disponible para la plataforma actual (null si no hay). */
   version?: string | null;
   error?: string | null;
 } & AccionesServicio) {
   const Icon = ICONOS_SERVICIO[service.icon];
   const disponible = service.status === "available";
-  const estado = estadoEscritorio(service, { version, guardada, ejecutable, instalada, bajando });
+  const estado = estadoEscritorio(service, { version, guardada, ejecutable, instalada, bajando, fijada });
   const percent = descarga?.percent ?? 0;
   const vigencia =
     service.licenseKey && service.licencia ? vigenciaDe(service.licencia) : null;
@@ -135,8 +138,21 @@ export default function ServiceRow({
         </span>
         <LineaEstado
           estado={estado}
-          texto={textoEstado(estado, { percent, version, instalada })}
+          texto={textoEstado(estado, { percent, version, instalada, fijada })}
         />
+        {/* Volver a una versión anterior si la nueva falla: discreto, sólo con la app en la PC. */}
+        {acciones.onVersiones && ejecutable && service.licencia?.hasAccess && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              acciones.onVersiones?.(service);
+            }}
+            className="mt-0.5 block text-[10px] font-light text-white/40 underline-offset-2 transition-colors hover:text-white/80 hover:underline"
+          >
+            Otras versiones
+          </button>
+        )}
         {error && (
           <span className="mt-0.5 block truncate text-[10px] font-light text-rose-400">
             {error}

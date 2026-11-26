@@ -24,6 +24,7 @@ export default function FeaturedCard({
   guardada = null,
   ejecutable = null,
   instalada = null,
+  fijada = null,
   version = null,
   error = null,
   ...acciones
@@ -36,12 +37,14 @@ export default function FeaturedCard({
   ejecutable?: boolean | null;
   /** Versión instalada de la app nativa (null si no se sabe). */
   instalada?: string | null;
+  /** Versión elegida a mano (no se ofrece actualizar). */
+  fijada?: string | null;
   version?: string | null;
   error?: string | null;
 } & AccionesServicio) {
   const Icon = ICONOS_SERVICIO[service.icon];
   const disponible = service.status === "available";
-  const estado = estadoEscritorio(service, { version, guardada, ejecutable, instalada, bajando });
+  const estado = estadoEscritorio(service, { version, guardada, ejecutable, instalada, bajando, fijada });
   const percent = descarga?.percent ?? 0;
   const vigencia =
     service.licenseKey && service.licencia ? vigenciaDe(service.licencia) : null;
@@ -132,7 +135,7 @@ export default function FeaturedCard({
           </span>
           <LineaEstado
             estado={estado}
-            texto={textoEstado(estado, { percent, version, instalada })}
+            texto={textoEstado(estado, { percent, version, instalada, fijada })}
           />
           {error && (
             <span className="mt-0.5 block truncate text-[11px] font-light text-rose-400">

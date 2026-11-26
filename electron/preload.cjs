@@ -92,7 +92,10 @@ contextBridge.exposeInMainWorld("bling", {
   /** Catálogo remoto con los flags de licencia del usuario ({ ok, apps?, codigo? }). */
   licenciasCatalogo: () => ipcRenderer.invoke("licencias:catalogo"),
   /** Baja el binario de una app (URL firmada + verificación sha256). */
-  licenciasDescargar: (key) => ipcRenderer.invoke("licencias:descargar", key),
+  licenciasDescargar: (key, version) => ipcRenderer.invoke("licencias:descargar", key, version),
+  licenciasVersiones: (key) => ipcRenderer.invoke("licencias:versiones", key),
+  licenciasFijada: (key) => ipcRenderer.invoke("licencias:fijada", key),
+  licenciasFijar: (key, version) => ipcRenderer.invoke("licencias:fijar", key, version),
   /** Versión descargada en disco de una app ({ version, archivo } o null). */
   licenciasInstalado: (key) => ipcRenderer.invoke("licencias:instalado", key),
   /** Ejecuta el instalador ya descargado. Devuelve true si arrancó. */

@@ -34,6 +34,8 @@ export type DatosEscritorio = {
   /** Versión instalada según su instalador (null si no se sabe). */
   instalada?: string | null;
   bajando?: boolean | null;
+  /** Versión elegida a mano para volver atrás: mientras esté, no se ofrece actualizar. */
+  fijada?: string | null;
 };
 
 /** "1.2.10" → [1, 2, 10]; null si no es X.Y.Z. */
@@ -58,6 +60,9 @@ export function estadoEscritorio(service: Service, datos: DatosEscritorio): Esta
   const licencia = service.licencia;
 
   if (datos.ejecutable) {
+    // La persona eligió esta versión (la nueva le daba problemas): no se le
+    // insiste con actualizar hasta que vuelva a la última.
+    if (datos.fijada && datos.instalada === datos.fijada) return "instalada";
     const hayNueva =
       licencia?.hasAccess &&
       datos.version &&
@@ -82,11 +87,14 @@ export function estadoEscritorio(service: Service, datos: DatosEscritorio): Esta
 /** Línea de estado bajo el nombre (null = no se muestra nada). */
 export function textoEstado(
   estado: EstadoEscritorio,
-  datos: { percent?: number; version?: string | null; instalada?: string | null } = {},
+  datos: { percent?: number; version?: string | null; instalada?: string | null; fijada?: string | null } = {},
 ): string | null {
-  const { percent = 0, version, instalada } = datos;
+  const { percent = 0, version, instalada, fijada } = datos;
   switch (estado) {
     case "instalada":
+      if (instalada && fijada === instalada) {
+        return `Instalada v${instalada} · versión elegida, no se actualiza sola`;
+      }
       return instalada ? `Instalada en esta PC · v${instalada}` : "Instalada en esta PC";
     case "desactualizada":
       return `Instalada v${instalada} · hay una versión nueva (v${version})`;
